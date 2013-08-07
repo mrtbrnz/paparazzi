@@ -81,15 +81,15 @@
 /*
  * SPI slave pin declaration
  */
-/* GYRO_CS */
+/* GYRO_CS on SPI1 */
 #define SPI_SELECT_SLAVE0_PORT GPIOC
 #define SPI_SELECT_SLAVE0_PIN GPIO14
 
-/* ACCEL_CS */
+/* ACCEL_CS on SPI1 */
 #define SPI_SELECT_SLAVE1_PORT GPIOC
 #define SPI_SELECT_SLAVE1_PIN GPIO15
 
-/* MPU_CS */
+/* MPU_CS on SPI1 */
 #define SPI_SELECT_SLAVE2_PORT GPIOB
 #define SPI_SELECT_SLAVE2_PIN GPIO0
 
@@ -213,8 +213,9 @@
  * Spektrum
  */
 /* The line that is pulled low at power up to initiate the bind process */
-#define SPEKTRUM_BIND_PIN GPIO8
-#define SPEKTRUM_BIND_PIN_PORT GPIOA
+/* GPIO_EXT1 on PX4FMU */
+#define SPEKTRUM_BIND_PIN GPIO4
+#define SPEKTRUM_BIND_PIN_PORT GPIOC
 
 #define SPEKTRUM_UART2_RCC_REG &RCC_APB1ENR
 #define SPEKTRUM_UART2_RCC_DEV RCC_APB1ENR_USART2EN
@@ -228,7 +229,7 @@
 
 
 /* Activate onboard baro */
-//#define BOARD_HAS_BARO 1
+#define BOARD_HAS_BARO 1
 
 
 #endif /* CONFIG_PX4FMU_1_7_H */

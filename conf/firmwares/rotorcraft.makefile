@@ -205,6 +205,11 @@ ap.srcs += $(SRC_BOARD)/baro_board.c
 else ifeq ($(BOARD), krooz)
 ap.srcs += $(SRC_BOARD)/baro_board.c
 
+else ifeq ($(BOARD), px4fmu)
+ap.srcs += $(SRC_BOARD)/baro_board.c
+ap.srcs += modules/sensors/baro_ms5611_i2c.c
+ap.CFLAGS += -DMS5611_I2C_DEV=i2c2
+
 # apogee baro
 else ifeq ($(BOARD), apogee)
 ap.CFLAGS += -DUSE_I2C1
