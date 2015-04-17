@@ -147,8 +147,8 @@ void electrical_periodic(void)
                                (1. / electrical_priv.nonlin_factor));
 #endif /* ADC_CHANNEL_CURRENT */
 
-  // mAh = mA * dt (10Hz -> hours)
-  electrical.energy += ((float)electrical.current) / 3600.0f / ELECTRICAL_PERIODIC_FREQ;
+  // Wh = mA * dV * dt (10Hz -> hours)
+  electrical.energy += ((float)electrical.current * (float)electrical.vsupply / 10000.0f) / 3600.0f / ELECTRICAL_PERIODIC_FREQ;
 
   /*if valid voltage is seen then start checking. Set min level to 0 to always start*/
   if (electrical.vsupply >= MIN_BAT_LEVEL * 10) {

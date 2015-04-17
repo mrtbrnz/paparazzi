@@ -45,10 +45,10 @@
 
 struct Electrical {
 
-  uint16_t vsupply;       ///< supply voltage in decivolts
-  int32_t  current;       ///< current in milliamps
+  uint16_t vsupply;       ///< supply voltage in deciVolts
+  int32_t  current;       ///< current in milliAmps
   int32_t  consumed;      ///< consumption in mAh
-  float    energy;        ///< consumed energy in mAh
+  float    energy;        ///< consumed energy in Wh
   bool_t   bat_low;       ///< battery low status
   bool_t   bat_critical;  ///< battery critical status
 

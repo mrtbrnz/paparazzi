@@ -112,7 +112,7 @@ static void send_estimator(struct transport_tx *trans, struct link_device *dev)
 static void send_bat(struct transport_tx *trans, struct link_device *dev)
 {
   int16_t amps = (int16_t)(current / 10);
-  int16_t e = energy;
+  int32_t e = energy;
   pprz_msg_send_BAT(trans, dev, AC_ID,
                     &v_ctl_throttle_slewed, &vsupply, &amps,
                     &autopilot_flight_time, (uint8_t *)(&kill_throttle),
@@ -121,7 +121,7 @@ static void send_bat(struct transport_tx *trans, struct link_device *dev)
 
 static void send_energy(struct transport_tx *trans, struct link_device *dev)
 {
-  uint16_t e = energy;
+  uint32_t e = energy;
   float vsup = ((float)vsupply) / 10.0f;
   float curs = ((float)current) / 1000.0f;
   float power = vsup * curs;
