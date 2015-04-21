@@ -80,8 +80,7 @@
   </section>
 
   <section name="BAT">
-    <define name="MILLIAMP_AT_FULL_THROTTLE" value="2000"/>
-
+    <define name="MILLIAMP_AT_FULL_THROTTLE" value="15000" unit="mA"/>
     <define name="CATASTROPHIC_BAT_LEVEL" value="9.3" unit="V"/>
   </section>
 
@@ -95,6 +94,11 @@
 
     <define name="DEFAULT_CIRCLE_RADIUS" value="80."/>
 
+  </section>
+
+  <section name="ZIGZAG" prefix="ZIGZAG_">
+    <define name="LEG_DISTANCE" value="50."/>
+    <define name="BETA_ANGLE" value="45." unit="deg"/>
   </section>
 
   <section name="VERTICAL CONTROL" prefix="V_CTL_">
@@ -189,12 +193,17 @@
     <load name="nav_survey_polygon.xml"/>
     <load name="nav_line_border.xml"/>
     <load name="nav_line.xml"/>
+    <load name="nav_zigzag.xml"/>
     <load name="nav_smooth.xml"/>
     <load name="nav_flower.xml"/>
     <load name="nav_line_osam.xml"/>
     <load name="nav_survey_poly_osam.xml"/>
     <load name="nav_vertical_raster.xml"/>
     <load name="nav_bungee_takeoff.xml"/>
+    <load name="cam_point.xml">
+      <define name="POINT_CAM_YAW_PITCH"  value="1"/>
+      <define name="SHOW_CAM_COORDINATES" value="1"/>
+    </load>
     <load name="infrared_adc.xml"/>
     <load name="ahrs_infrared.xml"/>
     <load name="tune_airspeed.xml"/>

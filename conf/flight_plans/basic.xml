@@ -40,6 +40,10 @@
       <set value="0" var="autopilot_flight_time"/>
       <go from="HOME" throttle="1.0" vmode="throttle" wp="CLIMB" pitch="15"/>
     </block>
+    <block name="ZIGZAG Flight">
+      <call fun="nav_zigzag_init()"/>
+      <call fun="nav_zigzag_run(WP_1, WP_2)"/>
+    </block>
     <block key="Ctrl+a" name="Standby" strip_button="Standby" strip_icon="home.png" group="home">
       <circle radius="nav_radius" wp="STDBY"/>
     </block>

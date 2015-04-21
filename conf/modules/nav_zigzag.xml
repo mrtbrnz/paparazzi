@@ -1,0 +1,26 @@
+<!DOCTYPE module SYSTEM "module.dtd">
+
+<module name="nav_zigzag" dir="nav">
+  <doc>
+    <description>
+      ZIGZAG Navigation module.
+
+      The zigzag is constructed over a straight line from the WP_1 to WP_2 (input waypoints).
+    </description>
+    <section name="ZIGZAG" prefix="ZIGZAG_">
+      <define name="LEG_DISTANCE" value="distance" unit="m" description="Leg distance"/>
+      <define name="BETA_ANGLE" value="angle" unit="deg" description="Angle between the straight line and the crossing zigzag paths"/>
+    </section>
+  </doc>
+<!--   <settings name="ZIGZAG">
+     <dl_settings NAME="control">
+        <dl_setting MAX="200" MIN="10" STEP="10" module="nav/nav_zigzag" VAR="ZIGZAG_LEG_DISTANCE"/>
+     </dl_settings>
+  </settings> -->
+  <header>
+    <file name="nav_zigzag.h"/>
+  </header>
+  <makefile target="ap|sim|nps">
+    <file name="nav_zigzag.c"/>
+  </makefile>
+</module>
