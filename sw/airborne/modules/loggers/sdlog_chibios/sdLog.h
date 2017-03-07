@@ -65,7 +65,6 @@ extern "C" {
  use of the api :
  sdLogInit (initialize peripheral,  verify sdCard availibility)
  sdLogOpenLog : open file
- sdLogExpandLogFile : reserve contiguous space on storage
  sdLogWriteXXX : write log using one off the many function of the API
  sdLogCloseLog : close log
  sdLogFinish : terminate logging thread
