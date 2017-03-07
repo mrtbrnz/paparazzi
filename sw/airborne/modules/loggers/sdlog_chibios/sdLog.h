@@ -247,7 +247,8 @@ SdioError sdLogCloseAllLogs(bool flush);
  * @param[in] fmt : format and args in printf convention
  * @return  status (always check status)
  */
-SdioError sdLogWriteLog(const FileDes fileObject, const char *fmt, ...);
+SdioError sdLogWriteLog(const FileDes fileObject, const char *fmt, ...)
+  __attribute__ ((format (printf, 2, 3)));;
 
 
 /**
