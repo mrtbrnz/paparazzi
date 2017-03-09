@@ -377,7 +377,7 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
 #warning the vertical control is hacked!
     // incremental thrust
     v_thrust = stabilization_cmd[COMMAND_THRUST] - (actuator_state_filt_vect[2] +actuator_state_filt_vect[3])/2;
-    v_thrust *= -1.0/625.0;
+    v_thrust *= Bwls[3][2] + Bwls[3][3];
   }
 
   // The control objective in array format
@@ -441,7 +441,7 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
   struct Int32Rates *body_rates_i = stateGetBodyRates_i();
   struct Int32Vect2 sp_accel_tri = {ACCEL_BFP_OF_REAL(sp_accel_tr.x),ACCEL_BFP_OF_REAL(sp_accel_tr.y)};
   // For floats: specify the number of digits, e.g. .5f
-  sdLogWriteLog(pprzLogFile, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
+  sdLogWriteLog(pprzLogFile, "%ld,%ld,%ld,%ld,%d,%d,%d,%d,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld\n",
       log_counter,
       body_rates_i->p,
       body_rates_i->q,
