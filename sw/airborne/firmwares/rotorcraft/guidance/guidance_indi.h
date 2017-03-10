@@ -50,7 +50,7 @@ extern enum transition_ctrl transition_control;
 extern float get_fwd_pitch(void);
 extern float get_transition_pitch(void);
 extern void get_two_d_accel(struct FloatVect2 *accel, float heading);
-extern void calc_inv_transition_effectiveness(float theta, float inv_eff[4]);
+extern void calc_inv_transition_effectiveness(float theta);
 
 extern bool perform_transition;
 extern bool transition_back;

@@ -187,12 +187,12 @@
   </section>
 
   <modules main_freq="512">
-    <module name="gps" type="ubx_ucenter"/>
-    <!--<module name="tlsf"/>-->
-    <!--<module name="pprzlog"/>-->
-    <!--<module name="logger" type="sd_chibios"/>-->
+    <!--<module name="gps" type="ubx_ucenter"/>-->
+    <module name="tlsf"/>
+    <module name="pprzlog"/>
+    <module name="logger" type="sd_chibios"/>
     <!--<module name="flight_recorder"/>-->
-    <module name="logger_spi_link"/>
+    <!--<module name="logger_spi_link"/>-->
 
     <!--Use an airspeed sensor and get the measured airspeed in the messages-->
     <module name="airspeed_ets">
@@ -223,8 +223,8 @@
   </section>
 
   <firmware name="rotorcraft">
-    <!--<target name="ap" board="apogee_1.0_chibios">-->
-    <target name="ap" board="apogee_1.0">
+    <target name="ap" board="apogee_1.0_chibios">
+    <!--<target name="ap" board="apogee_1.0">-->
       <module name="radio_control" type="sbus">
         <!-- Put the mode on channel AUX1-->
         <define name="RADIO_KILL_SWITCH" value="RADIO_GAIN1"/>

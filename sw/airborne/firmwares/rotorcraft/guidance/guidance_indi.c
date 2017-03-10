@@ -202,7 +202,7 @@ void guidance_indi_run(bool in_flight, int32_t heading) {
     sp_accel_tr.y = sp_accel.z; //Always keep controlling the altitude (y = z axis)
 
     // Calculate the inverse of the control effectiveness
-    calc_inv_transition_effectiveness(transition_pitch, inv_eff);
+    calc_inv_transition_effectiveness(transition_pitch);
 
     // Obtain the acceleration in a 2D 'navigation' plane
     struct FloatVect2 accel_tr;
@@ -469,7 +469,7 @@ void get_two_d_accel(struct FloatVect2 *accel, float heading) {
   accel->y = filt_accel_ned[2].o[0];
 }
 
-void calc_inv_transition_effectiveness(float theta, float inv_eff[4]) {
+void calc_inv_transition_effectiveness(float theta) {
   float T = 9.81;
 
   float eff[4];
