@@ -25,6 +25,7 @@
 
 #include "firmwares/rotorcraft/stabilization/stabilization_attitude_common_int.h"
 #include "firmwares/rotorcraft/stabilization/stabilization_attitude_ref_quat_int.h"
+#include "filters/low_pass_filter.h"
 
 //only 4 actuators supported for now
 #ifndef INDI_NUM_ACT
@@ -51,6 +52,9 @@ extern float indi_v[4];
 
 // used for scheduling
 extern float g1g2[INDI_OUTPUTS][INDI_NUM_ACT];
+
+// For sideslip correction
+extern Butterworth2LowPass accely_filt;
 
 struct ReferenceSystem {
   float err_p;

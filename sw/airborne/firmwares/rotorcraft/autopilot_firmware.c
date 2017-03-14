@@ -158,6 +158,7 @@ static void send_fp(struct transport_tx *trans, struct link_device *dev)
                                                       /*4, vect,*/
                                                       /*4, vect,*/
                                                       /*4, vect);*/
+  int32_t heading_fwd = stabilization_attitude_get_heading_i();
   int32_t carrot_up = -guidance_v_z_sp;
   pprz_msg_send_ROTORCRAFT_FP(trans, dev, AC_ID,
                               &(stateGetPositionEnu_i()->x),
@@ -168,7 +169,7 @@ static void send_fp(struct transport_tx *trans, struct link_device *dev)
                               &(stateGetSpeedEnu_i()->z),
                               &(stateGetNedToBodyEulers_i()->phi),
                               &(stateGetNedToBodyEulers_i()->theta),
-                              &(stateGetNedToBodyEulers_i()->psi),
+                              &heading_fwd,
                               &guidance_h.sp.pos.y,
                               &guidance_h.sp.pos.x,
                               &carrot_up,

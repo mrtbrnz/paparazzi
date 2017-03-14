@@ -76,18 +76,19 @@
 
   </axis>
 
-  <!--<axis name="SIDE">-->
+  <axis name="SIDE">
 
-    <!--<function name="aero/force/Side_beta">-->
-       <!--<description>Side force due to beta</description>-->
-       <!--<product>-->
-           <!--<property>aero/qbar-psf</property>-->
-           <!--<property>metrics/Sw-sqft</property>-->
-           <!--<property>aero/beta-rad</property>-->
-           <!--<value>-1</value>-->
-       <!--</product>-->
-    <!--</function>-->
+    <!--Destabalizing side force to reduce the sidewards drag a bit-->
+    <function name="aero/force/Side_beta">
+       <description>Side force due to beta</description>
+       <product>
+           <property>aero/qbar-psf</property>
+           <property>metrics/Sw-sqft</property>
+           <property>aero/beta-rad</property>
+           <value>0.02</value>
+       </product>
+    </function>
 
-  <!--</axis>-->
+  </axis>
 
  </aerodynamics>

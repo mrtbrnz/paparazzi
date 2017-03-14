@@ -202,6 +202,11 @@ void stabilization_attitude_read_rc_setpoint_eulers(struct Int32Eulers *sp, bool
         omega = ANGLE_BFP_OF_REAL(9.81 / COORDINATED_TURN_AIRSPEED * 1.72305 * ((sp->phi > 0) - (sp->phi < 0)));
       }
 
+#ifdef FWD_SIDESLIP_GAIN
+      // Add sideslip correction
+      omega -= ANGLE_BFP_OF_REAL(ACCEL_FLOAT_OF_BFP(accely_filt.o[0])*FWD_SIDESLIP_GAIN);
+#endif
+
       sp->psi += omega * dt;
     }
 #ifdef STABILIZATION_ATTITUDE_SP_PSI_DELTA_LIMIT

@@ -41,9 +41,10 @@
 #include "subsystems/radio_control.h"
 #include "subsystems/actuators.h"
 #include "subsystems/abi.h"
-#include "filters/low_pass_filter.h"
 #include "wls/wls_alloc.h"
 #include <stdio.h>
+#include "modules/sensors/airspeed_ms45xx_i2c.h"
+#include "mcu_periph/pwm_input.h"
 
 float u_min[4];
 float u_max[4];
@@ -147,6 +148,8 @@ Butterworth2LowPass estimation_input_lowpass_filters[INDI_NUM_ACT];
 Butterworth2LowPass measurement_lowpass_filters[3];
 Butterworth2LowPass estimation_output_lowpass_filters[3];
 Butterworth2LowPass acceleration_lowpass_filter;
+
+Butterworth2LowPass accely_filt;
 
 struct FloatVect3 body_accel_f;
 
@@ -257,6 +260,9 @@ void init_filters(void) {
 
   // Filtering of the accel body z
   init_butterworth_2_low_pass(&acceleration_lowpass_filter, tau_est, sample_time, 0.0);
+
+  // Filtering of the accel body y for sideslip control for forward flight
+  init_butterworth_2_low_pass(&accely_filt, tau, sample_time, 0.0);
 }
 
 /**
@@ -434,14 +440,18 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
     actuators_pprz[i] = (int16_t) indi_u[i];
   }
 
+#ifndef SITL
   /*Do some logging*/
   static uint32_t log_counter = 0;
   struct Int32Vect3 *accel = stateGetAccelBody_i();
   struct Int32Quat *quat = stateGetNedToBodyQuat_i();
   struct Int32Rates *body_rates_i = stateGetBodyRates_i();
   struct Int32Vect2 sp_accel_tri = {ACCEL_BFP_OF_REAL(sp_accel_tr.x),ACCEL_BFP_OF_REAL(sp_accel_tr.y)};
+  uint32_t raw_duty1 = get_pwm_input_duty_in_usec(PWM_INPUT1);
+  uint32_t raw_duty2 = get_pwm_input_duty_in_usec(PWM_INPUT2);
+  int32_t airspeed = ANGLE_BFP_OF_REAL(ms45xx.diff_pressure);
   // For floats: specify the number of digits, e.g. .5f
-  sdLogWriteLog(pprzLogFile, "%ld,%ld,%ld,%ld,%d,%d,%d,%d,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld\n",
+  sdLogWriteLog(pprzLogFile, "%ld,%ld,%ld,%ld,%d,%d,%d,%d,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld\n",
       log_counter,
       body_rates_i->p,
       body_rates_i->q,
@@ -468,9 +478,14 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
       stateGetSpeedNed_i()->y,
       stateGetSpeedNed_i()->z,
       sp_accel_tri.x,
-      sp_accel_tri.y);
+      sp_accel_tri.y,
+      raw_duty1,
+      raw_duty2,
+      airspeed
+        );
 
   log_counter += 1;
+#endif
 
 }
 
@@ -500,6 +515,10 @@ void stabilization_indi_run(bool in_flight, bool rate_control)
     estimation_rate_d[i] = (estimation_output_lowpass_filters[i].o[0] - estimation_output_lowpass_filters[i].o[1]) *PERIODIC_FREQUENCY;
     estimation_rate_dd[i] = (estimation_rate_d[i] - estimation_rate_d_prev) * PERIODIC_FREQUENCY;
   }
+
+  // Propagate filter for sideslip correction
+  float accely = ACCEL_FLOAT_OF_BFP(stateGetAccelBody_i()->y);
+  update_butterworth_2_low_pass(&accely_filt, accely);
 
   /* attitude error                          */
   struct Int32Quat att_err;

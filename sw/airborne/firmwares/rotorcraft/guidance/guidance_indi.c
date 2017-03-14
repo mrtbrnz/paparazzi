@@ -211,6 +211,10 @@ void guidance_indi_run(bool in_flight, int32_t heading) {
     // Calculate the acceleration error
     struct FloatVect2 a_diff_tr = {sp_accel_tr.x - accel_tr.x, sp_accel_tr.y - accel_tr.y};
 
+    if(transition_control==IN_FORWARD) {
+      a_diff_tr.x = 0.0;
+    }
+
     // Multiply with the inverse control effectiveness
     struct FloatVect2 cmds;
     float_mat2_mult(&cmds,inv_eff,a_diff_tr); // cmds = delta 1)pitch 2)thrust
@@ -475,7 +479,7 @@ void calc_inv_transition_effectiveness(float theta) {
   float eff[4];
   eff[0] = -cosf(theta)*T;
   eff[1] =  sinf(theta);
-  eff[2] =  sinf(theta)*T - 42.0*theta/RadOfDeg(-90.0);
+  eff[2] =  sinf(theta)*T - GUIDANCE_INDI_PITCH_LIFT_EFF*theta/RadOfDeg(-90.0);
   eff[3] =  cosf(theta);
 
   float_mat_inv_2d(inv_eff, eff);

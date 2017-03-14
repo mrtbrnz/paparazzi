@@ -66,7 +66,6 @@
     <define name="SP_MAX_R"       value="90." unit="deg/s"/>
     <define name="DEADBAND_R"     value="250"/>
     <define name="DEADBAND_A"     value="250"/>
-    <define name="SP_PSI_DELTA_LIMIT" value="90" unit="deg"/>
 
     <!-- reference -->
     <define name="REF_OMEGA_P"  value="1500" unit="deg/s"/>
@@ -184,6 +183,8 @@
     <define name="BARO_PERIODIC_FREQUENCY" value="50"/>
     <define name="GUIDANCE_H_MAX_BANK" value="30" unit="deg"/>
     <define name="CYCLONE_DESCEND_TEST" value="FALSE"/>
+
+    <define name="FWD_SIDESLIP_GAIN" value="0.22"/>
   </section>
 
   <modules main_freq="512">
@@ -266,8 +267,9 @@
     <module name="stabilization" type="indi"/>
     <module name="guidance"      type="indi">
       <define name="GUIDANCE_INDI_RC_DEBUG" value="FALSE"/>
-      <define name="GUIDANCE_INDI_POS_GAIN" value="0.3"/>
-      <define name="GUIDANCE_INDI_SPEED_GAIN" value="0.8"/>
+      <define name="GUIDANCE_INDI_POS_GAIN" value="0.5"/>
+      <define name="GUIDANCE_INDI_SPEED_GAIN" value="1.2"/>
+      <define name="GUIDANCE_INDI_PITCH_LIFT_EFF" value="42.0"/>
     </module>
 
     <module name="ahrs"          type="int_cmpl_quat">

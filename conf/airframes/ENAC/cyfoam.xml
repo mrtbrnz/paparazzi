@@ -32,16 +32,16 @@
 
   <section name="IMU" prefix="IMU_">
     <!-- IMU calibration, make sure to calibrate the IMU properly before flight, see the wiki for more info-->
-    <define name="MAG_X_NEUTRAL" value="12"/>
-    <define name="MAG_Y_NEUTRAL" value="-103"/>
-    <define name="MAG_Z_NEUTRAL" value="-444"/>
-    <define name="MAG_X_SENS" value="3.67726438454" integer="16"/>
-    <define name="MAG_Y_SENS" value="3.72705676695" integer="16"/>
-    <define name="MAG_Z_SENS" value="3.80412188394" integer="16"/>
+    <define name="MAG_X_NEUTRAL" value="234"/>
+    <define name="MAG_Y_NEUTRAL" value="-226"/>
+    <define name="MAG_Z_NEUTRAL" value="236"/>
+    <define name="MAG_X_SENS" value="7.38196858567" integer="16"/>
+    <define name="MAG_Y_SENS" value="8.7577026533" integer="16"/>
+    <define name="MAG_Z_SENS" value="8.6772551439" integer="16"/>
 
-    <define name= "MAG_X_CURRENT_COEF" value="0.00132143381435"/>
-    <define name= "MAG_Y_CURRENT_COEF" value="0.00613721186806"/>
-    <define name= "MAG_Z_CURRENT_COEF" value="0.0172048482992"/>
+    <define name= "MAG_X_CURRENT_COEF" value="0.001455"/>
+    <define name= "MAG_Y_CURRENT_COEF" value="0.012152"/>
+    <define name= "MAG_Z_CURRENT_COEF" value="-0.0001088"/>
 
     <define name="BODY_TO_IMU_PHI"   value="180." unit="deg"/>
     <define name="BODY_TO_IMU_THETA" value="90." unit="deg"/>
@@ -65,6 +65,16 @@
     <define name="G1_PITCH"  value="{-12.0,  12.0,     0,     0}"/>
     <define name="G1_YAW"    value="{-12.0, -12.0,   0.0,   0.0}"/>
     <define name="G1_THRUST" value="{    0,     0,  -0.9,  -0.9}"/>
+  </section>
+
+  <section name="STABILIZATION_ATTITUDE" prefix="STABILIZATION_ATTITUDE_">
+    <!-- setpoints -->
+    <define name="SP_MAX_PHI"     value="60." unit="deg"/>
+    <define name="SP_MAX_THETA"   value="60." unit="deg"/>
+    <define name="SP_MAX_R"       value="90." unit="deg/s"/>
+    <define name="DEADBAND_R"     value="250"/>
+    <define name="DEADBAND_A"     value="250"/>
+    <define name="SP_PSI_DELTA_LIMIT" value="90" unit="deg"/>
   </section>
 
   <section name="STABILIZATION_ATTITUDE_INDI" prefix="STABILIZATION_INDI_">
@@ -140,6 +150,8 @@
     <define name="BARO_PERIODIC_FREQUENCY" value="50"/>
     <define name="GUIDANCE_H_MAX_BANK" value="30" unit="deg"/>
     <define name="CYCLONE_DESCEND_TEST" value="FALSE"/>
+
+    <define name="FWD_SIDESLIP_GAIN" value="0.22"/>
   </section>
 
   <modules main_freq="512">
@@ -155,7 +167,19 @@
     <module name="ctrl_effectiveness_scheduling"/>
 
     <!--Use an airspeed sensor and get the measured airspeed in the messages-->
+    <module name="airspeed" type="ms45xx_i2c">
+      <define name="MS45XX_I2C_DEV" value="i2c1"/>
+    </module>
 
+    <!--<module name="pwm_meas"/>-->
+    <!--<module name="AOA_pwm">-->
+      <!--<define name="AOA_PWM_CHANNEL" value="PWM_INPUT1"/>-->
+    <!--</module>-->
+
+    <module name="pwm_meas">
+      <define name="USE_PWM_INPUT1" value="PWM_PULSE_TYPE_ACTIVE_LOW"/>
+      <define name="USE_PWM_INPUT2" value="PWM_PULSE_TYPE_ACTIVE_LOW"/>
+    </module>
   </modules>
 
 
@@ -175,7 +199,8 @@
 
     <module name="send_imu_mag_current">
       <define name="MILLIAMP_AT_IDLE_THROTTLE" value="1000"/>
-      <define name="MILLIAMP_AT_FULL_THROTTLE" value="20000"/>
+      <define name="MILLIAMP_AT_FULL_THROTTLE" value="30000"/>
+      <define name="CURRENT_ESTIMATION_NONLINEARITY" value="1.5"/>
     </module>
     <module name="sys_mon"/>
 
@@ -194,12 +219,13 @@
     <module name="stabilization" type="indi"/>
     <module name="guidance"      type="indi">
       <define name="GUIDANCE_INDI_RC_DEBUG" value="FALSE"/>
-      <define name="GUIDANCE_INDI_POS_GAIN" value="0.3"/>
-      <define name="GUIDANCE_INDI_SPEED_GAIN" value="0.8"/>
+      <define name="GUIDANCE_INDI_POS_GAIN" value="0.5"/>
+      <define name="GUIDANCE_INDI_SPEED_GAIN" value="1.2"/>
+      <define name="GUIDANCE_INDI_PITCH_LIFT_EFF" value="35.0"/>
     </module>
 
     <module name="ahrs"          type="int_cmpl_quat">
-      <configure name="USE_MAGNETOMETER" value="FALSE"/>
+      <configure name="USE_MAGNETOMETER" value="TRUE"/>
       <!--<define name="AHRS_GRAVITY_UPDATE_COORDINATED_TURN" value="TRUE"/>-->
       <!--<define name="AHRS_GPS_SPEED_IN_NEGATIVE_Z_DIRECTION" value="TRUE"/>-->
     </module>
