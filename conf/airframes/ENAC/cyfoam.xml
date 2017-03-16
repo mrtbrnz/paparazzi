@@ -32,16 +32,28 @@
 
   <section name="IMU" prefix="IMU_">
     <!-- IMU calibration, make sure to calibrate the IMU properly before flight, see the wiki for more info-->
-    <define name="MAG_X_NEUTRAL" value="234"/>
-    <define name="MAG_Y_NEUTRAL" value="-226"/>
-    <define name="MAG_Z_NEUTRAL" value="236"/>
-    <define name="MAG_X_SENS" value="7.38196858567" integer="16"/>
-    <define name="MAG_Y_SENS" value="8.7577026533" integer="16"/>
-    <define name="MAG_Z_SENS" value="8.6772551439" integer="16"/>
+    <!--<define name="MAG_X_NEUTRAL" value="234"/>-->
+    <!--<define name="MAG_Y_NEUTRAL" value="-226"/>-->
+    <!--<define name="MAG_Z_NEUTRAL" value="236"/>-->
+    <!--<define name="MAG_X_SENS" value="7.38196858567" integer="16"/>-->
+    <!--<define name="MAG_Y_SENS" value="8.7577026533" integer="16"/>-->
+    <!--<define name="MAG_Z_SENS" value="8.6772551439" integer="16"/>-->
 
-    <define name= "MAG_X_CURRENT_COEF" value="0.001455"/>
-    <define name= "MAG_Y_CURRENT_COEF" value="0.012152"/>
-    <define name= "MAG_Z_CURRENT_COEF" value="-0.0001088"/>
+    <!--<define name= "MAG_X_CURRENT_COEF" value="0.001455"/>-->
+    <!--<define name= "MAG_Y_CURRENT_COEF" value="0.012152"/>-->
+    <!--<define name= "MAG_Z_CURRENT_COEF" value="-0.0001088"/>-->
+
+    <!--Mag of gps-->
+    <define name="MAG_X_NEUTRAL" value="180"/>
+    <define name="MAG_Y_NEUTRAL" value="-534"/>
+    <define name="MAG_Z_NEUTRAL" value="706"/>
+    <define name="MAG_X_SENS" value="3.39798602736" integer="16"/>
+    <define name="MAG_Y_SENS" value="4.03337904701" integer="16"/>
+    <define name="MAG_Z_SENS" value="3.51454648402" integer="16"/>
+
+    <define name= "MAG_X_CURRENT_COEF" value="0.00112966043167"/>
+    <define name= "MAG_Y_CURRENT_COEF" value="0.0143720261475"/>
+    <define name= "MAG_Z_CURRENT_COEF" value="0.0139579034068"/>
 
     <define name="BODY_TO_IMU_PHI"   value="180." unit="deg"/>
     <define name="BODY_TO_IMU_THETA" value="90." unit="deg"/>
@@ -61,9 +73,9 @@
 
   <section name="ctrl_eff_scheduling" prefix="FWD_">
     <!-- control effectiveness, scaled by INDI_G_SCALING (1000)-->
-    <define name="G1_ROLL"   value="{    0,     0,  -9.0,   9.0}"/>
-    <define name="G1_PITCH"  value="{-12.0,  12.0,     0,     0}"/>
-    <define name="G1_YAW"    value="{-12.0, -12.0,   0.0,   0.0}"/>
+    <define name="G1_ROLL"   value="{    0,     0, -13.0,  13.0}"/>
+    <define name="G1_PITCH"  value="{-22.0,  12.0,     0,     0}"/>
+    <define name="G1_YAW"    value="{-22.0, -12.0,   0.0,   0.0}"/>
     <define name="G1_THRUST" value="{    0,     0,  -0.9,  -0.9}"/>
   </section>
 
@@ -197,6 +209,23 @@
       <!--define name="USE_SERVOS_7AND8"/-->
     </module>
 
+    <module name="mag" type="hmc58xx">
+      <configure name="MAG_HMC58XX_I2C_DEV" value="i2c2"/>
+      <define name="MODULE_HMC58XX_UPDATE_AHRS"/>
+
+      <define name="HMC58XX_CHAN_X" value="1"/>
+      <define name="HMC58XX_CHAN_Y" value="0"/>
+      <define name="HMC58XX_CHAN_Z" value="2"/>
+
+      <define name="HMC58XX_CHAN_X_SIGN" value="-"/>
+      <define name="HMC58XX_CHAN_Y_SIGN" value="+"/>
+      <define name="HMC58XX_CHAN_Z_SIGN" value="+"/>
+
+      <!--run the chimera mag once every 64 seconds-->
+      <define name="MPU9250_MAG_PRESCALER" value="32768"/>
+
+    </module>
+
     <module name="send_imu_mag_current">
       <define name="MILLIAMP_AT_IDLE_THROTTLE" value="1000"/>
       <define name="MILLIAMP_AT_FULL_THROTTLE" value="30000"/>
@@ -221,7 +250,7 @@
       <define name="GUIDANCE_INDI_RC_DEBUG" value="FALSE"/>
       <define name="GUIDANCE_INDI_POS_GAIN" value="0.5"/>
       <define name="GUIDANCE_INDI_SPEED_GAIN" value="1.2"/>
-      <define name="GUIDANCE_INDI_PITCH_LIFT_EFF" value="35.0"/>
+      <define name="GUIDANCE_INDI_PITCH_LIFT_EFF" value="25.0"/>
     </module>
 
     <module name="ahrs"          type="int_cmpl_quat">

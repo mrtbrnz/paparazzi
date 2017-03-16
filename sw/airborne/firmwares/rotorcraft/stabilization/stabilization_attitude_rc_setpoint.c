@@ -204,7 +204,7 @@ void stabilization_attitude_read_rc_setpoint_eulers(struct Int32Eulers *sp, bool
 
 #ifdef FWD_SIDESLIP_GAIN
       // Add sideslip correction
-      omega -= ANGLE_BFP_OF_REAL(ACCEL_FLOAT_OF_BFP(accely_filt.o[0])*FWD_SIDESLIP_GAIN);
+      omega -= ANGLE_BFP_OF_REAL(accely_filt.o[0]*FWD_SIDESLIP_GAIN);
 #endif
 
       sp->psi += omega * dt;

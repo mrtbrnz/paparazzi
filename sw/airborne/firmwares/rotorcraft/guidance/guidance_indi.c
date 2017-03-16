@@ -171,7 +171,7 @@ void guidance_indi_run(bool in_flight, int32_t heading) {
     float transition_pitch = get_transition_pitch();
 
     /*Calculate the transition percentage so that the ctrl_effecitveness scheduling works*/
-    transition_percentage = BFP_OF_REAL(transition_pitch/RadOfDeg(-78.0)*100,INT32_PERCENTAGE_FRAC);
+    transition_percentage = BFP_OF_REAL((transition_pitch/RadOfDeg(-75.0))*100,INT32_PERCENTAGE_FRAC);
     Bound(transition_percentage,0,BFP_OF_REAL(100,INT32_PERCENTAGE_FRAC));
 
     /*The desired acceleration in 2D, depending on the transition state*/
@@ -228,6 +228,10 @@ void guidance_indi_run(bool in_flight, int32_t heading) {
 
     // Incrment the pitch angle, using the special pitch representation
     guidance_euler_cmd.theta = pitchtr_filt.o[0] + cmds.x;
+
+    if(transition_control==IN_FORWARD) {
+      Bound(guidance_euler_cmd.theta, RadOfDeg(-120.0), RadOfDeg(-50.0));
+    }
 
     // Set the roll and yaw angles. Yaw will be updated from the read rc coordinated turn function
     int32_t roll_rc = radio_control.values[RADIO_ROLL];

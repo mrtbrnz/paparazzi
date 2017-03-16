@@ -379,6 +379,9 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
   float v_thrust = 0.0;
   if(indi_thrust_increment_set){
     v_thrust = indi_thrust_increment;
+
+    //update thrust command such that the current is correctly estimated
+    stabilization_cmd[COMMAND_THRUST] = (actuator_state[2] + actuator_state[3])/2.0;
   } else {
 #warning the vertical control is hacked!
     // incremental thrust
@@ -447,9 +450,15 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
   struct Int32Quat *quat = stateGetNedToBodyQuat_i();
   struct Int32Rates *body_rates_i = stateGetBodyRates_i();
   struct Int32Vect2 sp_accel_tri = {ACCEL_BFP_OF_REAL(sp_accel_tr.x),ACCEL_BFP_OF_REAL(sp_accel_tr.y)};
+#if CYCLONE_MINI
+  uint32_t raw_duty1 = 0;
+  uint32_t raw_duty2 = 0;
+  int32_t airspeed = 0;
+#else
   uint32_t raw_duty1 = get_pwm_input_duty_in_usec(PWM_INPUT1);
   uint32_t raw_duty2 = get_pwm_input_duty_in_usec(PWM_INPUT2);
   int32_t airspeed = ANGLE_BFP_OF_REAL(ms45xx.diff_pressure);
+#endif
   // For floats: specify the number of digits, e.g. .5f
   sdLogWriteLog(pprzLogFile, "%ld,%ld,%ld,%ld,%d,%d,%d,%d,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld\n",
       log_counter,
