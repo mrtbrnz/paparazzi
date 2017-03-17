@@ -490,6 +490,7 @@ static inline float float_eulers_norm(struct FloatEulers *e)
 }
 extern void float_eulers_of_rmat(struct FloatEulers *e, struct FloatRMat *rm);
 extern void float_eulers_of_quat(struct FloatEulers *e, struct FloatQuat *q);
+extern void float_eulers_of_quat_zxy(struct FloatEulers *e, struct FloatQuat *q);
 
 /* defines for backwards compatibility */
 #define FLOAT_EULERS_OF_RMAT(_e, _rm) WARNING("FLOAT_EULERS_OF_RMAT macro is deprecated, use the lower case function instead") float_eulers_of_rmat(&(_e), &(_rm))

@@ -579,6 +579,38 @@ void float_eulers_of_quat(struct FloatEulers *e, struct FloatQuat *q)
   e->psi = atan2f(dcm01, dcm00);
 }
 
+/**
+ * @brief euler rotation 'ZXY'
+ * It is the same as the extrinsic YXZ rotation
+ * extrinsic uses static axes, so first rotate around Y (pitch),
+ * then rotate around X (roll), and finally rotate around Z (yaw)
+ *
+ * @param e Euler output
+ * @param q Quat input
+ */
+void float_eulers_of_quat_zxy(struct FloatEulers *e, struct FloatQuat *q)
+{
+  const float qx2  = q->qx * q->qx;
+  const float qy2  = q->qy * q->qy;
+  const float qz2  = q->qz * q->qz;
+  const float qi2  = q->qi * q->qi;
+  const float qiqx = q->qi * q->qx;
+  const float qiqy = q->qi * q->qy;
+  const float qiqz = q->qi * q->qz;
+  const float qxqy = q->qx * q->qy;
+  const float qxqz = q->qx * q->qz;
+  const float qyqz = q->qy * q->qz;
+  const float r11  = -2*(qxqy - qiqz);
+  const float r12  = qi2 - qx2 + qy2 - qz2;
+  const float r21  =  2*(qyqz + qiqx);
+  const float r31  = -2*(qxqz - qiqy);
+  const float r32  = qi2 - qx2 - qy2 + qz2;
+
+  e->psi = atan2f(r11, r12);
+  e->phi = asinf(r21);
+  e->theta = atan2f(r31, r32);
+}
+
 /*
  * 4x4 Matrix inverse.
  * obtained from: http://rodolphe-vaillant.fr/?e=7
