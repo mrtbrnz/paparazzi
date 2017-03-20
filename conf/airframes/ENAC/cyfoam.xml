@@ -44,16 +44,12 @@
     <!--<define name= "MAG_Z_CURRENT_COEF" value="-0.0001088"/>-->
 
     <!--Mag of gps-->
-    <define name="MAG_X_NEUTRAL" value="180"/>
-    <define name="MAG_Y_NEUTRAL" value="-534"/>
-    <define name="MAG_Z_NEUTRAL" value="706"/>
-    <define name="MAG_X_SENS" value="3.39798602736" integer="16"/>
-    <define name="MAG_Y_SENS" value="4.03337904701" integer="16"/>
-    <define name="MAG_Z_SENS" value="3.51454648402" integer="16"/>
-
-    <define name= "MAG_X_CURRENT_COEF" value="0.00112966043167"/>
-    <define name= "MAG_Y_CURRENT_COEF" value="0.0143720261475"/>
-    <define name= "MAG_Z_CURRENT_COEF" value="0.0139579034068"/>
+    <define name="MAG_X_NEUTRAL" value="195"/>
+    <define name="MAG_Y_NEUTRAL" value="-47"/>
+    <define name="MAG_Z_NEUTRAL" value="-25"/>
+    <define name="MAG_X_SENS" value="3.68245686199" integer="16"/>
+    <define name="MAG_Y_SENS" value="3.81802043484" integer="16"/>
+    <define name="MAG_Z_SENS" value="4.01084591146" integer="16"/>
 
     <define name="BODY_TO_IMU_PHI"   value="180." unit="deg"/>
     <define name="BODY_TO_IMU_THETA" value="90." unit="deg"/>
@@ -74,8 +70,8 @@
   <section name="ctrl_eff_scheduling" prefix="FWD_">
     <!-- control effectiveness, scaled by INDI_G_SCALING (1000)-->
     <define name="G1_ROLL"   value="{    0,     0, -13.0,  13.0}"/>
-    <define name="G1_PITCH"  value="{-22.0,  12.0,     0,     0}"/>
-    <define name="G1_YAW"    value="{-22.0, -12.0,   0.0,   0.0}"/>
+    <define name="G1_PITCH"  value="{-22.0,  22.0,     0,     0}"/>
+    <define name="G1_YAW"    value="{-22.0, -22.0,   0.0,   0.0}"/>
     <define name="G1_THRUST" value="{    0,     0,  -0.9,  -0.9}"/>
   </section>
 
@@ -194,7 +190,6 @@
     </module>
   </modules>
 
-
   <firmware name="rotorcraft">
     <target name="ap" board="chimera_1.0">
       <module name="radio_control" type="sbus">
@@ -255,6 +250,8 @@
 
     <module name="ahrs"          type="int_cmpl_quat">
       <configure name="USE_MAGNETOMETER" value="TRUE"/>
+      <!--Use external magnetometer-->
+      <define name="AHRS_ICQ_MAG_ID" value="MAG_HMC58XX_SENDER_ID"/>
       <!--<define name="AHRS_GRAVITY_UPDATE_COORDINATED_TURN" value="TRUE"/>-->
       <!--<define name="AHRS_GPS_SPEED_IN_NEGATIVE_Z_DIRECTION" value="TRUE"/>-->
     </module>

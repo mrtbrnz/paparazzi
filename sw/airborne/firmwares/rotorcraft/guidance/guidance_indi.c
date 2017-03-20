@@ -172,7 +172,11 @@ void guidance_indi_run(bool in_flight, int32_t heading) {
 
     /*Calculate the transition percentage so that the ctrl_effecitveness scheduling works*/
     transition_percentage = BFP_OF_REAL((transition_pitch/RadOfDeg(-75.0))*100,INT32_PERCENTAGE_FRAC);
-    Bound(transition_percentage,0,BFP_OF_REAL(100,INT32_PERCENTAGE_FRAC));
+    Bound(transition_percentage,0,BFP_OF_REAL(100.0,INT32_PERCENTAGE_FRAC));
+    const int32_t max_offset = ANGLE_BFP_OF_REAL(TRANSITION_MAX_OFFSET);
+    transition_theta_offset = INT_MULT_RSHIFT((transition_percentage <<
+          (INT32_ANGLE_FRAC - INT32_PERCENTAGE_FRAC)) / 100,
+          max_offset, INT32_ANGLE_FRAC);
 
     /*The desired acceleration in 2D, depending on the transition state*/
     switch (transition_control) {
@@ -244,7 +248,7 @@ void guidance_indi_run(bool in_flight, int32_t heading) {
 
     // Set the quaternion setpoint, by subsequently rotating around 'navigation' axes
     struct FloatQuat sp_quat;
-    transition_quat_from_angles(&sp_quat, &guidance_euler_cmd);
+    float_quat_of_eulers_zxy(&sp_quat, &guidance_euler_cmd);
     float_quat_normalize(&sp_quat);
     QUAT_BFP_OF_REAL(stab_att_sp_quat,sp_quat);
 
@@ -385,9 +389,10 @@ void guidance_indi_calcG(struct FloatMat33 *Gmat) {
   RMAT_ELMT(*Gmat, 0, 0) = (cphi*spsi - sphi*cpsi*stheta)*T;
   RMAT_ELMT(*Gmat, 1, 0) = (-sphi*spsi*stheta - cpsi*cphi)*T;
   RMAT_ELMT(*Gmat, 2, 0) = -ctheta*sphi*T;
-  RMAT_ELMT(*Gmat, 0, 1) = (cphi*cpsi*ctheta)*T;
-  RMAT_ELMT(*Gmat, 1, 1) = (cphi*spsi*ctheta)*T;
-  RMAT_ELMT(*Gmat, 2, 1) = -stheta*cphi*T;
+#warning "I have been messing with the guidance effectiveness!"
+  RMAT_ELMT(*Gmat, 0, 1) = (cphi*cpsi*ctheta)*T*2.0;
+  RMAT_ELMT(*Gmat, 1, 1) = (cphi*spsi*ctheta)*T*2.0;
+  RMAT_ELMT(*Gmat, 2, 1) = -stheta*cphi*T*2.0;
   RMAT_ELMT(*Gmat, 0, 2) = sphi*spsi + cphi*cpsi*stheta;
   RMAT_ELMT(*Gmat, 1, 2) = cphi*spsi*stheta - cpsi*sphi;
   RMAT_ELMT(*Gmat, 2, 2) = cphi*ctheta;
