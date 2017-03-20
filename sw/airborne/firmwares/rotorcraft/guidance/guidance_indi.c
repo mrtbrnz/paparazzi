@@ -92,12 +92,14 @@ enum transition transition_state = HOVER;
 enum transition_ctrl transition_control = TO_FORWARD;
 struct FloatVect2 sp_accel_tr;
 
+/** state eulers in zxy order */
+struct FloatEulers eulers_zxy;
+
 float thrust_act = 0;
 Butterworth2LowPass filt_accel_ned[3];
 Butterworth2LowPass roll_filt;
 Butterworth2LowPass pitch_filt;
 Butterworth2LowPass thrust_filt;
-Butterworth2LowPass pitchtr_filt;
 
 struct FloatMat33 Ga;
 struct FloatMat33 Ga_inv;
@@ -116,7 +118,6 @@ bool transition_back = false;
 
 static void guidance_indi_propagate_filters(void);
 static void guidance_indi_calcG(struct FloatMat33 *Gmat);
-static void transition_quat_from_angles(struct FloatQuat *q, struct FloatEulers *angles);
 
 /**
  *
@@ -134,7 +135,6 @@ void guidance_indi_enter(void) {
   init_butterworth_2_low_pass(&roll_filt, tau, sample_time, 0.0);
   init_butterworth_2_low_pass(&pitch_filt, tau, sample_time, 0.0);
   init_butterworth_2_low_pass(&thrust_filt, tau, sample_time, 0.0);
-  init_butterworth_2_low_pass(&pitchtr_filt, tau, sample_time, 0.0);
 
   perform_transition = false;
   transition_control = TO_FORWARD;
@@ -147,7 +147,12 @@ void guidance_indi_enter(void) {
  *
  * main indi guidance function
  */
-void guidance_indi_run(bool in_flight, int32_t heading) {
+void guidance_indi_run(bool UNUSED in_flight, int32_t heading) {
+
+  /*Obtain eulers with zxy rotation order*/
+  float_eulers_of_quat_zxy(&eulers_zxy, stateGetNedToBodyQuat_f());
+
+  /*Get desired heading in float*/
   float heading_f = ANGLE_FLOAT_OF_BFP(heading);
 
   //filter accel to get rid of noise and filter attitude to synchronize with accel
@@ -167,11 +172,8 @@ void guidance_indi_run(bool in_flight, int32_t heading) {
   sp_accel.z = (speed_sp_z - stateGetSpeedNed_f()->z) * guidance_indi_speed_gain;
 
   if(perform_transition) {
-    /*Calculate pitch angle that can go beyond 90 degrees*/
-    float transition_pitch = get_transition_pitch();
-
     /*Calculate the transition percentage so that the ctrl_effecitveness scheduling works*/
-    transition_percentage = BFP_OF_REAL((transition_pitch/RadOfDeg(-75.0))*100,INT32_PERCENTAGE_FRAC);
+    transition_percentage = BFP_OF_REAL((eulers_zxy.theta/RadOfDeg(-75.0))*100,INT32_PERCENTAGE_FRAC);
     Bound(transition_percentage,0,BFP_OF_REAL(100.0,INT32_PERCENTAGE_FRAC));
     const int32_t max_offset = ANGLE_BFP_OF_REAL(TRANSITION_MAX_OFFSET);
     transition_theta_offset = INT_MULT_RSHIFT((transition_percentage <<
@@ -182,7 +184,7 @@ void guidance_indi_run(bool in_flight, int32_t heading) {
     switch (transition_control) {
       case TO_FORWARD:
         sp_accel_tr.x = transition_accel;
-        if(transition_pitch < RadOfDeg(-70.0)) {
+        if(eulers_zxy.theta < RadOfDeg(-70.0)) {
           transition_control++;
         }
         break;
@@ -194,7 +196,7 @@ void guidance_indi_run(bool in_flight, int32_t heading) {
         break;
       case TO_HOVER:
         sp_accel_tr.x = -transition_accel;
-        if(transition_pitch > RadOfDeg(-10.0)) {
+        if(eulers_zxy.theta > RadOfDeg(-10.0)) {
           perform_transition = false;
           transition_control = TO_FORWARD;
         }
@@ -206,7 +208,7 @@ void guidance_indi_run(bool in_flight, int32_t heading) {
     sp_accel_tr.y = sp_accel.z; //Always keep controlling the altitude (y = z axis)
 
     // Calculate the inverse of the control effectiveness
-    calc_inv_transition_effectiveness(transition_pitch);
+    calc_inv_transition_effectiveness(eulers_zxy.theta);
 
     // Obtain the acceleration in a 2D 'navigation' plane
     struct FloatVect2 accel_tr;
@@ -230,8 +232,8 @@ void guidance_indi_run(bool in_flight, int32_t heading) {
       AbiSendMsgTHRUST(THRUST_INCREMENT_ID, cmds.y);
     }
 
-    // Incrment the pitch angle, using the special pitch representation
-    guidance_euler_cmd.theta = pitchtr_filt.o[0] + cmds.x;
+    // Incrment the pitch angle
+    guidance_euler_cmd.theta = pitch_filt.o[0] + cmds.x;
 
     if(transition_control==IN_FORWARD) {
       Bound(guidance_euler_cmd.theta, RadOfDeg(-120.0), RadOfDeg(-50.0));
@@ -246,7 +248,7 @@ void guidance_indi_run(bool in_flight, int32_t heading) {
     //Bound euler angles to prevent flipping
     Bound(guidance_euler_cmd.theta, RadOfDeg(-110), 0.0);
 
-    // Set the quaternion setpoint, by subsequently rotating around 'navigation' axes
+    // Set the quaternion setpoint from eulers_zxy
     struct FloatQuat sp_quat;
     float_quat_of_eulers_zxy(&sp_quat, &guidance_euler_cmd);
     float_quat_normalize(&sp_quat);
@@ -256,7 +258,7 @@ void guidance_indi_run(bool in_flight, int32_t heading) {
 #if GUIDANCE_INDI_RC_DEBUG
 #warning "GUIDANCE_INDI_RC_DEBUG lets you control the accelerations via RC, but disables autonomous flight!"
     //for rc control horizontal, rotate from body axes to NED
-    float psi = stateGetNedToBodyEulers_f()->psi;
+    float psi = eulers_zxy.psi;
     float rc_x = -(radio_control.values[RADIO_PITCH]/9600.0)*8.0;
     float rc_y = (radio_control.values[RADIO_ROLL]/9600.0)*8.0;
     sp_accel.x = cosf(psi) * rc_x - sinf(psi) * rc_y;
@@ -299,7 +301,7 @@ void guidance_indi_run(bool in_flight, int32_t heading) {
     guidance_euler_cmd.phi = roll_filt.o[0] + euler_cmd.x;
     guidance_euler_cmd.theta = pitch_filt.o[0] + euler_cmd.y;
     //zero psi command, because a roll/pitch quat will be constructed later
-    guidance_euler_cmd.psi = 0;
+    guidance_euler_cmd.psi = heading_f;
 
 #ifdef GUIDANCE_INDI_SPECIFIC_FORCE_GAIN
     guidance_indi_filter_thrust();
@@ -331,8 +333,11 @@ void guidance_indi_run(bool in_flight, int32_t heading) {
     }
     wiggle_counter ++;
 
-    //set the quat setpoint with the calculated roll and pitch
-    stabilization_attitude_set_setpoint_rp_quat_f(&guidance_euler_cmd, in_flight, heading);
+    // Set the quaternion setpoint from eulers_zxy
+    struct FloatQuat sp_quat;
+    float_quat_of_eulers_zxy(&sp_quat, &guidance_euler_cmd);
+    float_quat_normalize(&sp_quat);
+    QUAT_BFP_OF_REAL(stab_att_sp_quat,sp_quat);
   }
 }
 
@@ -361,10 +366,8 @@ void guidance_indi_propagate_filters(void) {
   update_butterworth_2_low_pass(&filt_accel_ned[1], accel->y);
   update_butterworth_2_low_pass(&filt_accel_ned[2], accel->z);
 
-  update_butterworth_2_low_pass(&roll_filt, stateGetNedToBodyEulers_f()->phi);
-  update_butterworth_2_low_pass(&pitch_filt, stateGetNedToBodyEulers_f()->theta);
-
-  update_butterworth_2_low_pass(&pitchtr_filt, get_transition_pitch());
+  update_butterworth_2_low_pass(&roll_filt, eulers_zxy.phi);
+  update_butterworth_2_low_pass(&pitch_filt, eulers_zxy.theta);
 }
 
 /**
@@ -375,106 +378,29 @@ void guidance_indi_propagate_filters(void) {
  */
 void guidance_indi_calcG(struct FloatMat33 *Gmat) {
 
-  struct FloatEulers *euler = stateGetNedToBodyEulers_f();
-
-  float sphi = sinf(euler->phi);
-  float cphi = cosf(euler->phi);
-  float stheta = sinf(euler->theta);
-  float ctheta = cosf(euler->theta);
-  float spsi = sinf(euler->psi);
-  float cpsi = cosf(euler->psi);
+  /*Pre-calculate sines and cosines*/
+  float sphi = sinf(eulers_zxy.phi);
+  float cphi = cosf(eulers_zxy.phi);
+  float stheta = sinf(eulers_zxy.theta);
+  float ctheta = cosf(eulers_zxy.theta);
+  float spsi = sinf(eulers_zxy.psi);
+  float cpsi = cosf(eulers_zxy.psi);
   //minus gravity is a guesstimate of the thrust force, thrust measurement would be better
   float T = -9.81;
 
-  RMAT_ELMT(*Gmat, 0, 0) = (cphi*spsi - sphi*cpsi*stheta)*T;
-  RMAT_ELMT(*Gmat, 1, 0) = (-sphi*spsi*stheta - cpsi*cphi)*T;
-  RMAT_ELMT(*Gmat, 2, 0) = -ctheta*sphi*T;
-#warning "I have been messing with the guidance effectiveness!"
-  RMAT_ELMT(*Gmat, 0, 1) = (cphi*cpsi*ctheta)*T*2.0;
-  RMAT_ELMT(*Gmat, 1, 1) = (cphi*spsi*ctheta)*T*2.0;
-  RMAT_ELMT(*Gmat, 2, 1) = -stheta*cphi*T*2.0;
-  RMAT_ELMT(*Gmat, 0, 2) = sphi*spsi + cphi*cpsi*stheta;
-  RMAT_ELMT(*Gmat, 1, 2) = cphi*spsi*stheta - cpsi*sphi;
+#ifndef GUIDANCE_INDI_PITCH_EFF_SCALING
+#define GUIDANCE_INDI_PITCH_EFF_SCALING 1.0
+#endif
+
+  RMAT_ELMT(*Gmat, 0, 0) =  cphi*ctheta*spsi*T;
+  RMAT_ELMT(*Gmat, 1, 0) = -cphi*ctheta*cpsi*T;
+  RMAT_ELMT(*Gmat, 2, 0) = -sphi*ctheta*T;
+  RMAT_ELMT(*Gmat, 0, 1) = (ctheta*cpsi - sphi*stheta*spsi)*T*GUIDANCE_INDI_PITCH_EFF_SCALING;
+  RMAT_ELMT(*Gmat, 1, 1) = (ctheta*spsi + sphi*stheta*cpsi)*T*GUIDANCE_INDI_PITCH_EFF_SCALING;
+  RMAT_ELMT(*Gmat, 2, 1) = -cphi*stheta*T*GUIDANCE_INDI_PITCH_EFF_SCALING;
+  RMAT_ELMT(*Gmat, 0, 2) = stheta*cpsi + sphi*ctheta*spsi;
+  RMAT_ELMT(*Gmat, 1, 2) = stheta*spsi - sphi*ctheta*cpsi;
   RMAT_ELMT(*Gmat, 2, 2) = cphi*ctheta;
-}
-
-/**
- * @param indi_rp_cmd roll/pitch command from indi guidance [rad] (float)
- * @param in_flight in flight boolean
- * @param heading the desired heading [rad] in BFP with INT32_ANGLE_FRAC
- *
- * function that creates a quaternion from a roll, pitch and yaw setpoint
- */
-void stabilization_attitude_set_setpoint_rp_quat_f(struct FloatEulers* indi_rp_cmd, bool in_flight, int32_t heading)
-{
-  struct FloatQuat q_rp_cmd;
-  //this is a quaternion without yaw! add the desired yaw before you use it!
-  float_quat_of_eulers(&q_rp_cmd, indi_rp_cmd);
-
-  /* get current heading */
-  const struct FloatVect3 zaxis = {0., 0., 1.};
-  struct FloatQuat q_yaw;
-
-  float_quat_of_axis_angle(&q_yaw, &zaxis, stateGetNedToBodyEulers_f()->psi);
-
-  /* roll/pitch commands applied to to current heading */
-  struct FloatQuat q_rp_sp;
-  float_quat_comp(&q_rp_sp, &q_yaw, &q_rp_cmd);
-  float_quat_normalize(&q_rp_sp);
-
-  struct FloatQuat q_sp;
-
-  if (in_flight) {
-    /* get current heading setpoint */
-    struct FloatQuat q_yaw_sp;
-    float_quat_of_axis_angle(&q_yaw_sp, &zaxis, ANGLE_FLOAT_OF_BFP(heading));
-
-
-    /* rotation between current yaw and yaw setpoint */
-    struct FloatQuat q_yaw_diff;
-    float_quat_comp_inv(&q_yaw_diff, &q_yaw_sp, &q_yaw);
-
-    /* compute final setpoint with yaw */
-    float_quat_comp_norm_shortest(&q_sp, &q_rp_sp, &q_yaw_diff);
-  } else {
-    QUAT_COPY(q_sp, q_rp_sp);
-  }
-
-  QUAT_BFP_OF_REAL(stab_att_sp_quat,q_sp);
-}
-
-float get_transition_pitch(void) {
-  float fwd_theta = get_fwd_pitch()-RadOfDeg(90.0);
-  float hover_theta = stateGetNedToBodyEulers_f()->theta;
-
-  if(transition_state == HOVER) {
-    if(hover_theta > RadOfDeg(-45.0)) {
-      return hover_theta;
-    } else {
-      transition_state = FORWARD;
-      return fwd_theta;
-    }
-  } else {
-    if(fwd_theta < RadOfDeg(-45.0)) {
-      return fwd_theta;
-    } else {
-      transition_state = HOVER;
-      return hover_theta;
-    }
-  }
-}
-
-float get_fwd_pitch(void) {
-  struct FloatQuat ninety_quat = {0.7071, 0, 0.7071, 0};
-
-  struct FloatQuat rotated_quat;
-  struct FloatQuat *quat = stateGetNedToBodyQuat_f();
-  float_quat_comp(&rotated_quat, quat, &ninety_quat);
-  float_quat_normalize(&rotated_quat);
-  struct FloatEulers eulers;
-  float_eulers_of_quat(&eulers, &rotated_quat);
-
-  return eulers.theta;
 }
 
 void get_two_d_accel(struct FloatVect2 *accel, float heading) {
@@ -492,38 +418,5 @@ void calc_inv_transition_effectiveness(float theta) {
   eff[3] =  cosf(theta);
 
   float_mat_inv_2d(inv_eff, eff);
-}
-
-/** First pitch, then roll, the rotate to the correct heading.
- * The roll angle is interpreted relative to to the horizontal plane (earth bound).
- * @param[in] roll roll angle
- * @param[in] pitch pitch angle
- * @param[in] yaw yaw angle
- * @param[out] q quaternion representing the RC roll/pitch input
- */
-void transition_quat_from_angles(struct FloatQuat *q, struct FloatEulers *angles)
-{
-  /* only non-zero entries for roll quaternion */
-  float roll2 = angles->phi / 2.0f;
-  float qx_roll = sinf(roll2);
-  float qi_roll = cosf(roll2);
-
-  //An offset is added if in forward mode
-  /* only non-zero entries for pitch quaternion */
-  float pitch2 = angles->theta / 2.0f;
-  float qy_pitch = sinf(pitch2);
-  float qi_pitch = cosf(pitch2);
-
-  /* only multiply non-zero entries of float_quat_comp(q, &q_roll, &q_pitch) */
-  struct FloatQuat q_rp;
-  q_rp.qi = qi_roll * qi_pitch;
-  q_rp.qx = qx_roll * qi_pitch;
-  q_rp.qy = qi_roll * qy_pitch;
-  q_rp.qz = qx_roll * qy_pitch;
-
-  struct FloatQuat q_yaw_sp;
-  const struct FloatVect3 zaxis = {0., 0., 1.};
-  float_quat_of_axis_angle(&q_yaw_sp, &zaxis, angles->psi);
-  float_quat_comp(q, &q_yaw_sp, &q_rp);
 }
 
