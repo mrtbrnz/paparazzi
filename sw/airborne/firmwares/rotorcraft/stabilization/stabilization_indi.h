@@ -55,6 +55,7 @@ extern float g1g2[INDI_OUTPUTS][INDI_NUM_ACT];
 
 // For sideslip correction
 extern Butterworth2LowPass accely_filt;
+extern int32_t change_prio;
 
 struct ReferenceSystem {
   float err_p;
@@ -66,6 +67,8 @@ struct ReferenceSystem {
 };
 
 extern struct ReferenceSystem reference_acceleration;
+
+extern float thrust_of_pitch_eff;
 
 extern void stabilization_indi_init(void);
 extern void stabilization_indi_enter(void);

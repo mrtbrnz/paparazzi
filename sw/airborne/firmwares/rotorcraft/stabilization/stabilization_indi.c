@@ -51,7 +51,7 @@ float u_max[4];
 float indi_v[4];
 float* Bwls[4];
 int num_iter = 0;
-
+int32_t change_prio = 0;
 static void lms_estimation(void);
 static void get_actuator_state(void);
 static void calc_g1_element(float dx_error, int8_t i, int8_t j, float mu_extra);
@@ -71,6 +71,8 @@ struct ReferenceSystem reference_acceleration = {
 
 // Factor that the estimated G matrix is allowed to deviate from initial one
 #define INDI_ALLOWED_G_FACTOR 2.0
+
+float thrust_of_pitch_eff = 35.0;
 
 #if STABILIZATION_INDI_USE_ADAPTIVE
 bool indi_use_adaptive = true;
@@ -365,16 +367,21 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
     u_min[i] = -MAX_PPRZ*act_is_servo[i] - actuator_state_filt_vect[i];
     u_max[i] = MAX_PPRZ - actuator_state_filt_vect[i];
 
-    //limit minimum thrust ap can give
-    if(!act_is_servo[i]) {
-      if((guidance_h.mode == GUIDANCE_H_MODE_HOVER) || (guidance_h.mode == GUIDANCE_H_MODE_NAV)) {
-        u_min[i] = 3000 - actuator_state_filt_vect[i];
+#ifdef SITL
+    struct NedCoor_f *speed_ned = stateGetSpeedNed_f();
+    float airspeed = sqrt(speed_ned->x*speed_ned->x+speed_ned->y*speed_ned->y);
+#else
+    float airspeed = stateGetAirspeed_f();
+#endif
+    if(airspeed < 8.0) {
+      //limit minimum thrust ap can give
+      if(!act_is_servo[i]) {
+        if((guidance_h.mode == GUIDANCE_H_MODE_HOVER) || (guidance_h.mode == GUIDANCE_H_MODE_NAV)) {
+          u_min[i] = GUIDANCE_INDI_MIN_THROTTLE - actuator_state_filt_vect[i];
+        }
       }
     }
   }
-
-  //State prioritization {W Roll, W pitch, W yaw, TOTAL THRUST}
-  static float Wv[INDI_OUTPUTS] = {1000, 1000, 1, 100};
 
   float v_thrust = 0.0;
   if(indi_thrust_increment_set){
@@ -383,10 +390,11 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
     //update thrust command such that the current is correctly estimated
     stabilization_cmd[COMMAND_THRUST] = (actuator_state[2] + actuator_state[3])/2.0;
   } else {
-#warning the vertical control is hacked!
     // incremental thrust
-    v_thrust = stabilization_cmd[COMMAND_THRUST] - (actuator_state_filt_vect[2] +actuator_state_filt_vect[3])/2;
-    v_thrust *= Bwls[3][2] + Bwls[3][3];
+    for(i=0; i<INDI_NUM_ACT; i++) {
+      v_thrust +=
+        (stabilization_cmd[COMMAND_THRUST] - actuator_state_filt_vect[i])*Bwls[3][i];
+    }
   }
 
   // The control objective in array format
@@ -394,6 +402,22 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
   indi_v[1] = (angular_accel_ref.q - angular_acceleration[1]);
   indi_v[2] = (angular_accel_ref.r - angular_acceleration[2] + g2_times_du);
   indi_v[3] = v_thrust;
+
+  //State prioritization {W Roll, W pitch, W yaw, TOTAL THRUST}
+  static float Wv[INDI_OUTPUTS] = {100, 1000, 1, 10};
+  if(radio_control.values[6] > 0 && (actuator_state_filt_vect[0] < -7000) && (actuator_state_filt_vect[1] > 7000)) {
+    /*Wv[0] = 100;*/
+    /*Wv[3] = 10;*/
+    Bwls[1][2] = thrust_of_pitch_eff/INDI_G_SCALING;
+    Bwls[1][3] = thrust_of_pitch_eff/INDI_G_SCALING;
+    change_prio = 1;
+  } else {
+    /*Wv[0] = 1000;*/
+    /*Wv[3] = 100;*/
+    Bwls[1][2] = 0.0;
+    Bwls[1][3] = 0.0;
+    change_prio = 0;
+  }
 
   // WLS Control Allocator
   num_iter =
@@ -444,12 +468,18 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
   }
 
 #ifndef SITL
-  /*Do some logging*/
+
+#define LOG_LENGTH_INT 15
+#define LOG_LENGTH_FLOAT 17
+
+  int32_t sd_buffer_i[LOG_LENGTH_INT] = {0};
+  float sd_buffer_f[LOG_LENGTH_FLOAT] = {0};
+
   static uint32_t log_counter = 0;
   struct Int32Vect3 *accel = stateGetAccelBody_i();
-  struct Int32Quat *quat = stateGetNedToBodyQuat_i();
-  struct Int32Rates *body_rates_i = stateGetBodyRates_i();
-  struct Int32Vect2 sp_accel_tri = {ACCEL_BFP_OF_REAL(sp_accel_tr.x),ACCEL_BFP_OF_REAL(sp_accel_tr.y)};
+  struct FloatQuat *quat = stateGetNedToBodyQuat_f();
+  struct FloatRates *body_rates_f = stateGetBodyRates_f();
+
 #if CYCLONE_MINI
   uint32_t raw_duty1 = 0;
   uint32_t raw_duty2 = 0;
@@ -459,40 +489,43 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
   uint32_t raw_duty2 = get_pwm_input_duty_in_usec(PWM_INPUT2);
   int32_t airspeed = ANGLE_BFP_OF_REAL(ms45xx.diff_pressure);
 #endif
-  // For floats: specify the number of digits, e.g. .5f
-  sdLogWriteLog(pprzLogFile, "%ld,%ld,%ld,%ld,%d,%d,%d,%d,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld\n",
-      log_counter,
-      body_rates_i->p,
-      body_rates_i->q,
-      body_rates_i->r,
-      actuators_pprz[0],
-      actuators_pprz[1],
-      actuators_pprz[2],
-      actuators_pprz[3],
-      accel->x,
-      accel->y,
-      accel->z,
-      quat->qi,
-      quat->qx,
-      quat->qy,
-      quat->qz,
-      stab_att_sp_quat.qi,
-      stab_att_sp_quat.qx,
-      stab_att_sp_quat.qy,
-      stab_att_sp_quat.qz,
-      stateGetPositionNed_i()->x,
-      stateGetPositionNed_i()->y,
-      stateGetPositionNed_i()->z,
-      stateGetSpeedNed_i()->x,
-      stateGetSpeedNed_i()->y,
-      stateGetSpeedNed_i()->z,
-      sp_accel_tri.x,
-      sp_accel_tri.y,
-      raw_duty1,
-      raw_duty2,
-      airspeed
-        );
 
+  sd_buffer_i[0] = log_counter;
+  sd_buffer_i[1] = actuators_pprz[0];
+  sd_buffer_i[2] = actuators_pprz[1];
+  sd_buffer_i[3] = actuators_pprz[2];
+  sd_buffer_i[4] = actuators_pprz[3];
+  sd_buffer_i[5] = stab_att_sp_quat.qi;
+  sd_buffer_i[6] = stab_att_sp_quat.qx;
+  sd_buffer_i[7] = stab_att_sp_quat.qy;
+  sd_buffer_i[8] = stab_att_sp_quat.qz;
+  sd_buffer_i[9] = accel->x;
+  sd_buffer_i[10] = accel->y;
+  sd_buffer_i[11] = accel->z;
+  sd_buffer_i[12] = raw_duty1;
+  sd_buffer_i[13] = raw_duty2;
+  sd_buffer_i[14] = airspeed;
+
+  sd_buffer_f[0] = body_rates_f->p;
+  sd_buffer_f[1] = body_rates_f->q;
+  sd_buffer_f[2] = body_rates_f->r;
+  sd_buffer_f[3] = quat->qi;
+  sd_buffer_f[4] = quat->qx;
+  sd_buffer_f[5] = quat->qy;
+  sd_buffer_f[6] = quat->qz;
+  sd_buffer_f[7] = stateGetPositionNed_f()->x;
+  sd_buffer_f[8] = stateGetPositionNed_f()->y;
+  sd_buffer_f[9] = stateGetPositionNed_f()->z;
+  sd_buffer_f[10] = stateGetSpeedNed_f()->x;
+  sd_buffer_f[11] = stateGetSpeedNed_f()->y;
+  sd_buffer_f[12] = stateGetSpeedNed_f()->z;
+  sd_buffer_f[13] = indi_v[0];
+  sd_buffer_f[14] = indi_v[1];
+  sd_buffer_f[15] = indi_v[2];
+  sd_buffer_f[16] = indi_v[3];
+
+  sdLogWriteRaw(pprzLogFile, (uint8_t*) sd_buffer_i, LOG_LENGTH_INT*4);
+  sdLogWriteRaw(pprzLogFile, (uint8_t*) sd_buffer_f, LOG_LENGTH_FLOAT*4);
   log_counter += 1;
 #endif
 

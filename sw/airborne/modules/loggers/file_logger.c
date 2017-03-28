@@ -94,9 +94,8 @@ void file_logger_periodic(void)
   struct FloatQuat *quat = stateGetNedToBodyQuat_f();
   struct FloatRates *rates = stateGetBodyRates_f();
   struct Int32Vect3 *accel = stateGetAccelBody_i();
-  struct Int32Vect2 sp_accel_tri = {ACCEL_BFP_OF_REAL(sp_accel_tr.x),ACCEL_BFP_OF_REAL(sp_accel_tr.y)};
 
-  fprintf(file_logger, "%d,%f,%f,%f,%d,%d,%d,%d,%f,%f,%f,%f,%d,%d,%d,%d,%d,%d,%d,%d,%d,%f,%f,%f,%f,%f,%f,%d\n",
+  fprintf(file_logger, "%d,%f,%f,%f,%d,%d,%d,%d,%f,%f,%f,%f,%d,%d,%d,%d,%d,%d,%d,%f,%f,%f,%f,%f,%f,%d,%f,%f,%f\n",
           counter,
           rates->p,
           rates->q,
@@ -116,15 +115,16 @@ void file_logger_periodic(void)
           accel->x,
           accel->y,
           accel->z,
-          sp_accel_tri.x,
-          sp_accel_tri.y,
           stateGetPositionNed_f()->x,
           stateGetPositionNed_f()->y,
           stateGetPositionNed_f()->z,
           stateGetSpeedNed_f()->x,
           stateGetSpeedNed_f()->y,
           stateGetSpeedNed_f()->z,
-          guidance_v_z_ref
+          guidance_v_z_ref,
+          sp_accel.x,
+          sp_accel.y,
+          sp_accel.z
          );
   counter++;
 }

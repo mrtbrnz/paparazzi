@@ -13,7 +13,7 @@
       <field name="throttle" value="Fit(throttle,-117,117,0,127)" />
       <field name="roll" value="roll" />
       <field name="yaw" value="Fit(-yaw,-105,105,-127,127)" />
-      <field name="pitch" value="-pitch" />
+      <field name="pitch" value="Fit(-pitch,-105,105,-127,127)" />
     </message>
   </messages>
 </joystick>

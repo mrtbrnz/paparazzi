@@ -118,6 +118,8 @@ bool transition_back = false;
 
 static void guidance_indi_propagate_filters(void);
 static void guidance_indi_calcG(struct FloatMat33 *Gmat);
+static void guidance_indi_calcg_wing(struct FloatMat33 *Gmat);
+static float guidance_indi_get_liftd(float pitch);
 
 /**
  *
@@ -149,6 +151,13 @@ void guidance_indi_enter(void) {
  */
 void guidance_indi_run(bool UNUSED in_flight, int32_t heading) {
 
+  /*Calculate the transition percentage so that the ctrl_effecitveness scheduling works*/
+  transition_percentage = BFP_OF_REAL((eulers_zxy.theta/RadOfDeg(-75.0))*100,INT32_PERCENTAGE_FRAC);
+  Bound(transition_percentage,0,BFP_OF_REAL(100.0,INT32_PERCENTAGE_FRAC));
+  const int32_t max_offset = ANGLE_BFP_OF_REAL(TRANSITION_MAX_OFFSET);
+  transition_theta_offset = INT_MULT_RSHIFT((transition_percentage <<
+        (INT32_ANGLE_FRAC - INT32_PERCENTAGE_FRAC)) / 100, max_offset, INT32_ANGLE_FRAC);
+
   /*Obtain eulers with zxy rotation order*/
   float_eulers_of_quat_zxy(&eulers_zxy, stateGetNedToBodyQuat_f());
 
@@ -159,186 +168,109 @@ void guidance_indi_run(bool UNUSED in_flight, int32_t heading) {
   guidance_indi_propagate_filters();
 
   //Linear controller to find the acceleration setpoint from position and velocity
-  float pos_x_err = POS_FLOAT_OF_BFP(guidance_h.ref.pos.x) - stateGetPositionNed_f()->x;
-  float pos_y_err = POS_FLOAT_OF_BFP(guidance_h.ref.pos.y) - stateGetPositionNed_f()->y;
+  /*float pos_x_err = POS_FLOAT_OF_BFP(guidance_h.ref.pos.x) - stateGetPositionNed_f()->x;*/
+  /*float pos_y_err = POS_FLOAT_OF_BFP(guidance_h.ref.pos.y) - stateGetPositionNed_f()->y;*/
   float pos_z_err = POS_FLOAT_OF_BFP(guidance_v_z_ref - stateGetPositionNed_i()->z);
 
-  float speed_sp_x = pos_x_err * guidance_indi_pos_gain;
-  float speed_sp_y = pos_y_err * guidance_indi_pos_gain;
+  /*float speed_sp_x = pos_x_err * guidance_indi_pos_gain;*/
+  /*float speed_sp_y = pos_y_err * guidance_indi_pos_gain;*/
   float speed_sp_z = pos_z_err * guidance_indi_pos_gain;
+
+  //for rc control horizontal, rotate from body axes to NED
+  float psi = eulers_zxy.psi;
+  float rc_x = -(radio_control.values[RADIO_PITCH]/9600.0)*20.0;
+  float rc_y = (radio_control.values[RADIO_ROLL]/9600.0)*9.0;
+  float speed_sp_x = cosf(psi) * rc_x - sinf(psi) * rc_y;
+  float speed_sp_y = sinf(psi) * rc_x + cosf(psi) * rc_y;
 
   sp_accel.x = (speed_sp_x - stateGetSpeedNed_f()->x) * guidance_indi_speed_gain;
   sp_accel.y = (speed_sp_y - stateGetSpeedNed_f()->y) * guidance_indi_speed_gain;
   sp_accel.z = (speed_sp_z - stateGetSpeedNed_f()->z) * guidance_indi_speed_gain;
 
-  if(perform_transition) {
-    /*Calculate the transition percentage so that the ctrl_effecitveness scheduling works*/
-    transition_percentage = BFP_OF_REAL((eulers_zxy.theta/RadOfDeg(-75.0))*100,INT32_PERCENTAGE_FRAC);
-    Bound(transition_percentage,0,BFP_OF_REAL(100.0,INT32_PERCENTAGE_FRAC));
-    const int32_t max_offset = ANGLE_BFP_OF_REAL(TRANSITION_MAX_OFFSET);
-    transition_theta_offset = INT_MULT_RSHIFT((transition_percentage <<
-          (INT32_ANGLE_FRAC - INT32_PERCENTAGE_FRAC)) / 100,
-          max_offset, INT32_ANGLE_FRAC);
-
-    /*The desired acceleration in 2D, depending on the transition state*/
-    switch (transition_control) {
-      case TO_FORWARD:
-        sp_accel_tr.x = transition_accel;
-        if(eulers_zxy.theta < RadOfDeg(-70.0)) {
-          transition_control++;
-        }
-        break;
-      case IN_FORWARD:
-        sp_accel_tr.x = 0.0;
-        if(transition_back) {
-          transition_control++;
-        }
-        break;
-      case TO_HOVER:
-        sp_accel_tr.x = -transition_accel;
-        if(eulers_zxy.theta > RadOfDeg(-10.0)) {
-          perform_transition = false;
-          transition_control = TO_FORWARD;
-        }
-        break;
-      default:
-        sp_accel_tr.x = 0.0;
-        break;
-    }
-    sp_accel_tr.y = sp_accel.z; //Always keep controlling the altitude (y = z axis)
-
-    // Calculate the inverse of the control effectiveness
-    calc_inv_transition_effectiveness(eulers_zxy.theta);
-
-    // Obtain the acceleration in a 2D 'navigation' plane
-    struct FloatVect2 accel_tr;
-    get_two_d_accel(&accel_tr, heading_f);
-
-    // Calculate the acceleration error
-    struct FloatVect2 a_diff_tr = {sp_accel_tr.x - accel_tr.x, sp_accel_tr.y - accel_tr.y};
-
-    if(transition_control==IN_FORWARD) {
-      a_diff_tr.x = 0.0;
-    }
-
-    // Multiply with the inverse control effectiveness
-    struct FloatVect2 cmds;
-    float_mat2_mult(&cmds,inv_eff,a_diff_tr); // cmds = delta 1)pitch 2)thrust
-
-    if(transition_control == IN_FORWARD) {
-      stabilization_cmd[COMMAND_THRUST] = radio_control.values[RADIO_THROTTLE];
-    } else {
-      // Send the thrust increment to the inner loop
-      AbiSendMsgTHRUST(THRUST_INCREMENT_ID, cmds.y);
-    }
-
-    // Incrment the pitch angle
-    guidance_euler_cmd.theta = pitch_filt.o[0] + cmds.x;
-
-    if(transition_control==IN_FORWARD) {
-      Bound(guidance_euler_cmd.theta, RadOfDeg(-120.0), RadOfDeg(-50.0));
-    }
-
-    // Set the roll and yaw angles. Yaw will be updated from the read rc coordinated turn function
-    int32_t roll_rc = radio_control.values[RADIO_ROLL];
-    float roll_f = roll_rc * STABILIZATION_ATTITUDE_SP_MAX_PHI / MAX_PPRZ;
-    guidance_euler_cmd.phi = roll_f;
-    guidance_euler_cmd.psi = heading_f;
-
-    //Bound euler angles to prevent flipping
-    Bound(guidance_euler_cmd.theta, RadOfDeg(-110), 0.0);
-
-    // Set the quaternion setpoint from eulers_zxy
-    struct FloatQuat sp_quat;
-    float_quat_of_eulers_zxy(&sp_quat, &guidance_euler_cmd);
-    float_quat_normalize(&sp_quat);
-    QUAT_BFP_OF_REAL(stab_att_sp_quat,sp_quat);
-
-  } else {
 #if GUIDANCE_INDI_RC_DEBUG
 #warning "GUIDANCE_INDI_RC_DEBUG lets you control the accelerations via RC, but disables autonomous flight!"
-    //for rc control horizontal, rotate from body axes to NED
-    float psi = eulers_zxy.psi;
-    float rc_x = -(radio_control.values[RADIO_PITCH]/9600.0)*8.0;
-    float rc_y = (radio_control.values[RADIO_ROLL]/9600.0)*8.0;
-    sp_accel.x = cosf(psi) * rc_x - sinf(psi) * rc_y;
-    sp_accel.y = sinf(psi) * rc_x + cosf(psi) * rc_y;
+  //for rc control horizontal, rotate from body axes to NED
+  float psi = eulers_zxy.psi;
+  float rc_x = -(radio_control.values[RADIO_PITCH]/9600.0)*8.0;
+  float rc_y = (radio_control.values[RADIO_ROLL]/9600.0)*8.0;
+  sp_accel.x = cosf(psi) * rc_x - sinf(psi) * rc_y;
+  sp_accel.y = sinf(psi) * rc_x + cosf(psi) * rc_y;
 
 #if CYCLONE_DESCEND_TEST
-    speed_sp_z = vspeed_sp_setting;
-    sp_accel.z = (speed_sp_z - stateGetSpeedNed_f()->z) * guidance_indi_speed_gain;
+  speed_sp_z = vspeed_sp_setting;
+  sp_accel.z = (speed_sp_z - stateGetSpeedNed_f()->z) * guidance_indi_speed_gain;
 #else
-    //for rc vertical control
-    sp_accel.z = -(radio_control.values[RADIO_THROTTLE]-4500)*8.0/9600.0;
+  //for rc vertical control
+  sp_accel.z = -(radio_control.values[RADIO_THROTTLE]-4500)*8.0/9600.0;
 #endif
 #endif
 
-    //Calculate matrix of partial derivatives
-    guidance_indi_calcG(&Ga);
-    //Invert this matrix
-    MAT33_INV(Ga_inv, Ga);
+  //Calculate matrix of partial derivatives
+  /*guidance_indi_calcG(&Ga);*/
+  guidance_indi_calcg_wing(&Ga);
+  //Invert this matrix
+  MAT33_INV(Ga_inv, Ga);
 
-    struct FloatVect3 a_diff = { sp_accel.x - filt_accel_ned[0].o[0], sp_accel.y -filt_accel_ned[1].o[0], sp_accel.z -filt_accel_ned[2].o[0]};
+  struct FloatVect3 a_diff = { sp_accel.x - filt_accel_ned[0].o[0], sp_accel.y -filt_accel_ned[1].o[0], sp_accel.z -filt_accel_ned[2].o[0]};
 
-    //Bound the acceleration error so that the linearization still holds
-    Bound(a_diff.x, -6.0, 6.0);
-    Bound(a_diff.y, -6.0, 6.0);
-    Bound(a_diff.z, -9.0, 9.0);
+  //Bound the acceleration error so that the linearization still holds
+  Bound(a_diff.x, -6.0, 6.0);
+  Bound(a_diff.y, -6.0, 6.0);
+  Bound(a_diff.z, -9.0, 9.0);
 
-    //If the thrust to specific force ratio has been defined, include vertical control
-    //else ignore the vertical acceleration error
+  //If the thrust to specific force ratio has been defined, include vertical control
+  //else ignore the vertical acceleration error
 #ifndef GUIDANCE_INDI_SPECIFIC_FORCE_GAIN
 #ifndef STABILIZATION_ATTITUDE_INDI_FULL
-    a_diff.z = 0.0;
+  a_diff.z = 0.0;
 #endif
 #endif
 
-    //Calculate roll,pitch and thrust command
-    MAT33_VECT3_MUL(euler_cmd, Ga_inv, a_diff);
+  //Calculate roll,pitch and thrust command
+  MAT33_VECT3_MUL(euler_cmd, Ga_inv, a_diff);
 
-    AbiSendMsgTHRUST(THRUST_INCREMENT_ID, euler_cmd.z);
+  AbiSendMsgTHRUST(THRUST_INCREMENT_ID, euler_cmd.z);
 
-    guidance_euler_cmd.phi = roll_filt.o[0] + euler_cmd.x;
-    guidance_euler_cmd.theta = pitch_filt.o[0] + euler_cmd.y;
-    //zero psi command, because a roll/pitch quat will be constructed later
-    guidance_euler_cmd.psi = heading_f;
+  guidance_euler_cmd.phi = roll_filt.o[0] + euler_cmd.x;
+  guidance_euler_cmd.theta = pitch_filt.o[0] + euler_cmd.y;
+  //zero psi command, because a roll/pitch quat will be constructed later
+  guidance_euler_cmd.psi = heading_f;
 
 #ifdef GUIDANCE_INDI_SPECIFIC_FORCE_GAIN
-    guidance_indi_filter_thrust();
+  guidance_indi_filter_thrust();
 
-    //Add the increment in specific force * specific_force_to_thrust_gain to the filtered thrust
-    thrust_in = thrust_filt.o[0] + euler_cmd.z*thrust_in_specific_force_gain;
-    Bound(thrust_in, 0, 9600);
+  //Add the increment in specific force * specific_force_to_thrust_gain to the filtered thrust
+  thrust_in = thrust_filt.o[0] + euler_cmd.z*thrust_in_specific_force_gain;
+  Bound(thrust_in, 0, 9600);
 
 #if GUIDANCE_INDI_RC_DEBUG
-    if(radio_control.values[RADIO_THROTTLE]<300) {
-      thrust_in = 0;
-    }
-#endif
-
-    //Overwrite the thrust command from guidance_v
-    stabilization_cmd[COMMAND_THRUST] = thrust_in;
-#endif
-
-    //Bound euler angles to prevent flipping
-    Bound(guidance_euler_cmd.phi, -GUIDANCE_H_MAX_BANK, GUIDANCE_H_MAX_BANK);
-    Bound(guidance_euler_cmd.theta, -GUIDANCE_H_MAX_BANK, GUIDANCE_H_MAX_BANK);
-
-    // Start the wiggle!
-    static int32_t wiggle_counter = 0;
-    if(wiggle_counter >= 1024) {
-      wiggle_counter = 0;
-    } else if(wiggle_counter < 512) {
-      heading += ANGLE_BFP_OF_REAL(wiggle_magnitude);
-    }
-    wiggle_counter ++;
-
-    // Set the quaternion setpoint from eulers_zxy
-    struct FloatQuat sp_quat;
-    float_quat_of_eulers_zxy(&sp_quat, &guidance_euler_cmd);
-    float_quat_normalize(&sp_quat);
-    QUAT_BFP_OF_REAL(stab_att_sp_quat,sp_quat);
+  if(radio_control.values[RADIO_THROTTLE]<300) {
+    thrust_in = 0;
   }
+#endif
+
+  //Overwrite the thrust command from guidance_v
+  stabilization_cmd[COMMAND_THRUST] = thrust_in;
+#endif
+
+  //Bound euler angles to prevent flipping
+  Bound(guidance_euler_cmd.phi, -GUIDANCE_H_MAX_BANK, GUIDANCE_H_MAX_BANK);
+  Bound(guidance_euler_cmd.theta, -RadOfDeg(120.0), GUIDANCE_H_MAX_BANK);
+
+  // Start the wiggle!
+  static int32_t wiggle_counter = 0;
+  if(wiggle_counter >= 1024) {
+    wiggle_counter = 0;
+  } else if(wiggle_counter < 512) {
+    heading += ANGLE_BFP_OF_REAL(wiggle_magnitude);
+  }
+  wiggle_counter ++;
+
+  // Set the quaternion setpoint from eulers_zxy
+  struct FloatQuat sp_quat;
+  float_quat_of_eulers_zxy(&sp_quat, &guidance_euler_cmd);
+  float_quat_normalize(&sp_quat);
+  QUAT_BFP_OF_REAL(stab_att_sp_quat,sp_quat);
 }
 
 #ifdef GUIDANCE_INDI_SPECIFIC_FORCE_GAIN
@@ -388,16 +320,60 @@ void guidance_indi_calcG(struct FloatMat33 *Gmat) {
   //minus gravity is a guesstimate of the thrust force, thrust measurement would be better
   float T = -9.81;
 
+  RMAT_ELMT(*Gmat, 0, 0) =  cphi*ctheta*spsi*T;
+  RMAT_ELMT(*Gmat, 1, 0) = -cphi*ctheta*cpsi*T;
+  RMAT_ELMT(*Gmat, 2, 0) = -sphi*ctheta*T;
+  RMAT_ELMT(*Gmat, 0, 1) = (ctheta*cpsi - sphi*stheta*spsi)*T;
+  RMAT_ELMT(*Gmat, 1, 1) = (ctheta*spsi + sphi*stheta*cpsi)*T;
+  RMAT_ELMT(*Gmat, 2, 1) = -cphi*stheta*T;
+  RMAT_ELMT(*Gmat, 0, 2) = stheta*cpsi + sphi*ctheta*spsi;
+  RMAT_ELMT(*Gmat, 1, 2) = stheta*spsi - sphi*ctheta*cpsi;
+  RMAT_ELMT(*Gmat, 2, 2) = cphi*ctheta;
+}
+
+/**
+ * Calculate the matrix of partial derivatives of the roll, pitch and thrust
+ * w.r.t. the NED accelerations, taking into account the lift of a wing that is
+ * horizontal at -90 degrees pitch
+ *
+ * @param Gmat array to write the matrix to [3x3]
+ */
+void guidance_indi_calcg_wing(struct FloatMat33 *Gmat) {
+
+  /*Pre-calculate sines and cosines*/
+  float sphi = sinf(eulers_zxy.phi);
+  float cphi = cosf(eulers_zxy.phi);
+  float stheta = sinf(eulers_zxy.theta);
+  float ctheta = cosf(eulers_zxy.theta);
+  float spsi = sinf(eulers_zxy.psi);
+  float cpsi = cosf(eulers_zxy.psi);
+  //minus gravity is a guesstimate of the thrust force, thrust measurement would be better
+  float T = -9.81;
+
 #ifndef GUIDANCE_INDI_PITCH_EFF_SCALING
 #define GUIDANCE_INDI_PITCH_EFF_SCALING 1.0
 #endif
 
-  RMAT_ELMT(*Gmat, 0, 0) =  cphi*ctheta*spsi*T;
-  RMAT_ELMT(*Gmat, 1, 0) = -cphi*ctheta*cpsi*T;
-  RMAT_ELMT(*Gmat, 2, 0) = -sphi*ctheta*T;
-  RMAT_ELMT(*Gmat, 0, 1) = (ctheta*cpsi - sphi*stheta*spsi)*T*GUIDANCE_INDI_PITCH_EFF_SCALING;
-  RMAT_ELMT(*Gmat, 1, 1) = (ctheta*spsi + sphi*stheta*cpsi)*T*GUIDANCE_INDI_PITCH_EFF_SCALING;
-  RMAT_ELMT(*Gmat, 2, 1) = -cphi*stheta*T*GUIDANCE_INDI_PITCH_EFF_SCALING;
+  /*Amount of lift produced by the wing*/
+  float pitch_lift = eulers_zxy.theta;
+  Bound(pitch_lift,0,-M_PI_2);
+  float lift = sinf(pitch_lift)*9.81;
+
+  // get the derivative of the lift wrt to theta
+#ifdef SITL
+  struct NedCoor_f *speed_ned = stateGetSpeedNed_f();
+  float groundspeed = sqrt(speed_ned->x*speed_ned->x+speed_ned->y*speed_ned->y);
+  float liftd = guidance_indi_get_liftd(groundspeed);
+#else
+  float liftd = guidance_indi_get_liftd(stateGetAirspeed_f());
+#endif
+
+  RMAT_ELMT(*Gmat, 0, 0) =  cphi*ctheta*spsi*T + cphi*spsi*lift;
+  RMAT_ELMT(*Gmat, 1, 0) = -cphi*ctheta*cpsi*T - cphi*cpsi*lift;
+  RMAT_ELMT(*Gmat, 2, 0) = -sphi*ctheta*T -sphi*lift;
+  RMAT_ELMT(*Gmat, 0, 1) = (ctheta*cpsi - sphi*stheta*spsi)*T*GUIDANCE_INDI_PITCH_EFF_SCALING + sphi*spsi*liftd;
+  RMAT_ELMT(*Gmat, 1, 1) = (ctheta*spsi + sphi*stheta*cpsi)*T*GUIDANCE_INDI_PITCH_EFF_SCALING - sphi*cpsi*liftd;
+  RMAT_ELMT(*Gmat, 2, 1) = -cphi*stheta*T*GUIDANCE_INDI_PITCH_EFF_SCALING + cphi*liftd;
   RMAT_ELMT(*Gmat, 0, 2) = stheta*cpsi + sphi*ctheta*spsi;
   RMAT_ELMT(*Gmat, 1, 2) = stheta*spsi - sphi*ctheta*cpsi;
   RMAT_ELMT(*Gmat, 2, 2) = cphi*ctheta;
@@ -418,5 +394,22 @@ void calc_inv_transition_effectiveness(float theta) {
   eff[3] =  cosf(theta);
 
   float_mat_inv_2d(inv_eff, eff);
+}
+
+/**
+ * @brief Get the derivative of lift w.r.t. pitch.
+ *
+ * @param airspeed The airspeed says most about the flight condition
+ *
+ * @return The derivative of lift w.r.t. pitch
+ */
+float guidance_indi_get_liftd(float airspeed) {
+  float liftd = 0.0;
+  if(airspeed < 8.5) {
+    liftd = 0.0;
+  } else {
+    liftd = -(airspeed - 8.5)*0.2/M_PI*180.0;
+  }
+  return liftd;
 }
 

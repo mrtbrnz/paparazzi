@@ -196,10 +196,22 @@ void stabilization_attitude_read_rc_setpoint_eulers(struct Int32Eulers *sp, bool
       //feedforward estimate angular rotation omega = g*tan(phi)/v
       int32_t omega;
       const int32_t max_phi = ANGLE_BFP_OF_REAL(RadOfDeg(60.0));
+#if USE_AIRSPEED_MS45XX
+#if SITL
+      struct NedCoor_f *speed_ned = stateGetSpeedNed_f();
+      float groundspeed = sqrt(speed_ned->x*speed_ned->x+speed_ned->y*speed_ned->y);
+#else
+      float airspeed = stateGetAirspeed_f();
+#endif
+      //We are dividing by the airspeed, so a lower bound is important
+      Bound(airspeed,10.0,30.0);
+#else
+      float airspeed = COORDINATED_TURN_AIRSPEED;
+#endif
       if (abs(sp->phi) < max_phi) {
-        omega = ANGLE_BFP_OF_REAL(9.81 / COORDINATED_TURN_AIRSPEED * tanf(ANGLE_FLOAT_OF_BFP(sp->phi)));
+        omega = ANGLE_BFP_OF_REAL(9.81 / airspeed * tanf(ANGLE_FLOAT_OF_BFP(sp->phi)));
       } else { //max 60 degrees roll
-        omega = ANGLE_BFP_OF_REAL(9.81 / COORDINATED_TURN_AIRSPEED * 1.72305 * ((sp->phi > 0) - (sp->phi < 0)));
+        omega = ANGLE_BFP_OF_REAL(9.81 / airspeed * 1.72305 * ((sp->phi > 0) - (sp->phi < 0)));
       }
 
 #ifdef FWD_SIDESLIP_GAIN

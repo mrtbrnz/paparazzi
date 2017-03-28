@@ -175,6 +175,8 @@
     <!--Use an airspeed sensor and get the measured airspeed in the messages-->
     <module name="airspeed" type="ms45xx_i2c">
       <define name="MS45XX_I2C_DEV" value="i2c1"/>
+      <define name="MS45XX_AIRSPEED_SCALE" value="2.4"/>
+      <define name="USE_AIRSPEED_MS45XX" value="TRUE"/>
     </module>
 
     <!--<module name="pwm_meas"/>-->
@@ -201,7 +203,6 @@
         <!-- Put the mode on channel AUX1-->
         <define name="RADIO_KILL_SWITCH" value="RADIO_GAIN1"/>
       </module>
-      <!--<define name="USE_AIRSPEED" value="TRUE"/>-->
 
     <module name="ctrl_effectiveness_scheduling"/>
     </target>
@@ -252,7 +253,9 @@
 
     <!--<module name="servo_tester"/>-->
 
-    <module name="air_data"/>
+    <module name="air_data">
+      <define name="USE_AIRSPEED_AIR_DATA" value="FALSE"/>
+    </module>
     <module name="gps"           type="ublox">
       <configure name="GPS_BAUD" value="B115200"/>
     </module>
@@ -261,8 +264,10 @@
       <define name="GUIDANCE_INDI_RC_DEBUG" value="FALSE"/>
       <define name="GUIDANCE_INDI_POS_GAIN" value="0.5"/>
       <define name="GUIDANCE_INDI_SPEED_GAIN" value="1.2"/>
-      <define name="GUIDANCE_INDI_PITCH_LIFT_EFF" value="25.0"/>
+      <define name="GUIDANCE_INDI_PITCH_LIFT_EFF" value="60.0"/>
       <define name="GUIDANCE_INDI_PITCH_EFF_SCALING" value="2.0"/>
+      <define name="GUIDANCE_H_REF_MAX_SPEED" value="20.0"/>
+      <define name="GUIDANCE_INDI_MIN_THROTTLE" value="5000"/>
     </module>
 
     <module name="ahrs"          type="int_cmpl_quat">

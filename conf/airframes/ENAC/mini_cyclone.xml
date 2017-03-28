@@ -192,7 +192,9 @@
   <modules main_freq="512">
     <!--<module name="gps" type="ubx_ucenter"/>-->
     <module name="tlsf"/>
-    <module name="pprzlog"/>
+    <module name="pprzlog">
+      <define name="SDLOG_START_DELAY" value="10"/>
+    </module>
     <module name="logger" type="sd_chibios"/>
     <!--<module name="flight_recorder"/>-->
     <!--<module name="logger_spi_link"/>-->
@@ -272,6 +274,8 @@
       <define name="GUIDANCE_INDI_POS_GAIN" value="0.5"/>
       <define name="GUIDANCE_INDI_SPEED_GAIN" value="1.2"/>
       <define name="GUIDANCE_INDI_PITCH_LIFT_EFF" value="25.0"/>
+      <define name="GUIDANCE_H_REF_MAX_SPEED" value="20.0"/>
+      <define name="GUIDANCE_INDI_MIN_THROTTLE" value="3000"/>
     </module>
 
     <!--<module name="ahrs"          type="int_cmpl_quat">-->

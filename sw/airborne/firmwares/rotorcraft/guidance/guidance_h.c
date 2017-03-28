@@ -318,7 +318,7 @@ void guidance_h_read_rc(bool  in_flight)
       stabilization_attitude_read_rc(in_flight, FALSE, FALSE);
       break;
     case GUIDANCE_H_MODE_HOVER:
-      stabilization_attitude_read_rc_setpoint_eulers(&guidance_h.rc_sp, in_flight, FALSE, perform_transition );
+      stabilization_attitude_read_rc_setpoint_eulers(&guidance_h.rc_sp, in_flight, FALSE, true );
 #if GUIDANCE_H_USE_SPEED_REF
       read_rc_setpoint_speed_i(&guidance_h.sp.speed, in_flight);
       /* enable x,y velocity setpoints */
@@ -644,7 +644,9 @@ static void read_rc_setpoint_speed_i(struct Int32Vect2 *speed_sp, bool in_flight
     rc_y = rc_y * max_speed / MAX_PPRZ;
 
     /* Rotate from body to NED frame by negative psi angle */
-    int32_t psi = -stateGetNedToBodyEulers_i()->psi;
+    struct FloatEulers eulers_zxy_state;
+    float_eulers_of_quat_zxy(&eulers_zxy_state, stateGetNedToBodyQuat_f());
+    int32_t psi = - ANGLE_BFP_OF_REAL(eulers_zxy_state.psi);
     int32_t s_psi, c_psi;
     PPRZ_ITRIG_SIN(s_psi, psi);
     PPRZ_ITRIG_COS(c_psi, psi);
