@@ -10,8 +10,8 @@
   </fileheader>
 
   <metrics>
-    <wingarea unit="IN2">134</wingarea>
-    <wingspan unit="IN"> 18.9 </wingspan>
+    <wingarea unit="IN2"> 115 </wingarea>
+    <wingspan unit="IN"> 35.4 </wingspan>
     <chord unit="IN"> 7.09 </chord>
     <htailarea unit="FT2"> 0 </htailarea>
     <htailarm unit="FT"> 0 </htailarm>
@@ -36,13 +36,13 @@
   </metrics>
 
   <mass_balance>
-    <ixx unit="SLUG*FT2"> 0.0045 </ixx>
-    <iyy unit="SLUG*FT2"> 0.00125 </iyy>
-    <izz unit="SLUG*FT2"> 0.00224 </izz>
+    <ixx unit="SLUG*FT2"> 0.0132 </ixx>
+    <iyy unit="SLUG*FT2"> 0.00250 </iyy>
+    <izz unit="SLUG*FT2"> 0.0150 </izz>
     <ixy unit="SLUG*FT2"> 0. </ixy>
     <ixz unit="SLUG*FT2"> 0. </ixz>
     <iyz unit="SLUG*FT2"> 0. </iyz>
-        <emptywt unit="LBS"> 0.88 </emptywt>
+        <emptywt unit="LBS"> 2.4 </emptywt>
     <location name="CG" unit="M">
       <x> 0 </x>
       <y> 0 </y>
@@ -122,22 +122,22 @@
       <!--First order filter represents actuator dynamics-->
       <lag_filter name="ele_left_lag">
         <input> fcs/ele_left </input>
-        <c1> 21 </c1>
+        <c1> 54 </c1>
         <output> fcs/ele_left_lag</output>
       </lag_filter>
       <lag_filter name="ele_right_lag">
         <input> fcs/ele_right </input>
-        <c1> 21 </c1>
+        <c1> 54 </c1>
         <output> fcs/ele_right_lag</output>
       </lag_filter>
       <lag_filter name="mot_right_lag">
         <input> fcs/mot_right </input>
-        <c1> 13 </c1>
+        <c1> 31.7 </c1>
         <output> fcs/mot_right_lag</output>
       </lag_filter>
       <lag_filter name="mot_left_lag">
         <input> fcs/mot_left </input>
-        <c1> 13 </c1>
+        <c1> 31.7 </c1>
         <output> fcs/mot_left_lag</output>
       </lag_filter>
     </channel>
@@ -161,12 +161,12 @@
       <function>
         <product>
           <property>fcs/mot_right_lag</property>
-          <value> 0.8 </value>
+          <value> 2.2 </value>
         </product>
       </function>
       <location unit="IN">
         <x>0</x>
-        <y>5.51</y>
+        <y>9.4</y>
         <z>0</z>
       </location>
       <direction>
@@ -180,12 +180,12 @@
       <function>
         <product>
           <property>fcs/mot_left_lag</property>
-          <value> 0.8 </value>
+          <value> 2.2 </value>
         </product>
       </function>
       <location unit="IN">
         <x>0</x>
-        <y>-5.51</y>
+        <y>-9.4</y>
         <z>0</z>
       </location>
       <direction>
@@ -285,7 +285,7 @@
       <function>
         <product>
           <property>fcs/ele_left_lag</property>
-          <value>0.325</value>
+          <value> 4.2 </value>
         </product>
       </function>
       <location unit="IN">
@@ -306,7 +306,7 @@
       <function>
         <product>
           <property>fcs/ele_left_lag</property>
-          <value>0.325</value>
+          <value> 4.2 </value>
         </product>
       </function>
       <location unit="IN">
@@ -325,7 +325,7 @@
       <function>
         <product>
           <property>fcs/ele_right_lag</property>
-          <value>0.325</value>
+          <value> 4.2 </value>
         </product>
       </function>
       <location unit="IN">
@@ -346,7 +346,7 @@
       <function>
         <product>
           <property>fcs/ele_right_lag</property>
-          <value>0.325</value>
+          <value> 4.2 </value>
         </product>
       </function>
       <location unit="IN">
@@ -379,6 +379,6 @@
       <!--</function>-->
     <!--</axis>-->
   <!--</aerodynamics>-->
-  <aerodynamics file="Systems/aerodynamics_mini_cyclone.xml"/>
+  <aerodynamics file="Systems/aerodynamics_cyfoam.xml"/>
 
 </fdm_config>
