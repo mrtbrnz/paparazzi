@@ -51,7 +51,6 @@ float u_max[4];
 float indi_v[4];
 float* Bwls[4];
 int num_iter = 0;
-int32_t change_prio = 0;
 static void lms_estimation(void);
 static void get_actuator_state(void);
 static void calc_g1_element(float dx_error, int8_t i, int8_t j, float mu_extra);
@@ -315,7 +314,7 @@ void stabilization_indi_set_earth_cmd_i(struct Int32Vect2 *cmd, int32_t heading)
 
   quat_from_earth_cmd_i(&stab_att_sp_quat, cmd, heading);
 }
-#include "subsystems/radio_control.h"
+
 /**
  * @param att_err attitude error
  * @param rate_control boolean that states if we are in rate control or attitude control
@@ -373,11 +372,13 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
 #else
     float airspeed = stateGetAirspeed_f();
 #endif
-    if(airspeed < 8.0) {
-      //limit minimum thrust ap can give
-      if(!act_is_servo[i]) {
-        if((guidance_h.mode == GUIDANCE_H_MODE_HOVER) || (guidance_h.mode == GUIDANCE_H_MODE_NAV)) {
+    //limit minimum thrust ap can give
+    if(!act_is_servo[i]) {
+      if((guidance_h.mode == GUIDANCE_H_MODE_HOVER) || (guidance_h.mode == GUIDANCE_H_MODE_NAV)) {
+        if(airspeed < 8.0) {
           u_min[i] = GUIDANCE_INDI_MIN_THROTTLE - actuator_state_filt_vect[i];
+        } else {
+          u_min[i] = GUIDANCE_INDI_MIN_THROTTLE_FWD - actuator_state_filt_vect[i];
         }
       }
     }
@@ -410,13 +411,11 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
     /*Wv[3] = 10;*/
     Bwls[1][2] = thrust_of_pitch_eff/INDI_G_SCALING;
     Bwls[1][3] = thrust_of_pitch_eff/INDI_G_SCALING;
-    change_prio = 1;
   } else {
     /*Wv[0] = 1000;*/
     /*Wv[3] = 100;*/
     Bwls[1][2] = 0.0;
     Bwls[1][3] = 0.0;
-    change_prio = 0;
   }
 
   // WLS Control Allocator
@@ -470,7 +469,7 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
 #ifndef SITL
 
 #define LOG_LENGTH_INT 15
-#define LOG_LENGTH_FLOAT 17
+#define LOG_LENGTH_FLOAT 25
 
   int32_t sd_buffer_i[LOG_LENGTH_INT] = {0};
   float sd_buffer_f[LOG_LENGTH_FLOAT] = {0};
@@ -479,6 +478,7 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
   struct Int32Vect3 *accel = stateGetAccelBody_i();
   struct FloatQuat *quat = stateGetNedToBodyQuat_f();
   struct FloatRates *body_rates_f = stateGetBodyRates_f();
+  struct NedCoor_f *accelned = stateGetAccelNed_f();
 
 #if CYCLONE_MINI
   uint32_t raw_duty1 = 0;
@@ -523,6 +523,14 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
   sd_buffer_f[14] = indi_v[1];
   sd_buffer_f[15] = indi_v[2];
   sd_buffer_f[16] = indi_v[3];
+  sd_buffer_f[17] = sp_accel.x;
+  sd_buffer_f[18] = sp_accel.y;
+  sd_buffer_f[19] = sp_accel.z;
+  sd_buffer_f[20] = accelned->x;
+  sd_buffer_f[21] = accelned->y;
+  sd_buffer_f[22] = accelned->z;
+  sd_buffer_f[23] = speed_sp_x;
+  sd_buffer_f[24] = speed_sp_y;
 
   sdLogWriteRaw(pprzLogFile, (uint8_t*) sd_buffer_i, LOG_LENGTH_INT*4);
   sdLogWriteRaw(pprzLogFile, (uint8_t*) sd_buffer_f, LOG_LENGTH_FLOAT*4);

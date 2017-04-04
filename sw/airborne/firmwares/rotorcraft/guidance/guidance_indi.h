@@ -44,6 +44,8 @@ extern struct FloatVect3 sp_accel;
 
 enum transition {HOVER, FORWARD};
 extern enum transition transition_state;
+extern float speed_sp_x;
+extern float speed_sp_y;
 
 enum transition_ctrl {TO_FORWARD, IN_FORWARD, TO_HOVER};
 extern enum transition_ctrl transition_control;
@@ -56,6 +58,7 @@ extern void calc_inv_transition_effectiveness(float theta);
 extern bool perform_transition;
 extern bool transition_back;
 extern struct FloatVect2 sp_accel_tr;
+extern float lift_pitch_eff;
 
 extern float vspeed_sp_setting;
 extern float wiggle_magnitude;

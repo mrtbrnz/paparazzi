@@ -52,10 +52,10 @@ extern float indi_v[4];
 
 // used for scheduling
 extern float g1g2[INDI_OUTPUTS][INDI_NUM_ACT];
+extern float actuator_state_filt_vect[INDI_NUM_ACT];
 
 // For sideslip correction
 extern Butterworth2LowPass accely_filt;
-extern int32_t change_prio;
 
 struct ReferenceSystem {
   float err_p;

@@ -83,6 +83,7 @@ void file_logger_stop(void)
 #include "firmwares/rotorcraft/guidance/guidance_h.h"
 #include "firmwares/rotorcraft/guidance/guidance_indi.h"
 #include "firmwares/rotorcraft/guidance/guidance_v.h"
+#include "subsystems/radio_control.h"
 
 /** Log the values to a csv file */
 void file_logger_periodic(void)
@@ -94,8 +95,10 @@ void file_logger_periodic(void)
   struct FloatQuat *quat = stateGetNedToBodyQuat_f();
   struct FloatRates *rates = stateGetBodyRates_f();
   struct Int32Vect3 *accel = stateGetAccelBody_i();
+  float rc_x = -(radio_control.values[RADIO_PITCH]/9600.0)*20.0;
+  float rc_y = (radio_control.values[RADIO_ROLL]/9600.0)*9.0;
 
-  fprintf(file_logger, "%d,%f,%f,%f,%d,%d,%d,%d,%f,%f,%f,%f,%d,%d,%d,%d,%d,%d,%d,%f,%f,%f,%f,%f,%f,%d,%f,%f,%f\n",
+  fprintf(file_logger, "%d,%f,%f,%f,%d,%d,%d,%d,%f,%f,%f,%f,%d,%d,%d,%d,%d,%d,%d,%f,%f,%f,%f,%f,%f,%d,%f,%f,%f,%f,%f,%f,%f\n",
           counter,
           rates->p,
           rates->q,
@@ -124,7 +127,11 @@ void file_logger_periodic(void)
           guidance_v_z_ref,
           sp_accel.x,
           sp_accel.y,
-          sp_accel.z
+          sp_accel.z,
+          speed_sp_x,
+          speed_sp_y,
+          rc_x,
+          rc_y
          );
   counter++;
 }

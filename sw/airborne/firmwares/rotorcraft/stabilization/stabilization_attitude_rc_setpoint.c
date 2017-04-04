@@ -208,10 +208,14 @@ void stabilization_attitude_read_rc_setpoint_eulers(struct Int32Eulers *sp, bool
 #else
       float airspeed = COORDINATED_TURN_AIRSPEED;
 #endif
-      if (abs(sp->phi) < max_phi) {
-        omega = ANGLE_BFP_OF_REAL(9.81 / airspeed * tanf(ANGLE_FLOAT_OF_BFP(sp->phi)));
+      /*Obtain eulers with zxy rotation order*/
+      struct FloatEulers eulers_zxy;
+      float_eulers_of_quat_zxy(&eulers_zxy, stateGetNedToBodyQuat_f());
+      int32_t roll_i = ANGLE_BFP_OF_REAL(eulers_zxy.phi);
+      if (abs(roll_i) < max_phi) {
+        omega = ANGLE_BFP_OF_REAL(9.81 / airspeed * tanf(eulers_zxy.phi));
       } else { //max 60 degrees roll
-        omega = ANGLE_BFP_OF_REAL(9.81 / airspeed * 1.72305 * ((sp->phi > 0) - (sp->phi < 0)));
+        omega = ANGLE_BFP_OF_REAL(9.81 / airspeed * 1.72305 * ((roll_i > 0) - (roll_i < 0)));
       }
 
 #ifdef FWD_SIDESLIP_GAIN

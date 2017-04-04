@@ -88,6 +88,8 @@ static void guidance_indi_filter_thrust(void);
 float wiggle_magnitude = 0.00;
 float inv_eff[4];
 
+float lift_pitch_eff = 0.2;
+
 enum transition transition_state = HOVER;
 enum transition_ctrl transition_control = TO_FORWARD;
 struct FloatVect2 sp_accel_tr;
@@ -112,6 +114,8 @@ float thrust_in;
 
 float vspeed_sp_setting = 0.0;
 float transition_accel = 2.0;
+float speed_sp_x = 0.0;
+float speed_sp_y = 0.0;
 
 bool perform_transition = false;
 bool transition_back = false;
@@ -151,15 +155,15 @@ void guidance_indi_enter(void) {
  */
 void guidance_indi_run(bool UNUSED in_flight, int32_t heading) {
 
+  /*Obtain eulers with zxy rotation order*/
+  float_eulers_of_quat_zxy(&eulers_zxy, stateGetNedToBodyQuat_f());
+
   /*Calculate the transition percentage so that the ctrl_effecitveness scheduling works*/
   transition_percentage = BFP_OF_REAL((eulers_zxy.theta/RadOfDeg(-75.0))*100,INT32_PERCENTAGE_FRAC);
   Bound(transition_percentage,0,BFP_OF_REAL(100.0,INT32_PERCENTAGE_FRAC));
   const int32_t max_offset = ANGLE_BFP_OF_REAL(TRANSITION_MAX_OFFSET);
   transition_theta_offset = INT_MULT_RSHIFT((transition_percentage <<
         (INT32_ANGLE_FRAC - INT32_PERCENTAGE_FRAC)) / 100, max_offset, INT32_ANGLE_FRAC);
-
-  /*Obtain eulers with zxy rotation order*/
-  float_eulers_of_quat_zxy(&eulers_zxy, stateGetNedToBodyQuat_f());
 
   /*Get desired heading in float*/
   float heading_f = ANGLE_FLOAT_OF_BFP(heading);
@@ -180,8 +184,32 @@ void guidance_indi_run(bool UNUSED in_flight, int32_t heading) {
   float psi = eulers_zxy.psi;
   float rc_x = -(radio_control.values[RADIO_PITCH]/9600.0)*20.0;
   float rc_y = (radio_control.values[RADIO_ROLL]/9600.0)*9.0;
-  float speed_sp_x = cosf(psi) * rc_x - sinf(psi) * rc_y;
-  float speed_sp_y = sinf(psi) * rc_x + cosf(psi) * rc_y;
+  /*float rc_x_n = -(radio_control.values[RADIO_PITCH]/9600.0)*20.0;*/
+  /*float rc_y_n = (radio_control.values[RADIO_ROLL]/9600.0)*20.0;*/
+  /*float rc_x = cosf(psi) * rc_x_n + sinf(psi) * rc_y_n;*/
+  /*float rc_y =-sinf(psi) * rc_x_n + cosf(psi) * rc_y_n;*/
+#ifdef GUIDANCE_INDI_MAX_AIRSPEED
+#ifdef SITL
+  struct NedCoor_f *speed_ned = stateGetSpeedNed_f();
+  float airspeed = sqrt(speed_ned->x*speed_ned->x+speed_ned->y*speed_ned->y);
+#else
+  float airspeed = stateGetAirspeed_f();
+#endif
+  if(airspeed > 10.0) {
+    // Groundspeed vector in body frame
+    float groundspeed = cosf(psi) * stateGetSpeedNed_f()->x + sinf(psi) * stateGetSpeedNed_f()->y;
+    float speed_increment = rc_x - groundspeed;
+
+    // limit groundspeed setpoint to 20 + (diff gs and airspeed)
+    if((speed_increment + airspeed) > GUIDANCE_INDI_MAX_AIRSPEED) {
+      rc_x = GUIDANCE_INDI_MAX_AIRSPEED + groundspeed - airspeed;
+    }
+
+    BoundAbs(rc_y, 10.0);
+  }
+#endif
+  speed_sp_x = cosf(psi) * rc_x - sinf(psi) * rc_y;
+  speed_sp_y = sinf(psi) * rc_x + cosf(psi) * rc_y;
 
   sp_accel.x = (speed_sp_x - stateGetSpeedNed_f()->x) * guidance_indi_speed_gain;
   sp_accel.y = (speed_sp_y - stateGetSpeedNed_f()->y) * guidance_indi_speed_gain;
@@ -356,7 +384,7 @@ void guidance_indi_calcg_wing(struct FloatMat33 *Gmat) {
 
   /*Amount of lift produced by the wing*/
   float pitch_lift = eulers_zxy.theta;
-  Bound(pitch_lift,0,-M_PI_2);
+  Bound(pitch_lift,-M_PI_2,0);
   float lift = sinf(pitch_lift)*9.81;
 
   // get the derivative of the lift wrt to theta
@@ -379,23 +407,6 @@ void guidance_indi_calcg_wing(struct FloatMat33 *Gmat) {
   RMAT_ELMT(*Gmat, 2, 2) = cphi*ctheta;
 }
 
-void get_two_d_accel(struct FloatVect2 *accel, float heading) {
-  accel->x = filt_accel_ned[0].o[0] * cosf(heading) + filt_accel_ned[1].o[0] * sinf(heading);
-  accel->y = filt_accel_ned[2].o[0];
-}
-
-void calc_inv_transition_effectiveness(float theta) {
-  float T = 9.81;
-
-  float eff[4];
-  eff[0] = -cosf(theta)*T;
-  eff[1] =  sinf(theta);
-  eff[2] =  sinf(theta)*T - GUIDANCE_INDI_PITCH_LIFT_EFF*theta/RadOfDeg(-90.0);
-  eff[3] =  cosf(theta);
-
-  float_mat_inv_2d(inv_eff, eff);
-}
-
 /**
  * @brief Get the derivative of lift w.r.t. pitch.
  *
@@ -408,7 +419,7 @@ float guidance_indi_get_liftd(float airspeed) {
   if(airspeed < 8.5) {
     liftd = 0.0;
   } else {
-    liftd = -(airspeed - 8.5)*0.2/M_PI*180.0;
+    liftd = -(airspeed - 8.5)*lift_pitch_eff/M_PI*180.0;
   }
   return liftd;
 }

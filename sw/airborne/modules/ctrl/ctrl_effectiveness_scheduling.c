@@ -27,6 +27,8 @@
 #include "firmwares/rotorcraft/stabilization/stabilization_indi.h"
 #include "firmwares/rotorcraft/guidance/guidance_h.h"
 #include "generated/airframe.h"
+#include "state.h"
+#include "subsystems/radio_control.h"
 
 float g1g2_forward[INDI_OUTPUTS][INDI_NUM_ACT] = {FWD_G1_ROLL,
   FWD_G1_PITCH, FWD_G1_YAW, FWD_G1_THRUST};
@@ -55,7 +57,57 @@ void ctrl_eff_scheduling_init(void)
   }
 }
 
+#if EFF_SCHED_USE_FUNCTION
 void ctrl_eff_scheduling_periodic(void)
+{
+  if(radio_control.values[6] > 0) {
+    ctrl_eff_scheduling_periodic_b();
+  } else {
+    ctrl_eff_scheduling_periodic_a();
+  }
+}
+
+/*void ctrl_eff_scheduling_periodic(void)*/
+void ctrl_eff_scheduling_periodic_b(void)
+{
+#ifdef SITL
+  struct NedCoor_f *speed_ned = stateGetSpeedNed_f();
+  float airspeed = sqrt(speed_ned->x*speed_ned->x+speed_ned->y*speed_ned->y);
+#else
+  float airspeed = stateGetAirspeed_f();
+#endif
+  struct FloatEulers eulers_zxy;
+  if(airspeed < 6.0) {
+    float_eulers_of_quat_zxy(&eulers_zxy, stateGetNedToBodyQuat_f());
+    float pitch_interp = DegOfRad(eulers_zxy.theta);
+    Bound(pitch_interp, -60.0, -30.0);
+    float ratio = (pitch_interp + 30.0)/(-30.);
+
+    g1g2[1][0] = -2.1/1000*(1-ratio) + -4.0/1000*ratio;
+    g1g2[1][1] =  2.1/1000*(1-ratio) +  4.0/1000*ratio;
+    g1g2[2][0] = -2.0/1000*(1-ratio) + -8.0/1000*ratio;
+    g1g2[2][1] = -2.0/1000*(1-ratio) + -8.0/1000*ratio;
+  } else {
+    // calculate squared airspeed
+    Bound(airspeed, 0.0, 30.0);
+    float airspeed2 = airspeed*airspeed;
+
+    float pitch_eff = 2.4169 + 0.0307*airspeed2;
+    g1g2[1][0] = -pitch_eff/1000;
+    g1g2[1][1] =  pitch_eff/1000;
+
+    float yaw_eff = 5.6310 + 0.0515*airspeed2;
+    g1g2[2][0] = -yaw_eff/1000;
+    g1g2[2][1] = -yaw_eff/1000;
+  }
+
+  g1g2[0][2] = -actuator_state_filt_vect[2]/1000*0.0021;
+  g1g2[0][3] =  actuator_state_filt_vect[3]/1000*0.0021;
+  Bound(g1g2[0][2], -30.0/1000, -2.0/1000);
+  Bound(g1g2[0][3], 2.0/1000,  30.0/1000);
+}
+
+void ctrl_eff_scheduling_periodic_a(void)
 {
   // Go from transition percentage to ratio
   float ratio = FLOAT_OF_BFP(transition_percentage, INT32_PERCENTAGE_FRAC)/100;
@@ -72,3 +124,4 @@ void ctrl_eff_scheduling_periodic(void)
     }
   }
 }
+#endif
