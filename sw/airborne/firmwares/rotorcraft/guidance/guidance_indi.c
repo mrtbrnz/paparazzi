@@ -85,14 +85,9 @@ static void guidance_indi_filter_thrust(void);
 #endif
 #endif
 
-float wiggle_magnitude = 0.00;
 float inv_eff[4];
 
 float lift_pitch_eff = 0.2;
-
-enum transition transition_state = HOVER;
-enum transition_ctrl transition_control = TO_FORWARD;
-struct FloatVect2 sp_accel_tr;
 
 /** state eulers in zxy order */
 struct FloatEulers eulers_zxy;
@@ -112,13 +107,8 @@ float filter_cutoff = GUIDANCE_INDI_FILTER_CUTOFF;
 struct FloatEulers guidance_euler_cmd;
 float thrust_in;
 
-float vspeed_sp_setting = 0.0;
-float transition_accel = 2.0;
 float speed_sp_x = 0.0;
 float speed_sp_y = 0.0;
-
-bool perform_transition = false;
-bool transition_back = false;
 
 static void guidance_indi_propagate_filters(void);
 static void guidance_indi_calcG(struct FloatMat33 *Gmat);
@@ -141,10 +131,6 @@ void guidance_indi_enter(void) {
   init_butterworth_2_low_pass(&roll_filt, tau, sample_time, 0.0);
   init_butterworth_2_low_pass(&pitch_filt, tau, sample_time, 0.0);
   init_butterworth_2_low_pass(&thrust_filt, tau, sample_time, 0.0);
-
-  perform_transition = false;
-  transition_control = TO_FORWARD;
-  FLOAT_VECT2_ZERO(sp_accel_tr);
 }
 
 /**
@@ -224,13 +210,8 @@ void guidance_indi_run(bool UNUSED in_flight, int32_t heading) {
   sp_accel.x = cosf(psi) * rc_x - sinf(psi) * rc_y;
   sp_accel.y = sinf(psi) * rc_x + cosf(psi) * rc_y;
 
-#if CYCLONE_DESCEND_TEST
-  speed_sp_z = vspeed_sp_setting;
-  sp_accel.z = (speed_sp_z - stateGetSpeedNed_f()->z) * guidance_indi_speed_gain;
-#else
   //for rc vertical control
   sp_accel.z = -(radio_control.values[RADIO_THROTTLE]-4500)*8.0/9600.0;
-#endif
 #endif
 
   //Calculate matrix of partial derivatives
@@ -284,15 +265,6 @@ void guidance_indi_run(bool UNUSED in_flight, int32_t heading) {
   //Bound euler angles to prevent flipping
   Bound(guidance_euler_cmd.phi, -GUIDANCE_H_MAX_BANK, GUIDANCE_H_MAX_BANK);
   Bound(guidance_euler_cmd.theta, -RadOfDeg(120.0), GUIDANCE_H_MAX_BANK);
-
-  // Start the wiggle!
-  static int32_t wiggle_counter = 0;
-  if(wiggle_counter >= 1024) {
-    wiggle_counter = 0;
-  } else if(wiggle_counter < 512) {
-    heading += ANGLE_BFP_OF_REAL(wiggle_magnitude);
-  }
-  wiggle_counter ++;
 
   // Set the quaternion setpoint from eulers_zxy
   struct FloatQuat sp_quat;
