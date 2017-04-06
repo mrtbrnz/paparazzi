@@ -73,6 +73,10 @@ PRINT_CONFIG_VAR(GUIDANCE_H_USE_SPEED_REF)
 #define GUIDANCE_H_APPROX_FORCE_BY_THRUST FALSE
 #endif
 
+#ifndef GUIDANCE_HEADING_IS_FREE
+#define GUIDANCE_HEADING_IS_FREE TRUE
+#endif
+
 #ifndef GUIDANCE_INDI
 #define GUIDANCE_INDI FALSE
 #endif
@@ -119,6 +123,7 @@ static void send_hover_loop(struct transport_tx *trans, struct link_device *dev)
   struct NedCoor_i *pos = stateGetPositionNed_i();
   struct NedCoor_i *speed = stateGetSpeedNed_i();
   struct NedCoor_i *accel = stateGetAccelNed_i();
+  int32_t heading_sp_i = ANGLE_BFP_OF_REAL(guidance_h.sp.heading);
   pprz_msg_send_HOVER_LOOP(trans, dev, AC_ID,
                            &guidance_h.sp.pos.x,
                            &guidance_h.sp.pos.y,
@@ -133,7 +138,7 @@ static void send_hover_loop(struct transport_tx *trans, struct link_device *dev)
                            &guidance_h_trim_att_integrator.y,
                            &guidance_h_cmd_earth.x,
                            &guidance_h_cmd_earth.y,
-                           &guidance_h.sp.heading);
+                           &heading_sp_i);
 }
 
 static void send_href(struct transport_tx *trans, struct link_device *dev)
@@ -173,9 +178,9 @@ void guidance_h_init(void)
 
   INT_VECT2_ZERO(guidance_h.sp.pos);
   INT_VECT2_ZERO(guidance_h_trim_att_integrator);
-  INT_EULERS_ZERO(guidance_h.rc_sp);
-  guidance_h.sp.heading = 0;
-  guidance_h.sp.heading_rate = 0;
+  FLOAT_EULERS_ZERO(guidance_h.rc_sp);
+  guidance_h.sp.heading = 0.0;
+  guidance_h.sp.heading_rate = 0.0;
   guidance_h.gains.p = GUIDANCE_H_PGAIN;
   guidance_h.gains.i = GUIDANCE_H_IGAIN;
   guidance_h.gains.d = GUIDANCE_H_DGAIN;
@@ -318,7 +323,7 @@ void guidance_h_read_rc(bool  in_flight)
       stabilization_attitude_read_rc(in_flight, FALSE, FALSE);
       break;
     case GUIDANCE_H_MODE_HOVER:
-      stabilization_attitude_read_rc_setpoint_eulers(&guidance_h.rc_sp, in_flight, FALSE, true );
+      stabilization_attitude_read_rc_setpoint_eulers_f(&guidance_h.rc_sp, in_flight, FALSE, FALSE );
 #if GUIDANCE_H_USE_SPEED_REF
       read_rc_setpoint_speed_i(&guidance_h.sp.speed, in_flight);
       /* enable x,y velocity setpoints */
@@ -334,9 +339,9 @@ void guidance_h_read_rc(bool  in_flight)
 
     case GUIDANCE_H_MODE_NAV:
       if (radio_control.status == RC_OK) {
-        stabilization_attitude_read_rc_setpoint_eulers(&guidance_h.rc_sp, in_flight, FALSE, FALSE);
+        stabilization_attitude_read_rc_setpoint_eulers_f(&guidance_h.rc_sp, in_flight, FALSE, FALSE);
       } else {
-        INT_EULERS_ZERO(guidance_h.rc_sp);
+        FLOAT_EULERS_ZERO(guidance_h.rc_sp);
       }
       break;
     case GUIDANCE_H_MODE_FLIP:
@@ -381,6 +386,8 @@ void guidance_h_run(bool  in_flight)
 
     case GUIDANCE_H_MODE_GUIDED:
       guidance_h_guided_run(in_flight);
+      /* if the guidance updated the heading, update the rc sp as well */
+      guidance_h.rc_sp.psi = guidance_h.sp.heading;
       break;
 
     case GUIDANCE_H_MODE_NAV:
@@ -434,8 +441,8 @@ static void guidance_h_update_reference(void)
 
   /* update heading setpoint from rate */
   if (bit_is_set(guidance_h.sp.mask, 7)) {
-    guidance_h.sp.heading += (guidance_h.sp.heading_rate >> (INT32_ANGLE_FRAC - INT32_RATE_FRAC)) / PERIODIC_FREQUENCY;
-    INT32_ANGLE_NORMALIZE(guidance_h.sp.heading);
+    guidance_h.sp.heading += guidance_h.sp.heading_rate / PERIODIC_FREQUENCY;
+    FLOAT_ANGLE_NORMALIZE(guidance_h.sp.heading);
   }
 }
 
@@ -540,7 +547,7 @@ void guidance_h_hover_enter(void)
   reset_guidance_reference_from_current_position();
 
   /* set guidance to current heading and position */
-  guidance_h.rc_sp.psi = stateGetNedToBodyEulers_i()->psi;
+  guidance_h.rc_sp.psi = stateGetNedToBodyEulers_f()->psi;
   guidance_h.sp.heading = guidance_h.rc_sp.psi;
 }
 
@@ -555,6 +562,9 @@ void guidance_h_nav_enter(void)
   reset_guidance_reference_from_current_position();
 
   nav_heading = stateGetNedToBodyEulers_i()->psi;
+  struct FloatEulers eulers_zxy;
+  float_eulers_of_quat_zxy(&eulers_zxy, stateGetNedToBodyQuat_f());
+  guidance_h.sp.heading = eulers_zxy.psi;
 }
 
 void guidance_h_from_nav(bool in_flight)
@@ -589,18 +599,21 @@ void guidance_h_from_nav(bool in_flight)
 
     guidance_h_update_reference();
 
+#if GUIDANCE_HEADING_IS_FREE
     /* set psi command */
-    guidance_h.sp.heading = nav_heading;
-    INT32_ANGLE_NORMALIZE(guidance_h.sp.heading);
+    guidance_h.sp.heading = ANGLE_FLOAT_OF_BFP(nav_heading);
+    FLOAT_ANGLE_NORMALIZE(guidance_h.sp.heading);
+#endif
 
 #if GUIDANCE_INDI
-    guidance_indi_run(in_flight, guidance_h.sp.heading);
+    guidance_indi_run(in_flight, &guidance_h.sp.heading);
 #else
     /* compute x,y earth commands */
     guidance_h_traj_run(in_flight);
     /* set final attitude setpoint */
+    int32_t heading_sp_i = ANGLE_BFP_OF_REAL(guidance_h.sp.heading);
     stabilization_attitude_set_earth_cmd_i(&guidance_h_cmd_earth,
-        guidance_h.sp.heading);
+        heading_sp_i);
 #endif
 
 #endif
@@ -675,12 +688,13 @@ void guidance_h_guided_run(bool in_flight)
   guidance_h_update_reference();
 
 #if GUIDANCE_INDI
-  guidance_indi_run(in_flight, guidance_h.sp.heading);
+  guidance_indi_run(in_flight, &guidance_h.sp.heading);
 #else
   /* compute x,y earth commands */
   guidance_h_traj_run(in_flight);
   /* set final attitude setpoint */
-  stabilization_attitude_set_earth_cmd_i(&guidance_h_cmd_earth, guidance_h.sp.heading);
+  int32_t heading_sp_i = ANGLE_BFP_OF_REAL(guidance_h.sp.heading);
+  stabilization_attitude_set_earth_cmd_i(&guidance_h_cmd_earth, heading_sp_i);
 #endif
   stabilization_attitude_run(in_flight);
 }
@@ -700,8 +714,8 @@ bool guidance_h_set_guided_heading(float heading)
 {
   if (guidance_h.mode == GUIDANCE_H_MODE_GUIDED) {
     ClearBit(guidance_h.sp.mask, 7);
-    guidance_h.sp.heading = ANGLE_BFP_OF_REAL(heading);
-    INT32_ANGLE_NORMALIZE(guidance_h.sp.heading);
+    guidance_h.sp.heading = heading;
+    FLOAT_ANGLE_NORMALIZE(guidance_h.sp.heading);
     return true;
   }
   return false;
@@ -730,7 +744,7 @@ bool guidance_h_set_guided_heading_rate(float rate)
 {
   if (guidance_h.mode == GUIDANCE_H_MODE_GUIDED) {
     SetBit(guidance_h.sp.mask, 7);
-    guidance_h.sp.heading_rate = RATE_BFP_OF_REAL(rate);
+    guidance_h.sp.heading_rate = rate;
     return true;
   }
   return false;

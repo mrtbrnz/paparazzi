@@ -59,7 +59,8 @@
   <section name="AUTOPILOT">
     <define name="MODE_MANUAL"  value="AP_MODE_ATTITUDE_DIRECT"/>
     <define name="MODE_AUTO1" value="AP_MODE_FORWARD"/>
-    <define name="MODE_AUTO2"  value="AP_MODE_HOVER_Z_HOLD"/>
+    <define name="MODE_AUTO2"  value="AP_MODE_NAV"/>
+    <define name="MODE_STARTUP"  value="AP_MODE_NAV"/>
   </section>
 
   <section name="BAT">
@@ -205,6 +206,8 @@
         <!-- Put the mode on channel AUX1-->
         <define name="RADIO_KILL_SWITCH" value="RADIO_GAIN1"/>
       </module>
+
+    <module name="ctrl_effectiveness_scheduling"/>
     </target>
 
     <target name="nps"          board="pc">
@@ -221,8 +224,6 @@
       <!--define name="USE_SERVOS_7AND8"/-->
     </module>
 
-    <module name="ctrl_effectiveness_scheduling"/>
-
     <module name="mag" type="hmc58xx">
       <configure name="MAG_HMC58XX_I2C_DEV" value="i2c2"/>
       <define name="MODULE_HMC58XX_UPDATE_AHRS"/>
@@ -235,7 +236,7 @@
       <define name="HMC58XX_CHAN_Y_SIGN" value="+"/>
       <define name="HMC58XX_CHAN_Z_SIGN" value="+"/>
 
-      <!--run the chimera mag once every 64 seconds-->
+      <!--run the chimera mag once every 64 seconds to avoid message spam-->
       <define name="MPU9250_MAG_PRESCALER" value="32768"/>
 
     </module>
@@ -272,6 +273,7 @@
       <define name="GUIDANCE_INDI_MIN_THROTTLE" value="5000"/>
       <define name="GUIDANCE_INDI_MIN_THROTTLE_FWD" value="1500"/>
       <define name="GUIDANCE_INDI_MAX_AIRSPEED" value="22.0"/>
+      <define name="GUIDANCE_HEADING_IS_FREE" value="FALSE"/>
     </module>
 
     <module name="ahrs"          type="int_cmpl_quat">

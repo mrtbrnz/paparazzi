@@ -87,7 +87,7 @@ static void guidance_indi_filter_thrust(void);
 
 float inv_eff[4];
 
-float lift_pitch_eff = 0.2;
+float lift_pitch_eff = 0.06;
 
 /** state eulers in zxy order */
 struct FloatEulers eulers_zxy;
@@ -135,11 +135,11 @@ void guidance_indi_enter(void) {
 
 /**
  * @param in_flight in flight boolean
- * @param heading the desired heading [rad]
+ * @param heading_sp the desired heading [rad]
  *
  * main indi guidance function
  */
-void guidance_indi_run(bool UNUSED in_flight, int32_t heading) {
+void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
 
   /*Obtain eulers with zxy rotation order*/
   float_eulers_of_quat_zxy(&eulers_zxy, stateGetNedToBodyQuat_f());
@@ -151,29 +151,31 @@ void guidance_indi_run(bool UNUSED in_flight, int32_t heading) {
   transition_theta_offset = INT_MULT_RSHIFT((transition_percentage <<
         (INT32_ANGLE_FRAC - INT32_PERCENTAGE_FRAC)) / 100, max_offset, INT32_ANGLE_FRAC);
 
-  /*Get desired heading in float*/
-  float heading_f = ANGLE_FLOAT_OF_BFP(heading);
-
   //filter accel to get rid of noise and filter attitude to synchronize with accel
   guidance_indi_propagate_filters();
 
   //Linear controller to find the acceleration setpoint from position and velocity
-  /*float pos_x_err = POS_FLOAT_OF_BFP(guidance_h.ref.pos.x) - stateGetPositionNed_f()->x;*/
-  /*float pos_y_err = POS_FLOAT_OF_BFP(guidance_h.ref.pos.y) - stateGetPositionNed_f()->y;*/
+  float pos_x_err = POS_FLOAT_OF_BFP(guidance_h.ref.pos.x) - stateGetPositionNed_f()->x;
+  float pos_y_err = POS_FLOAT_OF_BFP(guidance_h.ref.pos.y) - stateGetPositionNed_f()->y;
   float pos_z_err = POS_FLOAT_OF_BFP(guidance_v_z_ref - stateGetPositionNed_i()->z);
 
-  /*float speed_sp_x = pos_x_err * guidance_indi_pos_gain;*/
-  /*float speed_sp_y = pos_y_err * guidance_indi_pos_gain;*/
+  float speed_sp_x = pos_x_err * guidance_indi_pos_gain;
+  float speed_sp_y = pos_y_err * guidance_indi_pos_gain;
   float speed_sp_z = pos_z_err * guidance_indi_pos_gain;
 
   //for rc control horizontal, rotate from body axes to NED
   float psi = eulers_zxy.psi;
-  float rc_x = -(radio_control.values[RADIO_PITCH]/9600.0)*20.0;
-  float rc_y = (radio_control.values[RADIO_ROLL]/9600.0)*9.0;
+  /*Steer in body axes*/
+  /*float rc_x = -(radio_control.values[RADIO_PITCH]/9600.0)*20.0;*/
+  /*float rc_y = (radio_control.values[RADIO_ROLL]/9600.0)*9.0;*/
+  /*Steer in NED axes*/
   /*float rc_x_n = -(radio_control.values[RADIO_PITCH]/9600.0)*20.0;*/
   /*float rc_y_n = (radio_control.values[RADIO_ROLL]/9600.0)*20.0;*/
   /*float rc_x = cosf(psi) * rc_x_n + sinf(psi) * rc_y_n;*/
   /*float rc_y =-sinf(psi) * rc_x_n + cosf(psi) * rc_y_n;*/
+  /*NAV mode*/
+  float rc_x = cosf(psi) * speed_sp_x + sinf(psi) * speed_sp_y;
+  float rc_y =-sinf(psi) * speed_sp_x + cosf(psi) * speed_sp_y;
 #ifdef GUIDANCE_INDI_MAX_AIRSPEED
 #ifdef SITL
   struct NedCoor_f *speed_ned = stateGetSpeedNed_f();
@@ -193,6 +195,8 @@ void guidance_indi_run(bool UNUSED in_flight, int32_t heading) {
 
     BoundAbs(rc_y, 10.0);
   }
+#else
+#error "You must have an airspeed sensor to use this guidance"
 #endif
   speed_sp_x = cosf(psi) * rc_x - sinf(psi) * rc_y;
   speed_sp_y = sinf(psi) * rc_x + cosf(psi) * rc_y;
@@ -240,10 +244,37 @@ void guidance_indi_run(bool UNUSED in_flight, int32_t heading) {
 
   AbiSendMsgTHRUST(THRUST_INCREMENT_ID, euler_cmd.z);
 
+  //Coordinated turn
+  //feedforward estimate angular rotation omega = g*tan(phi)/v
+  float omega;
+  const float max_phi = RadOfDeg(60.0);
+  float airspeed_turn = airspeed;
+  //We are dividing by the airspeed, so a lower bound is important
+  Bound(airspeed_turn,10.0,30.0);
+
+  float coordinated_turn_roll = eulers_zxy.phi;
+
+  if( (eulers_zxy.theta > 0.0) && ( fabs(eulers_zxy.phi) < eulers_zxy.theta)) {
+    coordinated_turn_roll = ((eulers_zxy.phi > 0.0) - (eulers_zxy.phi < 0.0))*eulers_zxy.theta;
+  }
+
+  if (fabs(coordinated_turn_roll) < max_phi) {
+    omega = 9.81 / airspeed_turn * tanf(coordinated_turn_roll);
+  } else { //max 60 degrees roll
+    omega = 9.81 / airspeed_turn * 1.72305 * ((coordinated_turn_roll > 0.0) - (coordinated_turn_roll < 0.0));
+  }
+
+#ifdef FWD_SIDESLIP_GAIN
+  // Add sideslip correction
+  omega -= accely_filt.o[0]*FWD_SIDESLIP_GAIN;
+#endif
+
+  *heading_sp += omega / PERIODIC_FREQUENCY;
+  FLOAT_ANGLE_NORMALIZE(*heading_sp);
+
   guidance_euler_cmd.phi = roll_filt.o[0] + euler_cmd.x;
   guidance_euler_cmd.theta = pitch_filt.o[0] + euler_cmd.y;
-  //zero psi command, because a roll/pitch quat will be constructed later
-  guidance_euler_cmd.psi = heading_f;
+  guidance_euler_cmd.psi = *heading_sp;
 
 #ifdef GUIDANCE_INDI_SPECIFIC_FORCE_GAIN
   guidance_indi_filter_thrust();

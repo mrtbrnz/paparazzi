@@ -160,6 +160,7 @@ static void send_fp(struct transport_tx *trans, struct link_device *dev)
                                                       /*4, vect);*/
   int32_t heading_fwd = stabilization_attitude_get_heading_i();
   int32_t carrot_up = -guidance_v_z_sp;
+  int32_t heading_sp_i = ANGLE_BFP_OF_REAL(guidance_h.sp.heading);
   pprz_msg_send_ROTORCRAFT_FP(trans, dev, AC_ID,
                               &(stateGetPositionEnu_i()->x),
                               &(stateGetPositionEnu_i()->y),
@@ -173,7 +174,7 @@ static void send_fp(struct transport_tx *trans, struct link_device *dev)
                               &guidance_h.sp.pos.y,
                               &guidance_h.sp.pos.x,
                               &carrot_up,
-                              &guidance_h.sp.heading,
+                              &heading_sp_i,
                               &stabilization_cmd[COMMAND_THRUST],
                               &autopilot.flight_time);
 }

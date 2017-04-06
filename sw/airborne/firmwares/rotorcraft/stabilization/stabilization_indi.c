@@ -405,7 +405,7 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
   indi_v[3] = v_thrust;
 
   //State prioritization {W Roll, W pitch, W yaw, TOTAL THRUST}
-  static float Wv[INDI_OUTPUTS] = {100, 1000, 1, 10};
+  static float Wv[INDI_OUTPUTS] = {100, 1000, 0.1, 10};
   if(radio_control.values[6] > 0 && (actuator_state_filt_vect[0] < -7000) && (actuator_state_filt_vect[1] > 7000)) {
     /*Wv[0] = 100;*/
     /*Wv[3] = 10;*/
