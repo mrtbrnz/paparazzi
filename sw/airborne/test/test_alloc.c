@@ -16,21 +16,21 @@
 int main(int argc, char **argv)
 {
 
-  float u_min[4] = {-2500, 0, -4500, -4500};
-  float u_max[4] = {2*9600-2500, 2*9600, 4500, 4500};
+  float u_min[4] = {-107, -19093, 0, -95, };
+  float u_max[4] = {19093, 107, 4600, 4505, };
 
   float g1g2[4][4] =
-  {{      0,         0,   -0.0089,    0.0083},
-  { -0.0045,    0.0035,         0,         0},
-  { -0.0012,   -0.0013,    0.0007,   -0.0005},
-  {       0,         0,   -0.0008,   -0.0008}};
+  {{      0,         0,  -0.0105,  0.0107016},
+  {-0.0030044, 0.0030044, 0.035, 0.035},
+  {-0.004856, -0.004856, 0, 0},
+  {       0,         0,   -0.0011,   -0.0011}};
 
   //State prioritization {W Roll, W pitch, W yaw, TOTAL THRUST}
-  static float Wv[INDI_OUTPUTS] = {1000, 1000, 1, 100};
+  static float Wv[INDI_OUTPUTS] = {100, 1000, 0.1, 10};
   /*static float Wv[INDI_OUTPUTS] = {10, 10, 0.1, 1};*/
 
   // The control objective in array format
-  float indi_v[4] = {10, 100, -125, 0.0};
+  float indi_v[4] = {10.8487,  -10.5658,    6.8383,    1.8532};
   float indi_du[4];
 
   // Initialize the array of pointers to the rows of g1g2

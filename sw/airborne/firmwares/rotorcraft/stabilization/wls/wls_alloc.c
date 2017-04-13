@@ -178,17 +178,14 @@ int wls_alloc(float* u, float* v, float* umin, float* umax, float** B,
         printf("%.2f\n", u[i]);
 #endif
 
-    if (!n_free) {
-      /*if( (u[0]>9500) || (u[1]>9500) || (u[2]>9500) || (u[3]>9500))*/
-        /*print_shebang(0, n_u, n_v, u, B, v, umin, umax);*/
-      // No free variables left, all actuators saturated
-      return iter;
-    }
+    if (n_free) {
+      // Still free variables left, calculate corresponding solution
 
-    // use a solver to find the solution to A_free*p_free = d
-    qr_solve_wrapper(n_c, n_free, A_free_ptr, d, p_free);
-    /*print_in_and_outputs(n_c, n_free, A_free_ptr, d, p_free);*/
-    /*RunOnceEvery(512, print_in_and_outputs(n_c, n_free, A_free_ptr, d, p_free););*/
+      // use a solver to find the solution to A_free*p_free = d
+      qr_solve_wrapper(n_c, n_free, A_free_ptr, d, p_free);
+      /*print_in_and_outputs(n_c, n_free, A_free_ptr, d, p_free);*/
+      /*RunOnceEvery(512, print_in_and_outputs(n_c, n_free, A_free_ptr, d, p_free););*/
+    }
     for (int i = 0; i < n_free; i++) {
       p[free_index[i]] = p_free[i];
       u_opt[free_index[i]] += p_free[i];
