@@ -197,12 +197,7 @@ void stabilization_attitude_read_rc_setpoint_eulers(struct Int32Eulers *sp, bool
       int32_t omega;
       const int32_t max_phi = ANGLE_BFP_OF_REAL(RadOfDeg(60.0));
 #if USE_AIRSPEED_MS45XX
-#if SITL
-      struct NedCoor_f *speed_ned = stateGetSpeedNed_f();
-      float groundspeed = sqrt(speed_ned->x*speed_ned->x+speed_ned->y*speed_ned->y);
-#else
       float airspeed = stateGetAirspeed_f();
-#endif
       //We are dividing by the airspeed, so a lower bound is important
       Bound(airspeed,10.0,30.0);
 #else

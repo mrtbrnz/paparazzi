@@ -411,6 +411,9 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
     /*Wv[3] = 10;*/
     Bwls[1][2] = thrust_of_pitch_eff/INDI_G_SCALING;
     Bwls[1][3] = thrust_of_pitch_eff/INDI_G_SCALING;
+  } else if(radio_control.values[6] > 0 && (actuator_state_filt_vect[0] > 7000) && (actuator_state_filt_vect[1] < -7000)) {
+    Bwls[1][2] = -thrust_of_pitch_eff/INDI_G_SCALING;
+    Bwls[1][3] = -thrust_of_pitch_eff/INDI_G_SCALING;
   } else {
     /*Wv[0] = 1000;*/
     /*Wv[3] = 100;*/
@@ -435,8 +438,10 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
   }
 
   if(radio_control.values[RADIO_THROTTLE] < 300) {
+#ifndef SITL
     float_vect_zero(indi_u, INDI_NUM_ACT);
     float_vect_zero(indi_du, INDI_NUM_ACT);
+#endif
   }
 
   // Propagate actuator filters
@@ -454,8 +459,10 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
 
   //Don't increment if thrust is off
   if(radio_control.values[RADIO_THROTTLE] < 300) {
+#ifndef SITL
     float_vect_zero(indi_u, INDI_NUM_ACT);
     float_vect_zero(actuator_state_filt_vect, INDI_NUM_ACT);
+#endif
   }
   else if(indi_use_adaptive) {
     lms_estimation();
@@ -469,7 +476,7 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
 #ifndef SITL
 
 #define LOG_LENGTH_INT 15
-#define LOG_LENGTH_FLOAT 25
+#define LOG_LENGTH_FLOAT 26
 
   int32_t sd_buffer_i[LOG_LENGTH_INT] = {0};
   float sd_buffer_f[LOG_LENGTH_FLOAT] = {0};
@@ -529,8 +536,9 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
   sd_buffer_f[20] = accelned->x;
   sd_buffer_f[21] = accelned->y;
   sd_buffer_f[22] = accelned->z;
-  sd_buffer_f[23] = speed_sp_x;
-  sd_buffer_f[24] = speed_sp_y;
+  sd_buffer_f[23] = speed_sp.x;
+  sd_buffer_f[24] = speed_sp.y;
+  sd_buffer_f[25] = speed_sp.z;
 
   sdLogWriteRaw(pprzLogFile, (uint8_t*) sd_buffer_i, LOG_LENGTH_INT*4);
   sdLogWriteRaw(pprzLogFile, (uint8_t*) sd_buffer_f, LOG_LENGTH_FLOAT*4);

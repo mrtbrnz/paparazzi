@@ -76,6 +76,15 @@
 #define CLOSE_TO_WAYPOINT (15 << INT32_POS_FRAC)
 #define CARROT_DIST (12 << INT32_POS_FRAC)
 
+static void scale_two_d(struct FloatVect3 *vect3, float bound) {
+  float norm = FLOAT_VECT2_NORM(*vect3);
+  if(norm>bound) {
+    float scale = bound/norm;
+    vect3->x *= scale;
+    vect3->y *= scale;
+  }
+}
+
 const float max_dist_from_home = MAX_DIST_FROM_HOME;
 const float max_dist2_from_home = MAX_DIST_FROM_HOME * MAX_DIST_FROM_HOME;
 float failsafe_mode_dist2 = FAILSAFE_MODE_DISTANCE * FAILSAFE_MODE_DISTANCE;
@@ -89,6 +98,8 @@ struct EnuCoor_i navigation_carrot;
 
 struct EnuCoor_i nav_last_point;
 
+struct FloatVect3 nav_get_speed_setpoint(void);
+
 uint8_t last_wp UNUSED;
 
 bool exception_flag[10] = {0}; //exception flags that can be used in the flight plan
@@ -97,6 +108,10 @@ uint8_t horizontal_mode;
 
 int32_t nav_leg_progress;
 uint32_t nav_leg_length;
+
+
+enum nav_source_def {NAV_GO, NAV_CIRCLE};
+enum nav_source_def nav_source = NAV_GO;
 
 bool nav_survey_active;
 
@@ -293,6 +308,36 @@ bool nav_approaching_from(struct EnuCoor_i *wp, struct EnuCoor_i *from, int16_t 
   }
 
   return false;
+}
+
+struct FloatVect3 nav_get_speed_setpoint(void) {
+  struct FloatVect3 speed_sp;
+  if(nav_source == NAV_GO) {
+    speed_sp = nav_get_speed_sp_from_go(navigation_target);
+  } else { //Default
+    speed_sp = nav_get_speed_sp_from_go(navigation_target);
+  }
+  return speed_sp;
+}
+
+struct FloatVect3 nav_get_speed_sp_from_go(struct EnuCoor_i target) {
+  // The speed sp that will be returned
+  struct FloatVect3 speed_sp;
+  struct NedCoor_f ned_target;
+  // Target in NED instead of ENU
+  VECT3_ASSIGN(ned_target, POS_FLOAT_OF_BFP(target.y), POS_FLOAT_OF_BFP(target.x), -POS_FLOAT_OF_BFP(target.z));
+
+  // Calculate position error
+  struct FloatVect3 pos_error;
+  struct NedCoor_f *pos = stateGetPositionNed_f();
+  VECT3_DIFF(pos_error, ned_target, *pos);
+
+  VECT3_SMUL(speed_sp, pos_error, guidance_indi_pos_gain);
+
+  scale_two_d(&speed_sp, 35.0);
+  BoundAbs(speed_sp.z, 3.0);
+
+  return speed_sp;
 }
 
 bool nav_check_wp_time(struct EnuCoor_i *wp, uint16_t stay_time)

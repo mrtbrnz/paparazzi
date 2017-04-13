@@ -111,6 +111,9 @@ extern bool exception_flag[10];
 extern void nav_init(void);
 extern void nav_run(void);
 
+extern struct FloatVect3 nav_get_speed_sp_from_go(struct EnuCoor_i target);
+extern struct FloatVect3 nav_get_speed_setpoint(void);
+
 extern void set_exception_flag(uint8_t flag_num);
 
 extern float get_dist2_to_waypoint(uint8_t wp_id);

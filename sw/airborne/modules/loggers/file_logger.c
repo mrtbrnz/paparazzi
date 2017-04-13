@@ -98,7 +98,7 @@ void file_logger_periodic(void)
   float rc_x = -(radio_control.values[RADIO_PITCH]/9600.0)*20.0;
   float rc_y = (radio_control.values[RADIO_ROLL]/9600.0)*9.0;
 
-  fprintf(file_logger, "%d,%f,%f,%f,%d,%d,%d,%d,%f,%f,%f,%f,%d,%d,%d,%d,%d,%d,%d,%f,%f,%f,%f,%f,%f,%d,%f,%f,%f,%f,%f,%f,%f\n",
+  fprintf(file_logger, "%d,%f,%f,%f,%d,%d,%d,%d,%f,%f,%f,%f,%d,%d,%d,%d,%d,%d,%d,%f,%f,%f,%f,%f,%f,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",
           counter,
           rates->p,
           rates->q,
@@ -128,10 +128,13 @@ void file_logger_periodic(void)
           sp_accel.x,
           sp_accel.y,
           sp_accel.z,
-          speed_sp_x,
-          speed_sp_y,
+          speed_sp.x,
+          speed_sp.y,
+          speed_sp.z,
           rc_x,
-          rc_y
+          rc_y,
+          desired_airspeed.x,
+          desired_airspeed.y
          );
   counter++;
 }
