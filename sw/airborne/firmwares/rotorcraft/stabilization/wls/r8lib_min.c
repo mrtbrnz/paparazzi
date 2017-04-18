@@ -91,7 +91,7 @@ float r8_epsilon ( void )
     Output, float R8_EPSILON, the R8 round-off unit.
 */
 {
-  const float value = 2.220446049250313E-016;
+  const float value = 1.192092896E-7;
 
   return value;
 }

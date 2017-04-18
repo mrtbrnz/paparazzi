@@ -243,8 +243,12 @@ int wls_alloc(float* u, float* v, float* umin, float* umax, float** B,
       // find the lowest distance from the limit among the free variables
       for (int i = 0; i < n_free; i++) {
         int id = free_index[i];
-        alpha_tmp = (p[id] < 0) ? (umin[id] - u[id]) / p[id]
-          : (umax[id] - u[id]) / p[id];
+        if(fabs(p[id]) > FLT_EPSILON) {
+          alpha_tmp = (p[id] < 0) ? (umin[id] - u[id]) / p[id]
+            : (umax[id] - u[id]) / p[id];
+        } else {
+          alpha_tmp = INFINITY;
+        }
         if (alpha_tmp < alpha) {
           alpha = alpha_tmp;
           id_alpha = id;
