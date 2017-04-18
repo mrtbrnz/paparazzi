@@ -46,10 +46,10 @@
 #include "modules/sensors/airspeed_ms45xx_i2c.h"
 #include "mcu_periph/pwm_input.h"
 
-float u_min[4];
-float u_max[4];
-float indi_v[4];
-float* Bwls[4];
+float u_min[INDI_NUM_ACT];
+float u_max[INDI_NUM_ACT];
+float indi_v[INDI_OUTPUTS];
+float* Bwls[INDI_OUTPUTS];
 int num_iter = 0;
 static void lms_estimation(void);
 static void get_actuator_state(void);
@@ -114,7 +114,7 @@ float estimation_rate_d[INDI_NUM_ACT];
 float estimation_rate_dd[INDI_NUM_ACT];
 float du_estimation[INDI_NUM_ACT];
 float ddu_estimation[INDI_NUM_ACT];
-float mu1[4] = {0.00001, 0.00001, 0.000003, 0.000002};
+float mu1[INDI_OUTPUTS] = {0.00001, 0.00001, 0.000003, 0.000002};
 float mu2 = 0.002;
 
 // other variables
@@ -366,12 +366,7 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
     u_min[i] = -MAX_PPRZ*act_is_servo[i] - actuator_state_filt_vect[i];
     u_max[i] = MAX_PPRZ - actuator_state_filt_vect[i];
 
-#ifdef SITL
-    struct NedCoor_f *speed_ned = stateGetSpeedNed_f();
-    float airspeed = sqrt(speed_ned->x*speed_ned->x+speed_ned->y*speed_ned->y);
-#else
     float airspeed = stateGetAirspeed_f();
-#endif
     //limit minimum thrust ap can give
     if(!act_is_servo[i]) {
       if((guidance_h.mode == GUIDANCE_H_MODE_HOVER) || (guidance_h.mode == GUIDANCE_H_MODE_NAV)) {
@@ -772,13 +767,13 @@ void calc_g1g2_pseudo_inv(void) {
   }
 
   //there are numerical errors if the scaling is not right.
-  float_vect_scale(g1g2_trans_mult[0], 100.0, INDI_OUTPUTS*INDI_NUM_ACT);
+  float_vect_scale(g1g2_trans_mult[0], 100.0, INDI_OUTPUTS*INDI_OUTPUTS);
 
   //inverse of 4x4 matrix
   float_mat_inv_4d(g1g2inv[0], g1g2_trans_mult[0]);
 
   //scale back
-  float_vect_scale(g1g2inv[0], 100.0, INDI_OUTPUTS*INDI_NUM_ACT);
+  float_vect_scale(g1g2inv[0], 100.0, INDI_OUTPUTS*INDI_OUTPUTS);
 
   //G1G2'*G1G2inv
   //calculate matrix multiplication INDI_NUM_ACTxINDI_OUTPUTS x INDI_OUTPUTSxINDI_OUTPUTS

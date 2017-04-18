@@ -48,7 +48,7 @@ extern bool indi_use_adaptive;
 extern struct FloatRates angular_accel_ref;
 
 // for logging
-extern float indi_v[4];
+extern float indi_v[INDI_OUTPUTS];
 
 // used for scheduling
 extern float g1g2[INDI_OUTPUTS][INDI_NUM_ACT];
