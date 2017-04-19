@@ -187,7 +187,37 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
   VECT2_DIFF(desired_airspeed, speed_sp, windspeed); // Use 2d part of speed_sp
   float norm_des_as = FLOAT_VECT2_NORM(desired_airspeed);
 
+  // Make turn instead of straight line
   if((airspeed > 10.0) && (norm_des_as > 14.0)) {
+
+  // Give the wind cancellation priority.
+    if (norm_des_as > GUIDANCE_INDI_MAX_AIRSPEED) {
+      float groundspeed_factor = 0.0;
+
+      // if the wind is faster than we can fly, just fly in the wind direction
+      if(FLOAT_VECT2_NORM(windspeed) < GUIDANCE_INDI_MAX_AIRSPEED) {
+        float av = speed_sp.x * speed_sp.x + speed_sp.y * speed_sp.y;
+        float bv = -2 * (windspeed.x * speed_sp.x + windspeed.y * speed_sp.y);
+        float cv = windspeed.x * windspeed.x + windspeed.y * windspeed.y - GUIDANCE_INDI_MAX_AIRSPEED * GUIDANCE_INDI_MAX_AIRSPEED;
+
+        float dv = bv * bv - 4.0 * av * cv;
+
+        // dv can only be positive, but just in case
+        if(dv < 0) {
+          dv = fabs(dv);
+        }
+        float d_sqrt = sqrtf(dv);
+
+        groundspeed_factor = (-bv + d_sqrt)  / (2 * av);
+      }
+
+      desired_airspeed.x = groundspeed_factor * speed_sp.x - windspeed.x;
+      desired_airspeed.y = groundspeed_factor * speed_sp.y - windspeed.y;
+
+      speed_sp_b_x = GUIDANCE_INDI_MAX_AIRSPEED;
+    }
+
+
     speed_sp_b_x = Min(norm_des_as,GUIDANCE_INDI_MAX_AIRSPEED);
 
     struct FloatVect2 sp_accel_b;
@@ -202,7 +232,7 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
     sp_accel.y = sinf(psi) * sp_accel_b.x + cosf(psi) * sp_accel_b.y;
 
     sp_accel.z = (speed_sp.z - stateGetSpeedNed_f()->z) * guidance_indi_speed_gain;
-  } else {
+  } else { // Go somewhere in the shortest way
 
     if(airspeed > 10.0) {
       // Groundspeed vector in body frame
@@ -222,8 +252,10 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
     sp_accel.z = (speed_sp.z - stateGetSpeedNed_f()->z) * guidance_indi_speed_gain;
   }
 
-  BoundAbs(sp_accel.x, 3.0 + airspeed/GUIDANCE_INDI_MAX_AIRSPEED*6.0);
-  BoundAbs(sp_accel.y, 3.0 + airspeed/GUIDANCE_INDI_MAX_AIRSPEED*6.0);
+  float accelbound = 3.0 + airspeed/GUIDANCE_INDI_MAX_AIRSPEED*6.0;
+  scale_two_d(&sp_accel, accelbound);
+  /*BoundAbs(sp_accel.x, 3.0 + airspeed/GUIDANCE_INDI_MAX_AIRSPEED*6.0);*/
+  /*BoundAbs(sp_accel.y, 3.0 + airspeed/GUIDANCE_INDI_MAX_AIRSPEED*6.0);*/
   BoundAbs(sp_accel.z, 3.0);
 
 #if GUIDANCE_INDI_RC_DEBUG

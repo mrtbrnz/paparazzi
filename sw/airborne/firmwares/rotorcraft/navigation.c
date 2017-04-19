@@ -76,7 +76,7 @@
 #define CLOSE_TO_WAYPOINT (15 << INT32_POS_FRAC)
 #define CARROT_DIST (12 << INT32_POS_FRAC)
 
-static void scale_two_d(struct FloatVect3 *vect3, float bound) {
+void scale_two_d(struct FloatVect3 *vect3, float bound) {
   float norm = FLOAT_VECT2_NORM(*vect3);
   if(norm>bound) {
     float scale = bound/norm;

@@ -116,6 +116,8 @@ extern struct FloatVect3 nav_get_speed_setpoint(void);
 
 extern void set_exception_flag(uint8_t flag_num);
 
+extern void scale_two_d(struct FloatVect3 *vect3, float bound);
+
 extern float get_dist2_to_waypoint(uint8_t wp_id);
 extern float get_dist2_to_point(struct EnuCoor_i *p);
 extern void compute_dist2_to_home(void);
