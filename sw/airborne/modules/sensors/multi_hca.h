@@ -27,7 +27,7 @@
 #include "mcu_periph/i2c.h"
 
 
-extern struct i2c_transaction multi_hca_i2c_trans;
+extern struct i2c_transaction multi_hca_i2c_trans[4];
 
 extern void multi_hca_init(void);
 extern void multi_hca_read_periodic(void);
