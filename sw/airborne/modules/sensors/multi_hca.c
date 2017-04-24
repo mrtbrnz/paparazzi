@@ -47,8 +47,8 @@
 #define BARO_HCA_PRESSURE_OFFSET 101325.0
 #endif
 
-#ifndef BARO_HCA_I2C_DEV
-#define BARO_HCA_I2C_DEV i2c0
+#ifndef MULTI_HCA_I2C_DEV
+#define MULTI_HCA_I2C_DEV i2c0
 #endif
 
 // Global variables
@@ -70,25 +70,25 @@ void multi_hca_init(void)
 void multi_hca_read_periodic(void)
 {
   if (multi_hca_i2c_trans.status == I2CTransDone) {
-    i2c_receive(&MULTI_HCA_I2C_DEV, &multi_hca_i2c_trans, BARO_HCA_ADDR, 2);
+    i2c_receive(&MULTI_HCA_I2C_DEV, &multi_hca_i2c_trans, MULTI_HCA_ADDR, 2);
   }
 }
 
 
-void baro_hca_read_event(void)
+void multi_hca_read_event(void)
 {
   pBaroRaw = 0;
   // Get raw altimeter from buffer
-  pBaroRaw = ((uint16_t)baro_hca_i2c_trans.buf[0] << 8) | baro_hca_i2c_trans.buf[1];
+  pBaroRaw = ((uint16_t)multi_hca_i2c_trans.buf[0] << 8) | multi_hca_i2c_trans.buf[1];
 
   if (pBaroRaw == 0) {
-    baro_hca_valid = false;
+    multi_hca_valid = false;
   } else {
-    baro_hca_valid = true;
+    multi_hca_valid = true;
   }
 
 
-  if (baro_hca_valid) {
+  if (multi_hca_valid) {
     //Cut RAW Min and Max
     if (pBaroRaw < BARO_HCA_MIN_OUT) {
       pBaroRaw = BARO_HCA_MIN_OUT;
@@ -96,11 +96,8 @@ void baro_hca_read_event(void)
     if (pBaroRaw > BARO_HCA_MAX_OUT) {
       pBaroRaw = BARO_HCA_MAX_OUT;
     }
-
-    float pressure = BARO_HCA_SCALE * (float)pBaroRaw + BARO_HCA_PRESSURE_OFFSET;
-    AbiSendMsgBARO_ABS(BARO_HCA_SENDER_ID, pressure);
   }
-  baro_hca_i2c_trans.status = I2CTransDone;
+  multi_hca_i2c_trans.status = I2CTransDone;
 
   uint16_t foo = 0;
   float bar = 0;
