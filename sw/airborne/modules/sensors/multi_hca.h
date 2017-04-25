@@ -26,7 +26,7 @@
 #include "std.h"
 
 #ifndef HCA_NB_SENSORS
-#define HCA_NB_SENSORS	4
+#define HCA_NB_SENSORS  4
 #endif
 
 struct hca_sensor {

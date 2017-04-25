@@ -64,9 +64,9 @@ void multi_hca_init(void)
   uint8_t i = 0;
 
   for (i = 0; i < HCA_NB_SENSORS; i++) {
-		hca_sensors[i].valid = false;
-		hca_sensors[i].raw = 0;
-		hca_sensors[i].scaled = 0.f;
+    hca_sensors[i].valid = false;
+    hca_sensors[i].raw = 0;
+    hca_sensors[i].scaled = 0.f;
     multi_hca_i2c_trans[i].status = I2CTransDone;
   }
 }
@@ -93,13 +93,13 @@ void multi_hca_read_event(void)
     if (multi_hca_i2c_trans[i].status == I2CTransSuccess) {
       pBaroRaw = 0;
       pBaroRaw = ((uint16_t)multi_hca_i2c_trans[i].buf[0] << 8) | multi_hca_i2c_trans[i].buf[1];
-   
+
       if (pBaroRaw == 0) {
         hca_sensors[i].valid = false;
       } else {
         hca_sensors[i].valid = true;
       }
-   
+
       if (hca_sensors[i].valid) {
         //Cut RAW Min and Max
         if (pBaroRaw < BARO_HCA_MIN_OUT) {
@@ -110,12 +110,11 @@ void multi_hca_read_event(void)
         }
       }
       hca_sensors[i].raw = pBaroRaw;
-			//FIXME apply scale
-			hca_sensors[i].scaled = (float) pBaroRaw;
+      //FIXME apply scale
+      hca_sensors[i].scaled = (float) pBaroRaw;
 
       multi_hca_i2c_trans[i].status = I2CTransDone;
-    }
-    else if (multi_hca_i2c_trans[0].status == I2CTransFailed) {
+    } else if (multi_hca_i2c_trans[0].status == I2CTransFailed) {
       multi_hca_i2c_trans[0].status = I2CTransDone;
     }
   }
