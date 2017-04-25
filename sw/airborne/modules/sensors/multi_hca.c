@@ -30,11 +30,6 @@
 #include "pprzlink/messages.h"
 #include "subsystems/datalink/downlink.h"
 
-uint8_t multi_hca_add[4]={0x70, 0x71, 0x72, 0x73};
-
-#define MULTI_HCA_ADDR 0x70
-#define BARO_HCA_MAX_PRESSURE 1100 // mBar
-#define BARO_HCA_MIN_PRESSURE 800 // mBar
 #define BARO_HCA_MAX_OUT 27852 //dec
 #define BARO_HCA_MIN_OUT 1638 //dec
 
@@ -52,21 +47,26 @@ uint8_t multi_hca_add[4]={0x70, 0x71, 0x72, 0x73};
 #define MULTI_HCA_I2C_DEV i2c0
 #endif
 
-// Global variables
-uint16_t pBaroRaw[4];
-bool multi_hca_valid;
-float multi_hca_p;
+#define SENSOR_SYNC_SEND  0
 
+struct hca_sensor hca_sensors[HCA_NB_SENSORS];
 
-struct i2c_transaction multi_hca_i2c_trans[4];
+struct i2c_transaction multi_hca_i2c_trans[HCA_NB_SENSORS];
+
+#ifndef HCA_SENSORS_ADDR
+#define HCA_SENSORS_ADDR { 0x70<<1, 0x71<<1, 0x72<<1, 0x73<<1 }
+#endif
+uint8_t multi_hca_addr[] = HCA_SENSORS_ADDR;
+
 
 void multi_hca_init(void)
 {
-  uin8_t i=0;
+  uint8_t i = 0;
 
-  for(i=0;i<4;i++) {
-    pBaroRaw[i] = 0;
-    multi_hca_valid[i] = true;
+  for (i = 0; i < HCA_NB_SENSORS; i++) {
+		hca_sensors[i].valid = false;
+		hca_sensors[i].raw = 0;
+		hca_sensors[i].scaled = 0.f;
     multi_hca_i2c_trans[i].status = I2CTransDone;
   }
 }
@@ -74,11 +74,11 @@ void multi_hca_init(void)
 
 void multi_hca_read_periodic(void)
 {
-  uin8_t i=0;
+  uint8_t i = 0;
 
-  for(i=0;i<4;i++) {
+  for (i = 0; i < HCA_NB_SENSORS; i++) {
     if (multi_hca_i2c_trans[i].status == I2CTransDone) {
-      i2c_receive(&MULTI_HCA_I2C_DEV, &multi_hca_i2c_trans[i], multi_hca_add[i], 2);
+      i2c_receive(&MULTI_HCA_I2C_DEV, &multi_hca_i2c_trans[i], multi_hca_addr[i], 2);
     }
   }
 }
@@ -86,53 +86,46 @@ void multi_hca_read_periodic(void)
 
 void multi_hca_read_event(void)
 {
-  uin8_t i=0;
+  uint8_t i = 0;
   uint16_t pBaroRaw = 0;
 
-  for(i=0;i<4;i++) {
+  for (i = 0; i < HCA_NB_SENSORS; i++) {
+    if (multi_hca_i2c_trans[i].status == I2CTransSuccess) {
+      pBaroRaw = 0;
+      pBaroRaw = ((uint16_t)multi_hca_i2c_trans[i].buf[0] << 8) | multi_hca_i2c_trans[i].buf[1];
+   
+      if (pBaroRaw == 0) {
+        hca_sensors[i].valid = false;
+      } else {
+        hca_sensors[i].valid = true;
+      }
+   
+      if (hca_sensors[i].valid) {
+        //Cut RAW Min and Max
+        if (pBaroRaw < BARO_HCA_MIN_OUT) {
+          pBaroRaw = BARO_HCA_MIN_OUT;
+        }
+        if (pBaroRaw > BARO_HCA_MAX_OUT) {
+          pBaroRaw = BARO_HCA_MAX_OUT;
+        }
+      }
+      hca_sensors[i].raw = pBaroRaw;
+			//FIXME apply scale
+			hca_sensors[i].scaled = (float) pBaroRaw;
 
-    pBaroRaw = 0;
-    pBaroRaw = ((uint16_t)multi_hca_i2c_trans[i].buf[0] << 8) | multi_hca_i2c_trans[i].buf[1];
-  
-    if (pBaroRaw == 0) {
-      multi_hca_valid = false;
-    } else {
-      multi_hca_valid = true;
+      multi_hca_i2c_trans[i].status = I2CTransDone;
     }
-  
-    if (multi_hca_valid) {
-      //Cut RAW Min and Max
-      if (pBaroRaw < BARO_HCA_MIN_OUT) {
-        pBaroRaw = BARO_HCA_MIN_OUT;
-      }
-      if (pBaroRaw > BARO_HCA_MAX_OUT) {
-        pBaroRaw = BARO_HCA_MAX_OUT;
-      }
+    else if (multi_hca_i2c_trans[0].status == I2CTransFailed) {
+      multi_hca_i2c_trans[0].status = I2CTransDone;
     }
-    multi_hca_i2c_trans[i].status = I2CTransDone;
-    pBaroRaw[i]=pBaroRaw;
-    
-    uint16_t foo = 0;
-    float bar = 0;
-  #ifdef SENSOR_SYNC_SEND
-    DOWNLINK_SEND_BARO_ETS(DefaultChannel, DefaultDevice, &pBaroRaw[i], &foo, &bar)
-  #else
-    RunOnceEvery(10, DOWNLINK_SEND_BARO_ETS(DefaultChannel, DefaultDevice, &pBaroRaw[i], &foo, &bar));
-  #endif
-  } 
+  }
+
+#ifdef SENSOR_SYNC_SENDa
+  float tab[HCA_NB_SENSORS];
+  for (i = 0; i < HCA_NB_SENSORS; i++) {
+    tab[i] = hca_sensors[i].scaled;
+  }
+  DOWNLINK_SEND_PAYLOAD_FLOAT(DefaultChannel, DefaultDevice, HCA_NB_SENSORS, tab);
+#endif
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
