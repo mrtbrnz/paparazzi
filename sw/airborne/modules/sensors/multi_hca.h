@@ -24,18 +24,22 @@
 #define MULTI_HCA_H
 
 #include "std.h"
-#include "mcu_periph/i2c.h"
 
+#ifndef HCA_NB_SENSORS
+#define HCA_NB_SENSORS	4
+#endif
 
-extern struct i2c_transaction multi_hca_i2c_trans[4];
+struct hca_sensor {
+  bool valid;
+  float scaled;
+  uint16_t raw;
+};
+
+extern struct hca_sensor hca_sensors[HCA_NB_SENSORS];
 
 extern void multi_hca_init(void);
 extern void multi_hca_read_periodic(void);
 extern void multi_hca_read_event(void);
 
-#define MultiHcaEvent() { \
-    if (multi_hca_i2c_trans.status == I2CTransSuccess) multi_hca_read_event(); \
-    else if (multi_hca_i2c_trans.status == I2CTransFailed) multi_hca_i2c_trans.status = I2CTransDone; \
-  }
-
 #endif
+
