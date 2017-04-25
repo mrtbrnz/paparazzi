@@ -47,7 +47,7 @@
 #define MULTI_HCA_I2C_DEV i2c0
 #endif
 
-#define SENSOR_SYNC_SEND  0
+#define SENSOR_SYNC_SEND  1
 
 struct hca_sensor hca_sensors[HCA_NB_SENSORS];
 
@@ -120,7 +120,7 @@ void multi_hca_read_event(void)
     }
   }
 
-#ifdef SENSOR_SYNC_SENDa
+#ifdef SENSOR_SYNC_SEND
   float tab[HCA_NB_SENSORS];
   for (i = 0; i < HCA_NB_SENSORS; i++) {
     tab[i] = hca_sensors[i].scaled;
