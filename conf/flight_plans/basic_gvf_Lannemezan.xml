@@ -26,6 +26,10 @@ static inline uint8_t TEMP_DECISION(void) { return FALSE; }
 	  <variable var="angle_ps" init="0" min="-180" max="179" step="1"/>
   </variables>
 
+  <modules>
+    <module name="gvf_module"/>
+  </modules>
+
   <exceptions>
     <exception cond="GetPosAlt() > 2100" deroute="Standby"/>
     <exception cond="datalink_time > (8*60)" deroute="Standby"/>

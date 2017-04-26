@@ -45,8 +45,6 @@
     <module name="nav" type="survey_polygon"/>
     <module name="nav" type="catapult"/>
 
-    <module name="gvf_module"/>
-
     <module name="tlsf"/>
     <module name="pprzlog"/>
     <module name="logger" type="sd_chibios"/>
