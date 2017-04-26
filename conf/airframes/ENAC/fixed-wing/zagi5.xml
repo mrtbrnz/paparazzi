@@ -27,7 +27,7 @@
     </target>
     <target name="nps" board="pc">
       <module name="radio_control" type="ppm"/>
-      <subsystem name="fdm"   type="jsbsim"/>
+      <module name="fdm"   type="jsbsim"/>
     </target>
 
     <module name="telemetry" type="xbee_api"/>
@@ -44,6 +44,8 @@
     <module name="navigation"/>
     <module name="nav" type="survey_polygon"/>
     <module name="nav" type="catapult"/>
+
+    <module name="gvf_module"/>
 
     <module name="tlsf"/>
     <module name="pprzlog"/>
