@@ -105,7 +105,8 @@ static enum {
 static void send_sdlog_status(struct transport_tx *trans, struct link_device *dev)
 {
   uint8_t status = (uint8_t) chibios_sdlog_status;
-  uint8_t errno = (uint8_t) sdLogGetStorageStatus();
+  //uint8_t errno = (uint8_t) sdLogGetStorageStatus();
+  uint8_t errno = (uint8_t) usb_storage_error;
   uint32_t used = (uint32_t) sdLogGetNbBytesWrittenToStorage();
   pprz_msg_send_LOGGER_STATUS(trans, dev, AC_ID, &status, &errno, &used);
 }

@@ -41,6 +41,7 @@ static thread_t *usbStorageThreadPtr = NULL;
 /* USB mass storage driver */
 static bool isRunning = false;
 
+uint8_t usb_storage_error = 0;
 
 /* Turns on a LED when there is I/O activity on the USB port */
 static void usbActivity(bool active __attribute__((unused)))
@@ -101,6 +102,7 @@ static void thdUsbStorage(void *arg)
   uint antiBounce = 5;
   event_listener_t connected;
 
+  usb_storage_error = 1;
   while (!chThdShouldTerminateX() && antiBounce) {
     const bool usbConnected = palReadPad(SDLOG_USB_VBUS_PORT, SDLOG_USB_VBUS_PIN);
     if (usbConnected) {
@@ -114,36 +116,47 @@ static void thdUsbStorage(void *arg)
   isRunning = true;
   chRegSetThreadName("UsbStorage:connected");
 
+  usb_storage_error = 2;
   /* Stop the logs*/
   // it's not a powerloss, wa have time to flush the ram buffer
   sdlog_chibios_finish(true);
 
+  usb_storage_error = 3;
 
   /* connect sdcard sdc interface sdio */
   if (sdio_connect() == false) {
     chThdExit(MSG_TIMEOUT);
+    usb_storage_error = 4;
   }
+  usb_storage_error = 5;
 
   /* initialize the USB mass storage driver */
   init_msd_driver(NULL, &msdConfig);
 
+  usb_storage_error = 6;
   /* wait for a real usb storage connexion before shutting down autopilot */
   msd_register_evt_connected(&connected, EVENT_MASK(1));
+  usb_storage_error = 7;
   chEvtWaitOne(EVENT_MASK(1));
+  usb_storage_error = 8;
 
   /* stop autopilot */
   pprz_terminate_autopilot_threads();
 
+  usb_storage_error = 9;
   /* wait until usb-storage is unmount and usb cable is unplugged*/
   while (!chThdShouldTerminateX() && palReadPad(SDLOG_USB_VBUS_PORT, SDLOG_USB_VBUS_PIN)) {
     chThdSleepMilliseconds(10);
   }
 
+  usb_storage_error = 10;
   deinit_msd_driver();
 
+  usb_storage_error = 11;
   chThdSleepMilliseconds(500);
 
   mcu_reset();
+  usb_storage_error = 12;
 }
 
 bool usbStorageIsItRunning(void)

@@ -26,6 +26,7 @@
 #pragma once
 
 #include <ch.h>
+extern uint8_t usb_storage_error;
 
 void usbStorageStartPolling(void);
 void usbStorageStop(void);
