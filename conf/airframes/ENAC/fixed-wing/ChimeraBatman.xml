@@ -17,7 +17,9 @@
   <firmware name="fixedwing">
     <define name="USE_I2C1"/>
     <define name="USE_GYRO_PITCH_RATE"/>
-    <!--configure name="PERIODIC_FREQUENCY" value="100"/-->
+
+    <!-- To have synchronized multi_hda store data-->
+    <configure name="PERIODIC_FREQUENCY" value="100"/>
 
     <target name="ap" board="chimera_1.0">
       <module name="radio_control" type="sbus"/>
