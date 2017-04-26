@@ -48,6 +48,12 @@
       <configure name="MULTI_HCA_I2C_DEV" value="i2c2"/>
     </module>
 
+    <module name="pwm_meas.xml"/>  
+    <module name="AOA_pwm.xml">  
+      <configure name="AOA_PWM_CHANNEL" value="PWM_INPUT1"/>
+      <configure name="SSA_PWM_CHANNEL" value="PWM_INPUT2"/>
+    </module>
+
     <module name="tlsf"/>
     <module name="pprzlog"/>
     <module name="logger" type="sd_chibios"/>
@@ -59,9 +65,9 @@
     <!-- DGPS>
     <define name="USE_GPS_UBX_RTCM" value="TRUE"/-->
     
-    <module name="current_sensor">
+    <!--module name="current_sensor">
       <configure name="ADC_CURRENT_SENSOR" value="ADC_1"/>
-    </module>
+    </module-->
 
   </firmware>
 
@@ -95,6 +101,16 @@
     <set servo="AILEVON_LEFT" value="$elevator - $aileron"/>
     <set servo="AILEVON_RIGHT" value="$elevator + $aileron"/>
   </command_laws>
+
+  <section name="AOA">
+    <define name="AOA_REVERSE" value="TRUE"/>
+    <define name="AOA_SENS" value="(0.7235*2.0*M_PI/4096.)"/>
+    <define name="SSA_SENS" value="(1.0*2.0*M_PI/4096.)"/>
+    <define name="AOA_OFFSET" value="0.0" unit="deg"/>
+    <define name="SSA_OFFSET" value="0.0" unit="deg"/>
+    <define name="LOG_AOA" value="FALSE"/>
+    <define name="USE_AIRSPEED_AIR_DATA" value="TRUE"/>
+  </section>
 
   <section name="AUTO1" prefix="AUTO1_">
     <define name="MAX_ROLL" value="0.85"/>
