@@ -30,6 +30,12 @@
 #include "pprzlink/messages.h"
 #include "subsystems/datalink/downlink.h"
 
+#if FLIGHTRECORDER_SDLOG
+#include "subsystems/datalink/telemetry.h"
+#include "modules/loggers/pprzlog_tp.h"
+#include "modules/loggers/sdlog_chibios.h"
+#endif
+
 #define BARO_HCA_MAX_OUT 27852 //dec
 #define BARO_HCA_MIN_OUT 1638 //dec
 
@@ -88,6 +94,7 @@ void multi_hca_read_event(void)
 {
   uint8_t i = 0;
   uint16_t pBaroRaw = 0;
+  static uint8_t new_data = 0;
 
   for (i = 0; i < HCA_NB_SENSORS; i++) {
     if (multi_hca_i2c_trans[i].status == I2CTransSuccess) {
@@ -98,6 +105,7 @@ void multi_hca_read_event(void)
         hca_sensors[i].valid = false;
       } else {
         hca_sensors[i].valid = true;
+	new_data++;
       }
 
       if (hca_sensors[i].valid) {
@@ -119,12 +127,24 @@ void multi_hca_read_event(void)
     }
   }
 
-#ifdef SENSOR_SYNC_SEND
-  float tab[HCA_NB_SENSORS];
-  for (i = 0; i < HCA_NB_SENSORS; i++) {
-    tab[i] = hca_sensors[i].scaled;
+#if SENSOR_SYNC_SEND || defined FLIGHTRECORDER_SDLOG
+  if (new_data >= HCA_NB_SENSORS) {
+    float tab[HCA_NB_SENSORS];
+    for (i = 0; i < HCA_NB_SENSORS; i++) {
+      tab[i] = hca_sensors[i].scaled;
+    }
+#if SENSOR_SYNC_SEND
+    DOWNLINK_SEND_PAYLOAD_FLOAT(DefaultChannel, DefaultDevice, HCA_NB_SENSORS, tab);
+#endif
+
+#if FLIGHTRECORDER_SDLOG
+    if (flightRecorderLogFile != -1) {
+      DOWNLINK_SEND_PAYLOAD_FLOAT(pprzlog_tp, flightrecorder_sdlog, HCA_NB_SENSORS, tab);
+    }
+#endif
+
+    new_data = 0;
   }
-  DOWNLINK_SEND_PAYLOAD_FLOAT(DefaultChannel, DefaultDevice, HCA_NB_SENSORS, tab);
 #endif
 }
 
