@@ -26,7 +26,7 @@
     </target>
     <target name="nps" board="pc">
       <module name="radio_control" type="ppm"/>
-      <module name="fdm"   type="jsbsim"/>
+      <module name="fdm" type="jsbsim"/>
     </target>
 
     <module name="telemetry" type="xbee_api"/>
@@ -153,7 +153,7 @@
     <define name="ACCEL_Z_SENS" value="2.43161716003" integer="16"/>
 
     <define name="BODY_TO_IMU_PHI" value="0"/>
-    <define name="BODY_TO_IMU_THETA" value="0.139626"/>
+    <define name="BODY_TO_IMU_THETA" value="-0.153589"/>
     <define name="BODY_TO_IMU_PSI" value="0"/>
   </section>
 
@@ -194,19 +194,19 @@
     <define name="AUTO_CLIMB_LIMIT" value="2*V_CTL_ALTITUDE_MAX_CLIMB"/>
 
     <!-- Cruise throttle + limits -->
-    <define name="AUTO_THROTTLE_NOMINAL_CRUISE_THROTTLE" value="0.55"/>
+    <define name="AUTO_THROTTLE_NOMINAL_CRUISE_THROTTLE" value="0.57"/>
     <define name="AUTO_THROTTLE_MIN_CRUISE_THROTTLE" value="0.25"/>
     <define name="AUTO_THROTTLE_MAX_CRUISE_THROTTLE" value="0.85"/>
 
     <!-- Climb loop (throttle) -->
-    <define name="AUTO_THROTTLE_CLIMB_THROTTLE_INCREMENT" value="0.088" unit="%/(m/s)"/>
-    <define name="AUTO_THROTTLE_PGAIN" value="0.004"/>
+    <define name="AUTO_THROTTLE_CLIMB_THROTTLE_INCREMENT" value="0.11" unit="%/(m/s)"/>
+    <define name="AUTO_THROTTLE_PGAIN" value="0.009"/>
     <define name="AUTO_THROTTLE_DGAIN" value="0.0"/>
-    <define name="AUTO_THROTTLE_IGAIN" value="0."/>
-    <define name="AUTO_THROTTLE_PITCH_OF_VZ_PGAIN" value="0.077"/>
+    <define name="AUTO_THROTTLE_IGAIN" value="0.006"/>
+    <define name="AUTO_THROTTLE_PITCH_OF_VZ_PGAIN" value="0.08"/>
 
     <!-- Climb loop (pitch) -->
-    <define name="AUTO_PITCH_PGAIN" value="0.027"/>
+    <define name="AUTO_PITCH_PGAIN" value="0.019"/>
     <define name="AUTO_PITCH_DGAIN" value="0.01"/>
     <define name="AUTO_PITCH_IGAIN" value="0.0"/>
     <define name="AUTO_PITCH_MAX_PITCH" value="20" unit="deg"/>
