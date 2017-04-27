@@ -127,13 +127,14 @@ enum Aoa_Type aoa_send_type;
 static void send_aoa(struct transport_tx *trans, struct link_device *dev)
 {
   // FIXME use a second message, more fields or add a sensor ID to send sideslip
+      float tmp = (float)ssa_pwm.raw;
   switch (aoa_send_type) {
     case SEND_TYPE_SIDESLIP:
       pprz_msg_send_AOA(trans, dev, AC_ID, &ssa_pwm.raw, &ssa_pwm.angle);
       break;
     case SEND_TYPE_AOA:
     default:
-      pprz_msg_send_AOA(trans, dev, AC_ID, &aoa_pwm.raw, &aoa_pwm.angle);
+      pprz_msg_send_AOA(trans, dev, AC_ID, &aoa_pwm.raw, &tmp);
       break;
   }
 }
