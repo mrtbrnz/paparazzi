@@ -14,7 +14,7 @@
                         SD card backside,  molex upside, power rightside) 
 -->
 
-<airframe name="ZagyBlackOne">
+<airframe name="Zagi5">
 
   <firmware name="fixedwing">
     <define name="USE_I2C1"/>
@@ -112,13 +112,9 @@
   <command_laws>
     <let var="aileron" value="@ROLL  * AILEVON_AILERON_RATE"/>
     <let var="elevator" value="@PITCH * AILEVON_ELEVATOR_RATE"/>
-    <let var="servo_fault1" value="@FAULT1 >= 0 ? 1.0 : 0.5"/>
-    <let var="servo_fault2" value="@FAULT2 >= 0 ? 1.0 : 0.5"/>
     <set servo="MOTOR" value="@THROTTLE"/>
-    <!--set servo="AILEVON_LEFT" value="($elevator - $aileron)"/>
-    <set servo="AILEVON_RIGHT" value="($elevator + $aileron)"/-->
-    <set servo="AILEVON_LEFT" value="($elevator - $aileron) * $servo_fault2"/>
-    <set servo="AILEVON_RIGHT" value="($elevator + $aileron) * $servo_fault1"/>
+    <set servo="AILEVON_LEFT" value="($elevator - $aileron)"/>
+    <set servo="AILEVON_RIGHT" value="($elevator + $aileron)"/>
   </command_laws>
 
   <section name="AOA">
@@ -154,12 +150,12 @@
     <define name="ACCEL_Y_SIGN" value="-1"/>
     <define name="ACCEL_Z_SIGN" value="-1"/>
 
-    <define name="ACCEL_X_NEUTRAL" value="2"/>
-    <define name="ACCEL_Y_NEUTRAL" value="-31"/>
-    <define name="ACCEL_Z_NEUTRAL" value="30"/>
-    <define name="ACCEL_X_SENS" value="2.44668108444" integer="16"/>
-    <define name="ACCEL_Y_SENS" value="2.43517068566" integer="16"/>
-    <define name="ACCEL_Z_SENS" value="2.45381364992" integer="16"/>
+    <define name="ACCEL_X_NEUTRAL" value="25"/>
+    <define name="ACCEL_Y_NEUTRAL" value="-41"/>
+    <define name="ACCEL_Z_NEUTRAL" value="379"/>
+    <define name="ACCEL_X_SENS" value="2.4537713161" integer="16"/>
+    <define name="ACCEL_Y_SENS" value="2.44806379634" integer="16"/>
+    <define name="ACCEL_Z_SENS" value="2.42823219968" integer="16"/>
 
     <define name="BODY_TO_IMU_PHI" value="0"/>
     <define name="BODY_TO_IMU_THETA" value="0"/>
