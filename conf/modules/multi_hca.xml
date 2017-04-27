@@ -10,7 +10,7 @@
     <file name="multi_hca.h"/>
   </header>
   <init fun="multi_hca_init()"/>
-  <periodic fun="multi_hca_read_periodic()" freq="10."/>
+  <periodic fun="multi_hca_read_periodic()" freq="50."/>
   <event fun="multi_hca_read_event()"/>
 
   <makefile target="ap">
