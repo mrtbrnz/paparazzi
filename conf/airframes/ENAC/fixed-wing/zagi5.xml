@@ -55,18 +55,23 @@
     </module>
     <!--DGPS-->
     <define name="USE_GPS_UBX_RTCM" value="TRUE"/>
-    
-    <module name="adc_generic">
-      <configure name="ADC_CHANNEL_GENERIC1" value="ADC_1"/>
-      <configure name="ADC_CHANNEL_GENERIC2" value="ADC_2"/>
+
+    <module name="mag" type="hmc58xx">
+      <define name="MODULE_HMC58XX_UPDATE_AHRS"/>
+      <configure name="MAG_HMC58XX_I2C_DEV" value="i2c2"/>
     </module>
 
-    <module name="pwm_meas"/>
-      <!--define name="USE_PWM1" value="FALSE"/>
-    </module-->
+    <module name="adc_generic">
+      <configure name="ADC_CHANNEL_GENERIC1" value="ADC_2"/>
+    </module>
+
+    <module name="pwm_meas">
+      <define name="USE_PWM1" value="FALSE"/>
+    </module>
     
     <module name="AOA_pwm">  
-      <configure name="AOA_PWM_CHANNEL" value="PWM_INPUT1"/>
+      <configure name="AOA_PWM_CHANNEL" value="PWM_INPUT2"/>
+      <configure name="SSA_PWM_CHANNEL" value="PWM_INPUT1"/>
     </module>
 
     <!--module name="airspeed_adc.xml">
@@ -82,7 +87,7 @@
   <servos>
     <servo name="MOTOR"         no="0" min="1040" neutral="1040" max="2000"/>
     <servo name="AILEVON_LEFT"  no="2" max="1100" neutral="1500" min="1900"/>
-    <servo name="AILEVON_RIGHT" no="1" max="1900" neutral="1500" min="1100"/>
+    <servo name="AILEVON_RIGHT" no="3" max="1900" neutral="1500" min="1100"/>
   </servos>
 
   <commands>
