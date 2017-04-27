@@ -1,10 +1,10 @@
 <!DOCTYPE airframe SYSTEM "../../airframe.dtd">
 
 <!--
-  ZagyBlackOne 
+   Zagi 5 with the AeroBOOM from ISAE 
 
-    - Propeller:        
-    - Motor:            
+    - Propeller:        8x6 203 x 152
+    - Motor:            T-Motor 1130 rpm/v
     - Motor controller: 
     - Radio modem:      Xbee 2.4 Ghz 
     - Radio control:    Futaba R6303SB (s-bus)
@@ -20,7 +20,7 @@
     <define name="USE_I2C1"/>
     <define name="USE_GYRO_PITCH_RATE"/>
 
-    <!--configure name="PERIODIC_FREQUENCY" value="100"/-->
+    <configure name="PERIODIC_FREQUENCY" value="100"/>
 
     <target name="ap" board="apogee_1.0_chibios">
       <module name="radio_control" type="sbus"/>

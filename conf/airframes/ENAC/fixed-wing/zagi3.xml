@@ -1,10 +1,10 @@
 <!DOCTYPE airframe SYSTEM "../../airframe.dtd">
 
 <!--
-  Black wing for Mistrale 
+  Zagi 3 with Surface AoA Sensors 
 
-    - Propeller:        8x6 203 x 152
-    - Motor:            Hacker 1130 rpm/v
+    - Propeller:        
+    - Motor:             rpm/v
     - Motor controller: Kiss ESC 30A
     - Radio modem:      Xbee 2.4 Ghz 
     - Radio control:    Futaba R6303SB (s-bus)
@@ -12,7 +12,7 @@
     - Autopilot;        Chimera
 -->
 
-<airframe name="Batman">
+<airframe name="Zagi3">
 
   <firmware name="fixedwing">
     <define name="USE_I2C1"/>
@@ -62,8 +62,13 @@
     <module name="gps" type="ublox">
       <configure name="GPS_BAUD" value="B115200"/>
     </module>
-    <!-- DGPS>
-    <define name="USE_GPS_UBX_RTCM" value="TRUE"/-->
+
+    <module name="airspeed" type="ms45xx_i2c">
+      <define name="MS45XX_I2C_DEV" value="i2c1"/>
+    </module>
+
+    <!-- DGPS-->
+    <define name="USE_GPS_UBX_RTCM" value="TRUE"/>
     
     <!--module name="current_sensor">
       <configure name="ADC_CURRENT_SENSOR" value="ADC_1"/>
