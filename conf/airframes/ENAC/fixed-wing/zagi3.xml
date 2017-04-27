@@ -62,8 +62,8 @@
     <module name="gps" type="ublox">
       <configure name="GPS_BAUD" value="B115200"/>
     </module>
-    <!-- DGPS-->
-    <define name="USE_GPS_UBX_RTCM" value="TRUE"/>
+    <!-- DGPS>
+    <define name="USE_GPS_UBX_RTCM" value="TRUE"/-->
     
     <!--module name="current_sensor">
       <configure name="ADC_CURRENT_SENSOR" value="ADC_1"/>
@@ -135,12 +135,13 @@
     <define name="ACCEL_X_SIGN" value="1"/>
     <define name="ACCEL_Y_SIGN" value="1"/>
     <define name="ACCEL_Z_SIGN" value="1"/>
-    <define name="ACCEL_X_NEUTRAL" value="2"/>
-    <define name="ACCEL_Y_NEUTRAL" value="-31"/>
-    <define name="ACCEL_Z_NEUTRAL" value="30"/>
-    <define name="ACCEL_X_SENS" value="2.44668108444" integer="16"/>
-    <define name="ACCEL_Y_SENS" value="2.43517068566" integer="16"/>
-    <define name="ACCEL_Z_SENS" value="2.45381364992" integer="16"/>
+
+    <define name="ACCEL_X_NEUTRAL" value="-25"/>
+    <define name="ACCEL_Y_NEUTRAL" value="-113"/>
+    <define name="ACCEL_Z_NEUTRAL" value="4"/>
+    <define name="ACCEL_X_SENS" value="2.44599670824" integer="16"/>
+    <define name="ACCEL_Y_SENS" value="2.44740997439" integer="16"/>
+    <define name="ACCEL_Z_SENS" value="2.43161716003" integer="16"/>
 
     <define name="BODY_TO_IMU_PHI" value="0"/>
     <define name="BODY_TO_IMU_THETA" value="0.139626"/>
