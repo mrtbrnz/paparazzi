@@ -125,9 +125,13 @@
   <section name="IMU" prefix="IMU_">
 
     <!-- Needed by NPS (simulation) -->
-    <define name="MAG_X_NEUTRAL" value="0"/>
-    <define name="MAG_Y_NEUTRAL" value="0"/>
-    <define name="MAG_Z_NEUTRAL" value="0"/>
+   <define name="MAG_X_NEUTRAL" value="38"/>
+   <define name="MAG_Y_NEUTRAL" value="303"/>
+   <define name="MAG_Z_NEUTRAL" value="-193"/>
+   <define name="MAG_X_SENS" value="7.55477348031" integer="16"/>
+   <define name="MAG_Y_SENS" value="8.32162503323" integer="16"/>
+   <define name="MAG_Z_SENS" value="7.78322993145" integer="16"/>
+
 
     <!-- Calibration Neutral -->
     <define name="GYRO_P_SIGN" value="1"/>
