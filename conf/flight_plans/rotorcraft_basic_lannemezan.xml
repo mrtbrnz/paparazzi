@@ -1,6 +1,6 @@
 <!DOCTYPE flight_plan SYSTEM "flight_plan.dtd">
 
-<flight_plan alt="200" ground_alt="170" lat0="43.46223" lon0="1.27289" max_dist_from_home="350" name="Rotorcraft Basic (Enac)" security_height="2">
+<flight_plan alt="650" ground_alt="600" home_mode_height="60" lat0="43.1231452" lon0="0.3653030" max_dist_from_home="1000" name="Flights Campistrou" qfu="270" security_height="40">
   <header>
 #include "autopilot.h"
 </header>
@@ -10,6 +10,8 @@
     <waypoint name="STDBY" x="-26.2" y="46.9"/>
     <waypoint name="p1" x="-75.8" y="57.6"/>
     <waypoint name="p2" x="-60.2" y="112.6"/>
+    <waypoint lat="43.1223881" lon="0.3627727" name="TA"/>
+    <waypoint lat="43.1241468" lon="0.3626271" name="TB"/>
     <waypoint name="p3" x="99.4" y="95.7"/>
     <waypoint name="p4" x="93.0" y="40.4"/>
     <waypoint name="TD" x="-12.7" y="67.6"/>
@@ -51,22 +53,24 @@
     </block>
     <block name="route">
       <set value="true" var="force_forward"/>
-      <go wp="p2"/>
-      <go wp="p3"/>
-      <go wp="p4"/>
-      <go wp="p1"/>
+      <while cond="true">
+        <go wp="p2"/>
+        <go wp="p3"/>
+        <go wp="p4"/>
+        <go wp="p1"/>
+      </while>
       <deroute block="stay_p1"/>
     </block>
     <block name="land here" strip_button="Land Here" strip_icon="land-right.png">
+      <set value="false" var="force_forward"/>
       <call_once fun="NavSetWaypointHere(WP_TD)"/>
     </block>
     <block name="land">
+      <set value="false" var="force_forward"/>
       <go wp="TD"/>
     </block>
     <block name="flare">
-      <exception cond="NavDetectGround()" deroute="Holding point"/>
-      <exception cond="!nav_is_in_flight()" deroute="landed"/>
-      <call_once fun="NavStartDetectGround()"/>
+      <set value="false" var="force_forward"/>
       <stay climb="nav_descend_vspeed" vmode="climb" wp="TD"/>
     </block>
     <block name="landed">

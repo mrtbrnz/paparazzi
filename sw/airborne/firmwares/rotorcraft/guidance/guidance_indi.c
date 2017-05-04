@@ -114,7 +114,7 @@ struct FloatVect3 speed_sp = {0.0, 0.0, 0.0};
 static void guidance_indi_propagate_filters(void);
 static void guidance_indi_calcG(struct FloatMat33 *Gmat);
 static void guidance_indi_calcg_wing(struct FloatMat33 *Gmat);
-static float guidance_indi_get_liftd(float pitch);
+static float guidance_indi_get_liftd(float pitch, float theta);
 
 /**
  *
@@ -445,7 +445,7 @@ void guidance_indi_calcg_wing(struct FloatMat33 *Gmat) {
   float lift = sinf(pitch_lift)*9.81;
 
   // get the derivative of the lift wrt to theta
-  float liftd = guidance_indi_get_liftd(stateGetAirspeed_f());
+  float liftd = guidance_indi_get_liftd(stateGetAirspeed_f(), eulers_zxy.theta);
 
   RMAT_ELMT(*Gmat, 0, 0) =  cphi*ctheta*spsi*T + cphi*spsi*lift;
   RMAT_ELMT(*Gmat, 1, 0) = -cphi*ctheta*cpsi*T - cphi*cpsi*lift;
@@ -465,10 +465,13 @@ void guidance_indi_calcg_wing(struct FloatMat33 *Gmat) {
  *
  * @return The derivative of lift w.r.t. pitch
  */
-float guidance_indi_get_liftd(float airspeed) {
+float guidance_indi_get_liftd(float airspeed, float theta) {
   float liftd = 0.0;
-  if(airspeed < 8.5) {
-    liftd = 0.0;
+  if(airspeed < 12) {
+    float pitch_interp = DegOfRad(theta);
+    Bound(pitch_interp, -70.0, -40.0);
+    float ratio = (pitch_interp + 40.0)/(-30.);
+    liftd = -12.0*ratio;
   } else {
     liftd = -(airspeed - 8.5)*lift_pitch_eff/M_PI*180.0;
   }

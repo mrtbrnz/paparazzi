@@ -310,7 +310,7 @@ SdioError sdLogOpenLog(FileDes *fd, const char *directoryName, const char *prefi
     fileDes[ldf].lastFlushTs = 0;
     sde = sdLogExpandLogFile(ldf, sizeInMo, preallocate);
   }
-  
+
   *fd = ldf;
   return storageStatus = sde;
 }

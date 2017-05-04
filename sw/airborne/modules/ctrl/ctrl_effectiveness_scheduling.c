@@ -101,8 +101,8 @@ void ctrl_eff_scheduling_periodic_b(void)
     g1g2[2][1] = -yaw_eff/1000;
   }
 
-  g1g2[0][2] = -actuator_state_filt_vect[2]/1000*0.0021;
-  g1g2[0][3] =  actuator_state_filt_vect[3]/1000*0.0021;
+  g1g2[0][2] = -actuator_state_filt_vect[2]/1000*0.0018;
+  g1g2[0][3] =  actuator_state_filt_vect[3]/1000*0.0018;
   Bound(g1g2[0][2], -30.0/1000, -2.0/1000);
   Bound(g1g2[0][3], 2.0/1000,  30.0/1000);
 }

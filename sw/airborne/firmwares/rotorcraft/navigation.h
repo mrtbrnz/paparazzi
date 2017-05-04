@@ -61,6 +61,9 @@ extern int32_t nav_cmd_roll, nav_cmd_pitch, nav_cmd_yaw;
 extern float nav_radius;
 extern float nav_climb_vspeed, nav_descend_vspeed;
 
+enum nav_source_def {NAV_GO, NAV_ACCEL, NAV_CIRCLE};
+extern enum nav_source_def nav_source;
+
 extern int32_t nav_leg_progress;
 extern uint32_t nav_leg_length;
 
@@ -113,10 +116,13 @@ extern void nav_run(void);
 
 extern struct FloatVect3 nav_get_speed_sp_from_go(struct EnuCoor_i target);
 extern struct FloatVect3 nav_get_speed_setpoint(void);
+extern struct FloatVect3 nav_get_speed_sp_from_accel(struct EnuCoor_i target);
 
 extern void set_exception_flag(uint8_t flag_num);
 
+extern bool force_forward;
 extern void scale_two_d(struct FloatVect3 *vect3, float bound);
+extern void scale_two_d_to_max(struct FloatVect3 *vect3, float max);
 
 extern float get_dist2_to_waypoint(uint8_t wp_id);
 extern float get_dist2_to_point(struct EnuCoor_i *p);

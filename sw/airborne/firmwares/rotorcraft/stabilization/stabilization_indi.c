@@ -470,7 +470,7 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
 
 #ifndef SITL
 
-#define LOG_LENGTH_INT 15
+#define LOG_LENGTH_INT 12
 #define LOG_LENGTH_FLOAT 26
 
   int32_t sd_buffer_i[LOG_LENGTH_INT] = {0};
@@ -501,12 +501,9 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
   sd_buffer_i[6] = stab_att_sp_quat.qx;
   sd_buffer_i[7] = stab_att_sp_quat.qy;
   sd_buffer_i[8] = stab_att_sp_quat.qz;
-  sd_buffer_i[9] = accel->x;
-  sd_buffer_i[10] = accel->y;
-  sd_buffer_i[11] = accel->z;
-  sd_buffer_i[12] = raw_duty1;
-  sd_buffer_i[13] = raw_duty2;
-  sd_buffer_i[14] = airspeed;
+  sd_buffer_i[9] = raw_duty1;
+  sd_buffer_i[10] = raw_duty2;
+  sd_buffer_i[11] = airspeed;
 
   sd_buffer_f[0] = body_rates_f->p;
   sd_buffer_f[1] = body_rates_f->q;

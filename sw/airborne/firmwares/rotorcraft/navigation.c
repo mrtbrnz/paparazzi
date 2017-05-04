@@ -85,6 +85,16 @@ void scale_two_d(struct FloatVect3 *vect3, float bound) {
   }
 }
 
+bool force_forward = false;
+void scale_two_d_to_max(struct FloatVect3 *vect3, float max) {
+  float norm = FLOAT_VECT2_NORM(*vect3);
+  if(norm>1.0) {
+    float scale = max/norm;
+    vect3->x *= scale;
+    vect3->y *= scale;
+  }
+}
+
 const float max_dist_from_home = MAX_DIST_FROM_HOME;
 const float max_dist2_from_home = MAX_DIST_FROM_HOME * MAX_DIST_FROM_HOME;
 float failsafe_mode_dist2 = FAILSAFE_MODE_DISTANCE * FAILSAFE_MODE_DISTANCE;
@@ -109,8 +119,6 @@ uint8_t horizontal_mode;
 int32_t nav_leg_progress;
 uint32_t nav_leg_length;
 
-
-enum nav_source_def {NAV_GO, NAV_CIRCLE};
 enum nav_source_def nav_source = NAV_GO;
 
 bool nav_survey_active;
@@ -314,6 +322,8 @@ struct FloatVect3 nav_get_speed_setpoint(void) {
   struct FloatVect3 speed_sp;
   if(nav_source == NAV_GO) {
     speed_sp = nav_get_speed_sp_from_go(navigation_target);
+  } else if(nav_source == NAV_ACCEL) {
+    speed_sp = nav_get_speed_sp_from_accel(navigation_target);
   } else { //Default
     speed_sp = nav_get_speed_sp_from_go(navigation_target);
   }
@@ -334,8 +344,37 @@ struct FloatVect3 nav_get_speed_sp_from_go(struct EnuCoor_i target) {
 
   VECT3_SMUL(speed_sp, pos_error, guidance_indi_pos_gain);
 
-  scale_two_d(&speed_sp, 35.0);
+  if(force_forward) {
+    scale_two_d_to_max(&speed_sp, 35.0);
+  } else {
+    scale_two_d(&speed_sp, 35.0);
+  }
   BoundAbs(speed_sp.z, 3.0);
+
+  return speed_sp;
+}
+
+struct FloatVect3 nav_get_speed_sp_from_accel(struct EnuCoor_i target) {
+  // The speed sp that will be returned
+  struct FloatVect3 speed_sp;
+  float alt_target;
+  // Target altitude in NED instead of ENU
+  alt_target = -POS_FLOAT_OF_BFP(target.z);
+
+  // Calculate position error
+  float alt_error = alt_target - stateGetPositionNed_f()->z;
+  speed_sp.z = alt_error * guidance_indi_pos_gain;
+
+  speed_sp.y = 0.0;
+  static float north_vel = 0.0;
+  north_vel += 1.0/PERIODIC_FREQUENCY;
+  speed_sp.x = -north_vel;//FIXME: attention, North is now south!
+
+  // Reset if reached 20 m/s
+  if(north_vel > 20.0) {
+    north_vel = 0.0;
+    nav_source = NAV_GO;
+  }
 
   return speed_sp;
 }
