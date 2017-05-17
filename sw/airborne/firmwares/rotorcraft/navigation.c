@@ -344,6 +344,10 @@ struct FloatVect3 nav_get_speed_sp_from_go(struct EnuCoor_i target) {
 
   VECT3_SMUL(speed_sp, pos_error, guidance_indi_pos_gain);
 
+  if((guidance_v_mode == GUIDANCE_V_MODE_NAV) && (vertical_mode == VERTICAL_MODE_CLIMB)) {
+    speed_sp.z = SPEED_FLOAT_OF_BFP(guidance_v_zd_sp);
+  }
+
   if(force_forward) {
     scale_two_d_to_max(&speed_sp, 35.0);
   } else {

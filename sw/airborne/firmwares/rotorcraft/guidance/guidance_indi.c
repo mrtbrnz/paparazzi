@@ -112,7 +112,6 @@ float thrust_in;
 struct FloatVect3 speed_sp = {0.0, 0.0, 0.0};
 
 static void guidance_indi_propagate_filters(void);
-static void guidance_indi_calcG(struct FloatMat33 *Gmat);
 static void guidance_indi_calcg_wing(struct FloatMat33 *Gmat);
 static float guidance_indi_get_liftd(float pitch, float theta);
 
@@ -252,7 +251,7 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
     sp_accel.z = (speed_sp.z - stateGetSpeedNed_f()->z) * guidance_indi_speed_gain;
   }
 
-  float accelbound = 3.0 + airspeed/GUIDANCE_INDI_MAX_AIRSPEED*6.0;
+  float accelbound = 3.0 + airspeed/GUIDANCE_INDI_MAX_AIRSPEED*5.0;
   scale_two_d(&sp_accel, accelbound);
   /*BoundAbs(sp_accel.x, 3.0 + airspeed/GUIDANCE_INDI_MAX_AIRSPEED*6.0);*/
   /*BoundAbs(sp_accel.y, 3.0 + airspeed/GUIDANCE_INDI_MAX_AIRSPEED*6.0);*/
@@ -272,7 +271,6 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
 #endif
 
   //Calculate matrix of partial derivatives
-  /*guidance_indi_calcG(&Ga);*/
   guidance_indi_calcg_wing(&Ga);
   //Invert this matrix
   MAT33_INV(Ga_inv, Ga);
@@ -307,6 +305,11 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
 
   guidance_euler_cmd.phi = roll_filt.o[0] + euler_cmd.x;
   guidance_euler_cmd.theta = pitch_filt.o[0] + euler_cmd.y;
+
+  //Bound euler angles to prevent flipping
+  Bound(guidance_euler_cmd.phi, -GUIDANCE_H_MAX_BANK, GUIDANCE_H_MAX_BANK);
+  Bound(guidance_euler_cmd.theta, -RadOfDeg(120.0), RadOfDeg(25.0));
+
 
   float coordinated_turn_roll = guidance_euler_cmd.phi;
 
@@ -347,10 +350,6 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
   stabilization_cmd[COMMAND_THRUST] = thrust_in;
 #endif
 
-  //Bound euler angles to prevent flipping
-  Bound(guidance_euler_cmd.phi, -GUIDANCE_H_MAX_BANK, GUIDANCE_H_MAX_BANK);
-  Bound(guidance_euler_cmd.theta, -RadOfDeg(120.0), RadOfDeg(25.0));
-
   // Set the quaternion setpoint from eulers_zxy
   struct FloatQuat sp_quat;
   float_quat_of_eulers_zxy(&sp_quat, &guidance_euler_cmd);
@@ -385,35 +384,6 @@ void guidance_indi_propagate_filters(void) {
 
   update_butterworth_2_low_pass(&roll_filt, eulers_zxy.phi);
   update_butterworth_2_low_pass(&pitch_filt, eulers_zxy.theta);
-}
-
-/**
- * @param Gmat array to write the matrix to [3x3]
- *
- * Calculate the matrix of partial derivatives of the roll, pitch and thrust
- * w.r.t. the NED accelerations
- */
-void guidance_indi_calcG(struct FloatMat33 *Gmat) {
-
-  /*Pre-calculate sines and cosines*/
-  float sphi = sinf(eulers_zxy.phi);
-  float cphi = cosf(eulers_zxy.phi);
-  float stheta = sinf(eulers_zxy.theta);
-  float ctheta = cosf(eulers_zxy.theta);
-  float spsi = sinf(eulers_zxy.psi);
-  float cpsi = cosf(eulers_zxy.psi);
-  //minus gravity is a guesstimate of the thrust force, thrust measurement would be better
-  float T = -9.81;
-
-  RMAT_ELMT(*Gmat, 0, 0) =  cphi*ctheta*spsi*T;
-  RMAT_ELMT(*Gmat, 1, 0) = -cphi*ctheta*cpsi*T;
-  RMAT_ELMT(*Gmat, 2, 0) = -sphi*ctheta*T;
-  RMAT_ELMT(*Gmat, 0, 1) = (ctheta*cpsi - sphi*stheta*spsi)*T;
-  RMAT_ELMT(*Gmat, 1, 1) = (ctheta*spsi + sphi*stheta*cpsi)*T;
-  RMAT_ELMT(*Gmat, 2, 1) = -cphi*stheta*T;
-  RMAT_ELMT(*Gmat, 0, 2) = stheta*cpsi + sphi*ctheta*spsi;
-  RMAT_ELMT(*Gmat, 1, 2) = stheta*spsi - sphi*ctheta*cpsi;
-  RMAT_ELMT(*Gmat, 2, 2) = cphi*ctheta;
 }
 
 /**

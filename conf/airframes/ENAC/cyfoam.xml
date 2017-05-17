@@ -110,7 +110,7 @@
     <define name="FILT_CUTOFF" value="5.0"/>
 
     <!-- first order actuator dynamics -->
-    <define name="ACT_DYN" value="{0.1, 0.1, 0.05, 0.05}"/>
+    <define name="ACT_DYN" value="{0.1, 0.1, 0.045, 0.045}"/>
     <define name="ACT_RATE_LIMIT" value="{170, 170, 9600, 9600}"/>
     <define name="ACT_IS_SERVO" value="{1, 1, 0, 0}"/>
 
@@ -130,7 +130,7 @@
 
   <section name="NAV">
     <define name="NAV_CLIMB_VSPEED" value="1.5"/>
-    <define name="NAV_DESCEND_VSPEED" value="-0.5"/>
+    <define name="NAV_DESCEND_VSPEED" value="-0.8"/>
   </section>
 
   <!--<section name="AHRS" prefix="AHRS_">-->
@@ -162,14 +162,13 @@
     <define name="COORDINATED_TURN_AIRSPEED" value="18.0"/>
 
     <define name="BARO_PERIODIC_FREQUENCY" value="50"/>
-    <define name="GUIDANCE_H_MAX_BANK" value="40" unit="deg"/>
-    <define name="CYCLONE_DESCEND_TEST" value="FALSE"/>
+    <define name="GUIDANCE_H_MAX_BANK" value="60" unit="deg"/>
 
     <define name="FWD_SIDESLIP_GAIN" value="0.22"/>
 
     <define name="EFF_SCHED_USE_FUNCTION" value="TRUE"/>
 
-    <define name="ARRIVED_AT_WAYPOINT" value="30.0"/>
+    <define name="ARRIVED_AT_WAYPOINT" value="20.0"/>
     <define name="USE_AIRSPEED" value="TRUE"/>
   </section>
 
@@ -277,10 +276,10 @@
       <define name="GUIDANCE_INDI_SPEED_GAIN" value="1.0"/>
       <define name="GUIDANCE_INDI_PITCH_LIFT_EFF" value="60.0"/>
       <define name="GUIDANCE_INDI_PITCH_EFF_SCALING" value="2.0"/>
-      <define name="GUIDANCE_H_REF_MAX_SPEED" value="20.0"/>
+      <define name="GUIDANCE_H_REF_MAX_SPEED" value="18.0"/> <!--not used-->
       <define name="GUIDANCE_INDI_MIN_THROTTLE" value="4000"/>
       <define name="GUIDANCE_INDI_MIN_THROTTLE_FWD" value="1500"/>
-      <define name="GUIDANCE_INDI_MAX_AIRSPEED" value="20.0"/>
+      <define name="GUIDANCE_INDI_MAX_AIRSPEED" value="16.0"/>
       <define name="GUIDANCE_HEADING_IS_FREE" value="FALSE"/>
     </module>
 

@@ -477,7 +477,6 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
   float sd_buffer_f[LOG_LENGTH_FLOAT] = {0};
 
   static uint32_t log_counter = 0;
-  struct Int32Vect3 *accel = stateGetAccelBody_i();
   struct FloatQuat *quat = stateGetNedToBodyQuat_f();
   struct FloatRates *body_rates_f = stateGetBodyRates_f();
   struct NedCoor_f *accelned = stateGetAccelNed_f();
