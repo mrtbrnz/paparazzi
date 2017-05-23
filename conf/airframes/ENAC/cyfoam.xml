@@ -168,7 +168,7 @@
 
     <define name="EFF_SCHED_USE_FUNCTION" value="TRUE"/>
 
-    <define name="ARRIVED_AT_WAYPOINT" value="20.0"/>
+    <define name="ARRIVED_AT_WAYPOINT" value="50.0"/>
     <define name="USE_AIRSPEED" value="TRUE"/>
   </section>
 

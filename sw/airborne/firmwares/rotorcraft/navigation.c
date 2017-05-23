@@ -396,13 +396,13 @@ struct FloatVect3 nav_get_speed_sp_from_line(struct FloatVect2 line_v_enu, struc
   float dist_to_line_abs = fabs(dist_to_line);
 
   // The distance that needs to be traveled along the line
-  float dist_along_line = (line_v.x*to_end_v.x + line_v.y*to_end_v.y)/length_line;
-  v_along_line.x = line_v.x/length_line*dist_along_line;
-  v_along_line.y = line_v.y/length_line*dist_along_line;
+  /*float dist_along_line = (line_v.x*to_end_v.x + line_v.y*to_end_v.y)/length_line;*/
+  v_along_line.x = line_v.x/length_line*50.0;
+  v_along_line.y = line_v.y/length_line*50.0;
 
   // Calculate the desired direction to converge to the line
   struct FloatVect2 direction;
-  VECT2_SMUL(direction, v_along_line, (1.0/(1+dist_to_line_abs*0.1)));
+  VECT2_SMUL(direction, v_along_line, (1.0/(1+dist_to_line_abs*0.05)));
   VECT2_ADD(direction, v_to_line);
   float length_direction = float_vect2_norm(&direction);
   if(length_direction < 0.01) {

@@ -252,6 +252,7 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
     sp_accel.z = (speed_sp.z - stateGetSpeedNed_f()->z) * guidance_indi_speed_gain;
   }
 
+  // Bound the acceleration setpoint
   float accelbound = 3.0 + airspeed/GUIDANCE_INDI_MAX_AIRSPEED*5.0;
   scale_two_d(&sp_accel, accelbound);
   /*BoundAbs(sp_accel.x, 3.0 + airspeed/GUIDANCE_INDI_MAX_AIRSPEED*6.0);*/
