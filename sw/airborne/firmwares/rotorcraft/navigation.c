@@ -73,6 +73,8 @@
 #define FAILSAFE_MODE_DISTANCE (1.5*MAX_DIST_FROM_HOME)
 #endif
 
+#define NAV_MAX_SPEED (GUIDANCE_INDI_MAX_AIRSPEED + 10.0)
+
 #define CLOSE_TO_WAYPOINT (15 << INT32_POS_FRAC)
 #define CARROT_DIST (12 << INT32_POS_FRAC)
 
@@ -94,6 +96,8 @@ void scale_two_d_to_max(struct FloatVect3 *vect3, float max) {
     vect3->y *= scale;
   }
 }
+
+struct FloatVect2 line_vect, to_end_vect;
 
 const float max_dist_from_home = MAX_DIST_FROM_HOME;
 const float max_dist2_from_home = MAX_DIST_FROM_HOME * MAX_DIST_FROM_HOME;
@@ -232,6 +236,9 @@ void nav_init(void)
   dist2_to_home = 0;
   dist2_to_wp = 0;
 
+  FLOAT_VECT2_ZERO(line_vect);
+  FLOAT_VECT2_ZERO(to_end_vect);
+
 #if PERIODIC_TELEMETRY
   register_periodic_telemetry(DefaultPeriodic, PPRZ_MSG_ID_ROTORCRAFT_NAV_STATUS, send_nav_status);
   register_periodic_telemetry(DefaultPeriodic, PPRZ_MSG_ID_WP_MOVED, send_wp_moved);
@@ -321,7 +328,11 @@ bool nav_approaching_from(struct EnuCoor_i *wp, struct EnuCoor_i *from, int16_t 
 struct FloatVect3 nav_get_speed_setpoint(void) {
   struct FloatVect3 speed_sp;
   if(nav_source == NAV_GO) {
-    speed_sp = nav_get_speed_sp_from_go(navigation_target);
+    if(horizontal_mode == HORIZONTAL_MODE_ROUTE) {
+      speed_sp = nav_get_speed_sp_from_line(line_vect, to_end_vect, navigation_target);
+    } else {
+      speed_sp = nav_get_speed_sp_from_go(navigation_target);
+    }
   } else if(nav_source == NAV_ACCEL) {
     speed_sp = nav_get_speed_sp_from_accel(navigation_target);
   } else { //Default
@@ -329,10 +340,104 @@ struct FloatVect3 nav_get_speed_setpoint(void) {
   }
   return speed_sp;
 }
+#include <stdio.h>
+/**
+ * @brief follow a line
+ *
+ * @param line_v_enu 2d vector from beginning (0) line to end in enu
+ * @param to_end_v_enu 2d vector from curremtn position to end in enu
+ * @param target end waypoint in enu
+ *
+ * @return desired speed setpoint
+ */
+struct FloatVect3 nav_get_speed_sp_from_line(struct FloatVect2 line_v_enu, struct FloatVect2 to_end_v_enu, struct EnuCoor_i target) {
 
+  // enu -> ned
+  struct FloatVect2 line_v = {line_v_enu.y, line_v_enu.x};
+  struct FloatVect2 to_end_v = {to_end_v_enu.y, to_end_v_enu.x};
+
+  struct NedCoor_f ned_target;
+  // Target in NED instead of ENU
+  VECT3_ASSIGN(ned_target, POS_FLOAT_OF_BFP(target.y), POS_FLOAT_OF_BFP(target.x), -POS_FLOAT_OF_BFP(target.z));
+
+  // Calculate magnitude of the desired speed vector based on distance to waypoint
+  float dist_to_target = float_vect2_norm(&to_end_v);
+  float desired_speed;
+  if(force_forward) {
+    desired_speed = NAV_MAX_SPEED;
+  } else {
+    desired_speed = dist_to_target * guidance_indi_pos_gain;
+    Bound(desired_speed, 0.0, NAV_MAX_SPEED);
+  }
+
+  // Calculate lenght of line segment
+  float length_line = float_vect2_norm(&line_v);
+  if(length_line < 0.01) {
+    length_line = 0.01;
+  }
+
+  //Normal vector to the line, with length of the line
+  struct FloatVect2 normalv;
+  VECT2_ASSIGN(normalv, -line_v.y, line_v.x);
+  float length_normalv = float_vect2_norm(&normalv);
+  if(length_normalv < 0.01) {
+    length_normalv = 0.01;
+  }
+
+  // Distance along the normal vector
+  float dist_to_line = (to_end_v.x*normalv.x + to_end_v.y*normalv.y)/length_normalv;
+
+  // Normal vector scaled to be the distance to the line
+  struct FloatVect2 v_to_line, v_along_line;
+  v_to_line.x = dist_to_line*normalv.x/length_normalv;
+  v_to_line.y = dist_to_line*normalv.y/length_normalv;
+
+  // Depending on the normal vector, the distance could be negative
+  float dist_to_line_abs = fabs(dist_to_line);
+
+  // The distance that needs to be traveled along the line
+  float dist_along_line = (line_v.x*to_end_v.x + line_v.y*to_end_v.y)/length_line;
+  v_along_line.x = line_v.x/length_line*dist_along_line;
+  v_along_line.y = line_v.y/length_line*dist_along_line;
+
+  // Calculate the desired direction to converge to the line
+  struct FloatVect2 direction;
+  VECT2_SMUL(direction, v_along_line, (1.0/(1+dist_to_line_abs*0.1)));
+  VECT2_ADD(direction, v_to_line);
+  float length_direction = float_vect2_norm(&direction);
+  if(length_direction < 0.01) {
+    length_direction = 0.01;
+  }
+
+  // Scale to have the desired speed
+  struct FloatVect2 final_vector;
+  VECT2_SMUL(final_vector, direction, desired_speed/length_direction);
+
+  struct FloatVect3 speed_sp_return = {final_vector.x, final_vector.y, guidance_indi_pos_gain*(ned_target.z - stateGetPositionNed_f()->z)};
+  if((guidance_v_mode == GUIDANCE_V_MODE_NAV) && (vertical_mode == VERTICAL_MODE_CLIMB)) {
+    speed_sp_return.z = SPEED_FLOAT_OF_BFP(guidance_v_zd_sp);
+  }
+
+  // Bound vertical speed setpoint
+  if(stateGetAirspeed_f() > 13.0) {
+    Bound(speed_sp_return.z, -4.0, 5.0);
+  } else {
+    Bound(speed_sp_return.z, -nav_climb_vspeed, -nav_descend_vspeed);
+  }
+
+  return speed_sp_return; //DUMMY
+}
+
+/**
+ * @brief Go to a waypoint in the shortest way
+ *
+ * @param target the target waypoint
+ *
+ * @return desired speed vector3
+ */
 struct FloatVect3 nav_get_speed_sp_from_go(struct EnuCoor_i target) {
   // The speed sp that will be returned
-  struct FloatVect3 speed_sp;
+  struct FloatVect3 speed_sp_return;
   struct NedCoor_f ned_target;
   // Target in NED instead of ENU
   VECT3_ASSIGN(ned_target, POS_FLOAT_OF_BFP(target.y), POS_FLOAT_OF_BFP(target.x), -POS_FLOAT_OF_BFP(target.z));
@@ -342,37 +447,43 @@ struct FloatVect3 nav_get_speed_sp_from_go(struct EnuCoor_i target) {
   struct NedCoor_f *pos = stateGetPositionNed_f();
   VECT3_DIFF(pos_error, ned_target, *pos);
 
-  VECT3_SMUL(speed_sp, pos_error, guidance_indi_pos_gain);
+  VECT3_SMUL(speed_sp_return, pos_error, guidance_indi_pos_gain);
 
   if((guidance_v_mode == GUIDANCE_V_MODE_NAV) && (vertical_mode == VERTICAL_MODE_CLIMB)) {
-    speed_sp.z = SPEED_FLOAT_OF_BFP(guidance_v_zd_sp);
+    speed_sp_return.z = SPEED_FLOAT_OF_BFP(guidance_v_zd_sp);
   }
 
   if(force_forward) {
-    scale_two_d_to_max(&speed_sp, 35.0);
+    scale_two_d_to_max(&speed_sp_return, NAV_MAX_SPEED);
   } else {
-    scale_two_d(&speed_sp, 35.0);
+    scale_two_d(&speed_sp_return, NAV_MAX_SPEED);
   }
-  BoundAbs(speed_sp.z, 3.0);
 
-  return speed_sp;
+  // Bound vertical speed setpoint
+  if(stateGetAirspeed_f() > 13.0) {
+    Bound(speed_sp_return.z, -4.0, 5.0);
+  } else {
+    Bound(speed_sp_return.z, -nav_climb_vspeed, -nav_descend_vspeed);
+  }
+
+  return speed_sp_return;
 }
 
 struct FloatVect3 nav_get_speed_sp_from_accel(struct EnuCoor_i target) {
   // The speed sp that will be returned
-  struct FloatVect3 speed_sp;
+  struct FloatVect3 speed_sp_return;
   float alt_target;
   // Target altitude in NED instead of ENU
   alt_target = -POS_FLOAT_OF_BFP(target.z);
 
   // Calculate position error
   float alt_error = alt_target - stateGetPositionNed_f()->z;
-  speed_sp.z = alt_error * guidance_indi_pos_gain;
+  speed_sp_return.z = alt_error * guidance_indi_pos_gain;
 
-  speed_sp.y = 0.0;
+  speed_sp_return.y = 0.0;
   static float north_vel = 0.0;
   north_vel += 1.0/PERIODIC_FREQUENCY;
-  speed_sp.x = -north_vel;//FIXME: attention, North is now south!
+  speed_sp_return.x = -north_vel;//FIXME: attention, North is now south!
 
   // Reset if reached 20 m/s
   if(north_vel > 20.0) {
@@ -380,7 +491,7 @@ struct FloatVect3 nav_get_speed_sp_from_accel(struct EnuCoor_i target) {
     nav_source = NAV_GO;
   }
 
-  return speed_sp;
+  return speed_sp_return;
 }
 
 bool nav_check_wp_time(struct EnuCoor_i *wp, uint16_t stay_time)

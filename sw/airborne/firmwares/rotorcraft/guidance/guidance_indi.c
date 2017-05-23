@@ -167,6 +167,7 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
     speed_sp.y = pos_y_err * guidance_indi_pos_gain;
     speed_sp.z = pos_z_err * guidance_indi_pos_gain;
   }
+
   //for rc control horizontal, rotate from body axes to NED
   float psi = eulers_zxy.psi;
   /*NAV mode*/

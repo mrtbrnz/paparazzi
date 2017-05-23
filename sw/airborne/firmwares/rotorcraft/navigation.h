@@ -117,6 +117,7 @@ extern void nav_run(void);
 extern struct FloatVect3 nav_get_speed_sp_from_go(struct EnuCoor_i target);
 extern struct FloatVect3 nav_get_speed_setpoint(void);
 extern struct FloatVect3 nav_get_speed_sp_from_accel(struct EnuCoor_i target);
+extern struct FloatVect3 nav_get_speed_sp_from_line(struct FloatVect2 line_v, struct FloatVect2 to_end_v, struct EnuCoor_i target);
 
 extern void set_exception_flag(uint8_t flag_num);
 
@@ -278,10 +279,14 @@ extern uint8_t nav_oval_count;
 
 /*********** Navigation along a line *************************************/
 extern void nav_route(struct EnuCoor_i *wp_start, struct EnuCoor_i *wp_end);
+extern struct FloatVect2 line_vect, to_end_vect;
 static inline void NavSegment(uint8_t wp_start, uint8_t wp_end)
 {
   horizontal_mode = HORIZONTAL_MODE_ROUTE;
-  nav_route(&waypoints[wp_start].enu_i, &waypoints[wp_end].enu_i);
+  VECT2_DIFF(line_vect, waypoints[wp_end].enu_f, waypoints[wp_start].enu_f);
+  VECT2_DIFF(to_end_vect, waypoints[wp_end].enu_f, *stateGetPositionEnu_f());
+  VECT3_COPY(navigation_target, waypoints[wp_end].enu_i);
+  //nav_route(&waypoints[wp_start].enu_i, &waypoints[wp_end].enu_i);
 }
 
 /** Nav glide routine */
