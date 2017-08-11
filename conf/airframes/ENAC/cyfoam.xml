@@ -141,9 +141,15 @@
   <!--</section>-->
 
   <section name="INS" prefix="INS_">
-    <define name="H_X" value="0.5138"/>
-    <define name="H_Y" value="0.00019"/>
-    <define name="H_Z" value="0.8578"/>
+    <!-- Toulouse -->
+    <!--<define name="H_X" value="0.5138"/>-->
+    <!--<define name="H_Y" value="0.00019"/>-->
+    <!--<define name="H_Z" value="0.8578"/>-->
+
+    <!-- Delft -->
+    <define name="H_X" value="0.3892503"/>
+    <define name="H_Y" value="0.0017972"/>
+    <define name="H_Z" value="0.9211303"/>
   </section>
 
   <!-- Gains for horizontal navigation-->
@@ -211,7 +217,7 @@
     <target name="ap" board="chimera_1.0">
       <module name="radio_control" type="sbus">
         <!-- Put the mode on channel AUX1-->
-        <define name="RADIO_KILL_SWITCH" value="RADIO_GAIN1"/>
+        <define name="RADIO_KILL_SWITCH" value="RADIO_GAIN2"/>
       </module>
 
     <module name="ctrl_effectiveness_scheduling"/>
