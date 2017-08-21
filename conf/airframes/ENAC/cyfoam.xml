@@ -281,7 +281,7 @@
       <define name="GUIDANCE_INDI_POS_GAIN" value="0.2"/>
       <define name="GUIDANCE_INDI_SPEED_GAIN" value="1.0"/>
       <define name="GUIDANCE_INDI_PITCH_LIFT_EFF" value="60.0"/>
-      <define name="GUIDANCE_INDI_PITCH_EFF_SCALING" value="2.0"/>
+      <define name="GUIDANCE_INDI_PITCH_EFF_SCALING" value="1.0"/>
       <define name="GUIDANCE_H_REF_MAX_SPEED" value="18.0"/> <!--not used-->
       <define name="GUIDANCE_INDI_MIN_THROTTLE" value="4000"/>
       <define name="GUIDANCE_INDI_MIN_THROTTLE_FWD" value="1500"/>
