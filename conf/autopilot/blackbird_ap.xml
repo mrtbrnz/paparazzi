@@ -19,6 +19,8 @@
       <include name="guidance/guidance_h.h"/>
       <include name="stabilization/stabilization_attitude.h"/>
       <include name="subsystems/gps.h"/>
+      <define name="RCAuxMode0()" value="rc_mode_switch(RADIO_GAIN2, 0, 2)"/>
+      <define name="RCAuxMode1()" value="rc_mode_switch(RADIO_GAIN2, 1, 2)"/>
     </includes>
 
     <control_block name="actuators_ap">
@@ -62,7 +64,7 @@
     </exceptions>
 
     <mode name="MANUAL" gcs_name="MANU">
-      <!--select cond="RCMode0()"/-->
+      <select cond="RCMode0()"/>
       <control freq="4"> <!-- only for display -->
         <call fun="common_nav_periodic_task_4Hz()"/>
         <call fun="nav_periodic_task()"/>
@@ -74,7 +76,7 @@
     </mode>
 
     <mode name="AUTO1">
-      <select cond="RCMode0()"/>
+      <select cond="RCMode1()"/>
       <control freq="4"> <!-- only for display -->
         <call fun="common_nav_periodic_task_4Hz()"/>
         <call fun="nav_periodic_task()"/>
@@ -88,10 +90,12 @@
     </mode>
 
     <mode name="ZHOLD">
-      <select cond="RCMode1()"/>
+      <select cond="RCMode2() && RCAuxMode0()"/>
       <on_enter>
         <call fun="flight_altitude = stateGetPositionUtm_f()->alt"/>
+	<call fun="v_ctl_auto_throttle_cruise_throttle = (float) imcu_get_radio(RADIO_THROTTLE)/MAX_PPRZ "/>
         <call fun="v_ctl_mode = V_CTL_MODE_AUTO_ALT"/>
+        <call fun="lateral_mode = LATERAL_MODE_ROLL"/>
       </on_enter>
       <!--control freq="4">
         <call fun="common_nav_periodic_task_4Hz()"/>
@@ -109,7 +113,7 @@
 
     <mode name="AUTO2">
       <select cond="$DEFAULT_MODE"/>
-      <select cond="RCMode2()" exception="HOME"/>
+      <select cond="RCMode2() && RCAuxMode1()" exception="HOME"/>
       <control freq="4">
         <call fun="common_nav_periodic_task_4Hz()"/>
         <call fun="nav_periodic_task()"/>
