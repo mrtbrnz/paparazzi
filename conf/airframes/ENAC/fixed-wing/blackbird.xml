@@ -18,7 +18,6 @@
 
   <firmware name="fixedwing">
     <define name="USE_PWM6"/>
-    <define name="USE_BAROMETER"/>
 
     <configure name="PERIODIC_FREQUENCY" value="120"/>
     <define name="CONTROL_FREQUENCY" value="60"/>
@@ -27,10 +26,14 @@
 
     <target name="ap" board="apogee_1.0_chibios">
       <module name="radio_control" type="sbus"/>
+      <define name="USE_BAROMETER"/>
     </target>
     <target name="nps" board="pc">
       <module name="radio_control" type="ppm"/>
       <module name="fdm" type="jsbsim"/>
+    </target>
+    <target name="sim" board="pc">
+      <module name="radio_control" type="ppm"/>
     </target>
 
     <module name="telemetry" type="xbee_api"/>
@@ -41,6 +44,7 @@
     </module>
 
     <module name="ahrs" type="float_dcm"/>
+
     <module name="ins" type="alt_float"/>
     <module name="control" type="new"/>
     <module name="navigation"/>
@@ -179,8 +183,8 @@
     <define name="AUTO_CLIMB_LIMIT" value="2*V_CTL_ALTITUDE_MAX_CLIMB"/>
 
     <!-- Cruise throttle + limits -->
-    <define name="AUTO_THROTTLE_NOMINAL_CRUISE_THROTTLE" value="0.40"/>
-    <define name="AUTO_THROTTLE_MIN_CRUISE_THROTTLE" value="0.25"/>
+    <define name="AUTO_THROTTLE_NOMINAL_CRUISE_THROTTLE" value="0.30"/>
+    <define name="AUTO_THROTTLE_MIN_CRUISE_THROTTLE" value="0.10"/>
     <define name="AUTO_THROTTLE_MAX_CRUISE_THROTTLE" value="0.85"/>
 
     <!-- Climb loop (throttle) -->
