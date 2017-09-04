@@ -53,14 +53,18 @@
 // gains can be higher, depending on the speed of the inner loop.
 #ifdef GUIDANCE_INDI_POS_GAIN
 float guidance_indi_pos_gain = GUIDANCE_INDI_POS_GAIN;
+float guidance_indi_pos_gainz = GUIDANCE_INDI_POS_GAINZ;
 #else
 float guidance_indi_pos_gain = 0.5;
+float guidance_indi_pos_gainz = 0.5;
 #endif
 
 #ifdef GUIDANCE_INDI_SPEED_GAIN
 float guidance_indi_speed_gain = GUIDANCE_INDI_SPEED_GAIN;
+float guidance_indi_speed_gainz = GUIDANCE_INDI_SPEED_GAINZ;
 #else
 float guidance_indi_speed_gain = 1.8;
+float guidance_indi_speed_gainz = 1.8;
 #endif
 
 struct FloatVect3 sp_accel = {0.0,0.0,0.0};
@@ -180,7 +184,7 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
   } else{
     speed_sp.x = pos_x_err * guidance_indi_pos_gain;
     speed_sp.y = pos_y_err * guidance_indi_pos_gain;
-    speed_sp.z = pos_z_err * guidance_indi_pos_gain;
+    speed_sp.z = pos_z_err * guidance_indi_pos_gainz;
   }
 
   //for rc control horizontal, rotate from body axes to NED
@@ -246,7 +250,7 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
     sp_accel.x = cosf(psi) * sp_accel_b.x - sinf(psi) * sp_accel_b.y;
     sp_accel.y = sinf(psi) * sp_accel_b.x + cosf(psi) * sp_accel_b.y;
 
-    sp_accel.z = (speed_sp.z - stateGetSpeedNed_f()->z) * guidance_indi_speed_gain;
+    sp_accel.z = (speed_sp.z - stateGetSpeedNed_f()->z) * guidance_indi_speed_gainz;
   } else { // Go somewhere in the shortest way
 
     if(airspeed > 10.0) {
@@ -264,7 +268,7 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
 
     sp_accel.x = (speed_sp.x - stateGetSpeedNed_f()->x) * guidance_indi_speed_gain;
     sp_accel.y = (speed_sp.y - stateGetSpeedNed_f()->y) * guidance_indi_speed_gain;
-    sp_accel.z = (speed_sp.z - stateGetSpeedNed_f()->z) * guidance_indi_speed_gain;
+    sp_accel.z = (speed_sp.z - stateGetSpeedNed_f()->z) * guidance_indi_speed_gainz;
   }
 
   // Bound the acceleration setpoint

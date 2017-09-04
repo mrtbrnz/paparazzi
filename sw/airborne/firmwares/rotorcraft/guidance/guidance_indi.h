@@ -49,6 +49,8 @@ extern float lift_pitch_eff;
 
 extern float guidance_indi_pos_gain;
 extern float guidance_indi_speed_gain;
+extern float guidance_indi_pos_gainz;
+extern float guidance_indi_speed_gainz;
 
 extern struct FloatVect2 desired_airspeed;
 extern int16_t update_hp_freq_and_reset;

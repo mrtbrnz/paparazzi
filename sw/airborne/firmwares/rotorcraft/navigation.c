@@ -413,7 +413,7 @@ struct FloatVect3 nav_get_speed_sp_from_line(struct FloatVect2 line_v_enu, struc
   struct FloatVect2 final_vector;
   VECT2_SMUL(final_vector, direction, desired_speed/length_direction);
 
-  struct FloatVect3 speed_sp_return = {final_vector.x, final_vector.y, guidance_indi_pos_gain*(ned_target.z - stateGetPositionNed_f()->z)};
+  struct FloatVect3 speed_sp_return = {final_vector.x, final_vector.y, guidance_indi_pos_gainz*(ned_target.z - stateGetPositionNed_f()->z)};
   if((guidance_v_mode == GUIDANCE_V_MODE_NAV) && (vertical_mode == VERTICAL_MODE_CLIMB)) {
     speed_sp_return.z = SPEED_FLOAT_OF_BFP(guidance_v_zd_sp);
   }
@@ -448,6 +448,7 @@ struct FloatVect3 nav_get_speed_sp_from_go(struct EnuCoor_i target) {
   VECT3_DIFF(pos_error, ned_target, *pos);
 
   VECT3_SMUL(speed_sp_return, pos_error, guidance_indi_pos_gain);
+  speed_sp_return.z = guidance_indi_pos_gainz*pos_error.z;
 
   if((guidance_v_mode == GUIDANCE_V_MODE_NAV) && (vertical_mode == VERTICAL_MODE_CLIMB)) {
     speed_sp_return.z = SPEED_FLOAT_OF_BFP(guidance_v_zd_sp);
@@ -478,7 +479,7 @@ struct FloatVect3 nav_get_speed_sp_from_accel(struct EnuCoor_i target) {
 
   // Calculate position error
   float alt_error = alt_target - stateGetPositionNed_f()->z;
-  speed_sp_return.z = alt_error * guidance_indi_pos_gain;
+  speed_sp_return.z = alt_error * guidance_indi_pos_gainz;
 
   speed_sp_return.y = 0.0;
   static float north_vel = 0.0;
