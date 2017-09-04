@@ -74,6 +74,7 @@
 #endif
 
 #define NAV_MAX_SPEED (GUIDANCE_INDI_MAX_AIRSPEED + 10.0)
+float nav_max_speed = NAV_MAX_SPEED;
 
 #define CLOSE_TO_WAYPOINT (15 << INT32_POS_FRAC)
 #define CARROT_DIST (12 << INT32_POS_FRAC)
@@ -364,10 +365,10 @@ struct FloatVect3 nav_get_speed_sp_from_line(struct FloatVect2 line_v_enu, struc
   float dist_to_target = float_vect2_norm(&to_end_v);
   float desired_speed;
   if(force_forward) {
-    desired_speed = NAV_MAX_SPEED;
+    desired_speed = nav_max_speed;
   } else {
     desired_speed = dist_to_target * guidance_indi_pos_gain;
-    Bound(desired_speed, 0.0, NAV_MAX_SPEED);
+    Bound(desired_speed, 0.0, nav_max_speed);
   }
 
   // Calculate lenght of line segment
@@ -455,9 +456,9 @@ struct FloatVect3 nav_get_speed_sp_from_go(struct EnuCoor_i target) {
   }
 
   if(force_forward) {
-    scale_two_d_to_max(&speed_sp_return, NAV_MAX_SPEED);
+    scale_two_d_to_max(&speed_sp_return, nav_max_speed);
   } else {
-    scale_two_d(&speed_sp_return, NAV_MAX_SPEED);
+    scale_two_d(&speed_sp_return, nav_max_speed);
   }
 
   // Bound vertical speed setpoint

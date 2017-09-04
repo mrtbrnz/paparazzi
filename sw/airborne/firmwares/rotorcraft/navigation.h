@@ -84,6 +84,7 @@ extern float failsafe_mode_dist2; ///< maximum squared distance to home wp befor
 extern float dist2_to_wp;       ///< squared distance to next waypoint
 
 extern bool exception_flag[10];
+extern float nav_max_speed;
 
 
 /*****************************************************************

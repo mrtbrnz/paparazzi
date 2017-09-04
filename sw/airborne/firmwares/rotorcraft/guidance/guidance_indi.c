@@ -305,7 +305,7 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
     float ratio = (pitch_interp + 40.0)/(-30.);
     flap_effectiveness = 0.00018 + 0.00062*ratio;
   } else {
-    flap_effectiveness = 0.0008 + (airspeed - 8.0)*0.00009+0.0008;
+    flap_effectiveness = 0.0008 + (airspeed - 8.0)*0.00009;
   }
   double flap_accel_body_x = -flap_effectiveness*actuator_state_filt_vect[0] + flap_effectiveness*actuator_state_filt_vect[1];
 
@@ -411,8 +411,10 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
   omega -= accely_filt.o[0]*FWD_SIDESLIP_GAIN;
 #endif
 
+#ifndef KNIFE_EDGE_TEST
   *heading_sp += omega / PERIODIC_FREQUENCY;
   FLOAT_ANGLE_NORMALIZE(*heading_sp);
+#endif
 
   guidance_euler_cmd.psi = *heading_sp;
 
@@ -486,7 +488,6 @@ void guidance_indi_calcg_wing(struct FloatMat33 *Gmat) {
   float spsi = sinf(eulers_zxy.psi);
   float cpsi = cosf(eulers_zxy.psi);
   //minus gravity is a guesstimate of the thrust force, thrust measurement would be better
-  float T = -9.81;
 
 #ifndef GUIDANCE_INDI_PITCH_EFF_SCALING
 #define GUIDANCE_INDI_PITCH_EFF_SCALING 1.0
@@ -496,6 +497,7 @@ void guidance_indi_calcg_wing(struct FloatMat33 *Gmat) {
   float pitch_lift = eulers_zxy.theta;
   Bound(pitch_lift,-M_PI_2,0);
   float lift = sinf(pitch_lift)*9.81;
+  float T = cosf(pitch_lift)*-9.81;
 
   // get the derivative of the lift wrt to theta
   float liftd = guidance_indi_get_liftd(stateGetAirspeed_f(), eulers_zxy.theta);
@@ -522,9 +524,9 @@ float guidance_indi_get_liftd(float airspeed, float theta) {
   float liftd = 0.0;
   if(airspeed < 12) {
     float pitch_interp = DegOfRad(theta);
-    Bound(pitch_interp, -70.0, -40.0);
-    float ratio = (pitch_interp + 40.0)/(-30.);
-    liftd = -12.0*ratio;
+    Bound(pitch_interp, -80.0, -40.0);
+    float ratio = (pitch_interp + 40.0)/(-40.);
+    liftd = -24.0*ratio;
   } else {
     liftd = -(airspeed - 8.5)*lift_pitch_eff/M_PI*180.0;
   }

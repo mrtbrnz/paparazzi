@@ -73,6 +73,8 @@ PRINT_CONFIG_VAR(GUIDANCE_H_USE_SPEED_REF)
 #define GUIDANCE_H_APPROX_FORCE_BY_THRUST FALSE
 #endif
 
+// Navigation can set heading freely
+// This is false if sideslip is a problem
 #ifndef GUIDANCE_HEADING_IS_FREE
 #define GUIDANCE_HEADING_IS_FREE TRUE
 #endif
