@@ -90,6 +90,11 @@ static void guidance_indi_filter_thrust(void);
 #endif
 #endif
 
+#ifndef GUIDANCE_INDI_MAX_AIRSPEED
+#error "You must have an airspeed sensor to use this guidance"
+#endif
+float guidance_indi_max_airspeed = GUIDANCE_INDI_MAX_AIRSPEED;
+
 float inv_eff[4];
 
 float lift_pitch_eff = 0.12;
@@ -193,9 +198,6 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
   float speed_sp_b_x = cosf(psi) * speed_sp.x + sinf(psi) * speed_sp.y;
   float speed_sp_b_y =-sinf(psi) * speed_sp.x + cosf(psi) * speed_sp.y;
 
-#ifndef GUIDANCE_INDI_MAX_AIRSPEED
-#error "You must have an airspeed sensor to use this guidance"
-#endif
   float airspeed = stateGetAirspeed_f();
 
   struct NedCoor_f *groundspeed = stateGetSpeedNed_f();
@@ -210,14 +212,14 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
   if((airspeed > 10.0) && (norm_des_as > 14.0)) {
 
   // Give the wind cancellation priority.
-    if (norm_des_as > GUIDANCE_INDI_MAX_AIRSPEED) {
+    if (norm_des_as > guidance_indi_max_airspeed) {
       float groundspeed_factor = 0.0;
 
       // if the wind is faster than we can fly, just fly in the wind direction
-      if(FLOAT_VECT2_NORM(windspeed) < GUIDANCE_INDI_MAX_AIRSPEED) {
+      if(FLOAT_VECT2_NORM(windspeed) < guidance_indi_max_airspeed) {
         float av = speed_sp.x * speed_sp.x + speed_sp.y * speed_sp.y;
         float bv = -2 * (windspeed.x * speed_sp.x + windspeed.y * speed_sp.y);
-        float cv = windspeed.x * windspeed.x + windspeed.y * windspeed.y - GUIDANCE_INDI_MAX_AIRSPEED * GUIDANCE_INDI_MAX_AIRSPEED;
+        float cv = windspeed.x * windspeed.x + windspeed.y * windspeed.y - guidance_indi_max_airspeed * guidance_indi_max_airspeed;
 
         float dv = bv * bv - 4.0 * av * cv;
 
@@ -233,18 +235,20 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
       desired_airspeed.x = groundspeed_factor * speed_sp.x - windspeed.x;
       desired_airspeed.y = groundspeed_factor * speed_sp.y - windspeed.y;
 
-      speed_sp_b_x = GUIDANCE_INDI_MAX_AIRSPEED;
+      speed_sp_b_x = guidance_indi_max_airspeed;
     }
 
+    // desired airspeed can not be larger than max airspeed
+    speed_sp_b_x = Min(norm_des_as,guidance_indi_max_airspeed);
 
-    speed_sp_b_x = Min(norm_des_as,GUIDANCE_INDI_MAX_AIRSPEED);
-
+    // Calculate accel sp in body axes, because we need to regulate airspeed
     struct FloatVect2 sp_accel_b;
-
+    // In turn acceleration proportional to heading diff
     sp_accel_b.y = atan2(desired_airspeed.y, desired_airspeed.x) - psi;
     FLOAT_ANGLE_NORMALIZE(sp_accel_b.y);
     sp_accel_b.y *= 15.0;
 
+    // Control the airspeed
     sp_accel_b.x = (speed_sp_b_x - airspeed) * guidance_indi_speed_gain;
 
     sp_accel.x = cosf(psi) * sp_accel_b.x - sinf(psi) * sp_accel_b.y;
@@ -259,8 +263,8 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
       float speed_increment = speed_sp_b_x - groundspeed_x;
 
       // limit groundspeed setpoint to max_airspeed + (diff gs and airspeed)
-      if((speed_increment + airspeed) > GUIDANCE_INDI_MAX_AIRSPEED) {
-        speed_sp_b_x = GUIDANCE_INDI_MAX_AIRSPEED + groundspeed_x - airspeed;
+      if((speed_increment + airspeed) > guidance_indi_max_airspeed) {
+        speed_sp_b_x = guidance_indi_max_airspeed + groundspeed_x - airspeed;
       }
     }
     speed_sp.x = cosf(psi) * speed_sp_b_x - sinf(psi) * speed_sp_b_y;
@@ -272,10 +276,10 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
   }
 
   // Bound the acceleration setpoint
-  float accelbound = 3.0 + airspeed/GUIDANCE_INDI_MAX_AIRSPEED*5.0;
+  float accelbound = 3.0 + airspeed/guidance_indi_max_airspeed*5.0;
   scale_two_d(&sp_accel, accelbound);
-  /*BoundAbs(sp_accel.x, 3.0 + airspeed/GUIDANCE_INDI_MAX_AIRSPEED*6.0);*/
-  /*BoundAbs(sp_accel.y, 3.0 + airspeed/GUIDANCE_INDI_MAX_AIRSPEED*6.0);*/
+  /*BoundAbs(sp_accel.x, 3.0 + airspeed/guidance_indi_max_airspeed*6.0);*/
+  /*BoundAbs(sp_accel.y, 3.0 + airspeed/guidance_indi_max_airspeed*6.0);*/
   BoundAbs(sp_accel.z, 3.0);
 
 #if GUIDANCE_INDI_RC_DEBUG
@@ -307,7 +311,7 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
   } else {
     flap_effectiveness = 0.0008 + (airspeed - 8.0)*0.00009;
   }
-  double flap_accel_body_x = -flap_effectiveness*actuator_state_filt_vect[0] + flap_effectiveness*actuator_state_filt_vect[1];
+  double flap_deflection = -actuator_state_filt_vect[0] + actuator_state_filt_vect[1];
 
   if(update_hp_freq_and_reset > 0) {
     double *coef_a;
@@ -339,15 +343,17 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
   }
 
   // propagate high pass filter, because we don't want steady state offsets in the acceleration
-  update_fourth_order_high_pass(&flap_accel_hp, flap_accel_body_x);
+  update_fourth_order_high_pass(&flap_accel_hp, flap_deflection);
+
+  float flap_accel_body_x = (float) flap_accel_hp.o[0] * flap_effectiveness;
 
   float accel_x, accel_y, accel_z;
   if(radio_control.values[5] > 0) {
     struct FloatRMat rot_mat;
     float_rmat_of_quat(&rot_mat, stateGetNedToBodyQuat_f());
-    accel_x = filt_accel_ned[0].o[0] - RMAT_ELMT(rot_mat, 0,0) * (float) flap_accel_hp.o[0];
-    accel_y = filt_accel_ned[1].o[0] - RMAT_ELMT(rot_mat, 0,1) * (float) flap_accel_hp.o[0];
-    accel_z = filt_accel_ned[2].o[0] - RMAT_ELMT(rot_mat, 0,2) * (float) flap_accel_hp.o[0];
+    accel_x = filt_accel_ned[0].o[0] - RMAT_ELMT(rot_mat, 0,0) * flap_accel_body_x;
+    accel_y = filt_accel_ned[1].o[0] - RMAT_ELMT(rot_mat, 0,1) * flap_accel_body_x;
+    accel_z = filt_accel_ned[2].o[0] - RMAT_ELMT(rot_mat, 0,2) * flap_accel_body_x;
 
 /*or: cosf(psi)cosf(theta)-sinf(theta)sinf(psi)sinf(phi), sinf(psi)cosf(theta)+sinf(theta)sinf(phi)cosf(psi), -sinf(theta)cosf(phi)*/
     /*accel_x = filt_accel_ned[0].o[0] - (cosf(eulers_zxy.psi) - sinf(eulers_zxy.psi)) * (float) flap_accel_hp.o[0];*/

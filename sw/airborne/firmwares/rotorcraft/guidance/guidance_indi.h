@@ -55,5 +55,6 @@ extern float guidance_indi_speed_gainz;
 extern struct FloatVect2 desired_airspeed;
 extern int16_t update_hp_freq_and_reset;
 extern struct FourthOrderHighPass flap_accel_hp;
+extern float guidance_indi_max_airspeed;
 
 #endif /* GUIDANCE_INDI_H */

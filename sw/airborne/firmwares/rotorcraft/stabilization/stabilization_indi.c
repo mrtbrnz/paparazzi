@@ -71,7 +71,7 @@ struct ReferenceSystem reference_acceleration = {
 // Factor that the estimated G matrix is allowed to deviate from initial one
 #define INDI_ALLOWED_G_FACTOR 2.0
 
-float thrust_of_pitch_eff = 35.0;
+float thrust_of_pitch_eff = 23.0;
 
 #if STABILIZATION_INDI_USE_ADAPTIVE
 bool indi_use_adaptive = true;
