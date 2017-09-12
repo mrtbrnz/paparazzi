@@ -97,7 +97,7 @@ float guidance_indi_max_airspeed = GUIDANCE_INDI_MAX_AIRSPEED;
 
 float inv_eff[4];
 
-float lift_pitch_eff = 0.12;
+float lift_pitch_eff = GUIDANCE_INDI_PITCH_LIFT_EFF;
 
 /** state eulers in zxy order */
 struct FloatEulers eulers_zxy;
@@ -307,9 +307,9 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
     float pitch_interp = DegOfRad(eulers_zxy.theta);
     Bound(pitch_interp, -70.0, -40.0);
     float ratio = (pitch_interp + 40.0)/(-30.);
-    flap_effectiveness = 0.00018 + 0.00062*ratio;
+    flap_effectiveness = FE_Lift_A_PITCH + FE_Lift_B_PITCH*ratio;
   } else {
-    flap_effectiveness = 0.0008 + (airspeed - 8.0)*0.00009;
+    flap_effectiveness = FE_Lift_A_AS + (airspeed - 8.0)*FE_Lift_B_AS;
   }
   double flap_deflection = -actuator_state_filt_vect[0] + actuator_state_filt_vect[1];
 

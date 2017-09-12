@@ -481,14 +481,19 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
   struct FloatRates *body_rates_f = stateGetBodyRates_f();
   struct NedCoor_f *accelned = stateGetAccelNed_f();
 
+uint32_t raw_duty1 = 0;
+uint32_t raw_duty2 = 0;
+
 #if CYCLONE_MINI
-  uint32_t raw_duty1 = 0;
-  uint32_t raw_duty2 = 0;
+  raw_duty1 = 0;
+  raw_duty2 = 0;
   int32_t airspeed = 0;
 #else
-  uint32_t raw_duty1 = get_pwm_input_duty_in_usec(PWM_INPUT1);
-  uint32_t raw_duty2 = get_pwm_input_duty_in_usec(PWM_INPUT2);
   int32_t airspeed = ANGLE_BFP_OF_REAL(ms45xx.diff_pressure);
+#ifdef USE_PWM_INPUT1
+  raw_duty1 = get_pwm_input_duty_in_usec(PWM_INPUT1);
+  raw_duty2 = get_pwm_input_duty_in_usec(PWM_INPUT2);
+#endif
 #endif
 
   sd_buffer_i[0] = log_counter;

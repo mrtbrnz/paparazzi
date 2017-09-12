@@ -83,28 +83,38 @@ void ctrl_eff_scheduling_periodic_b(void)
     Bound(pitch_interp, -60.0, -30.0);
     float ratio = (pitch_interp + 30.0)/(-30.);
 
-    g1g2[1][0] = -2.1/1000*(1-ratio) + -4.0/1000*ratio;
-    g1g2[1][1] =  2.1/1000*(1-ratio) +  4.0/1000*ratio;
-    g1g2[2][0] = -2.0/1000*(1-ratio) + -8.0/1000*ratio;
-    g1g2[2][1] = -2.0/1000*(1-ratio) + -8.0/1000*ratio;
+    /*pitch*/
+    g1g2[1][0] = g1g2_hover[1][0]/1000*(1-ratio) + -PITCH_EFF_AT_60/1000*ratio;
+    g1g2[1][1] = g1g2_hover[1][1]/1000*(1-ratio) +  PITCH_EFF_AT_60/1000*ratio;
+    /*yaw*/
+    g1g2[2][0] = g1g2_hover[2][0]/1000*(1-ratio) + -YAW_EFF_AT_60/1000*ratio;
+    g1g2[2][1] = g1g2_hover[2][1]/1000*(1-ratio) + -YAW_EFF_AT_60/1000*ratio;
   } else {
     // calculate squared airspeed
     Bound(airspeed, 0.0, 30.0);
     float airspeed2 = airspeed*airspeed;
 
-    float pitch_eff = 2.4169 + 0.0307*airspeed2;
+    float pitch_eff = CE_PITCH_A + CE_PITCH_B*airspeed2;
     g1g2[1][0] = -pitch_eff/1000;
     g1g2[1][1] =  pitch_eff/1000;
 
-    float yaw_eff = 5.6310 + 0.0515*airspeed2;
+    float yaw_eff = CE_YAW_A + CE_YAW_B*airspeed2;
     g1g2[2][0] = -yaw_eff/1000;
     g1g2[2][1] = -yaw_eff/1000;
   }
 
-  g1g2[0][2] = -actuator_state_filt_vect[2]/1000*0.0018;
-  g1g2[0][3] =  actuator_state_filt_vect[3]/1000*0.0018;
+  g1g2[0][2] = -actuator_state_filt_vect[2]/1000*SQUARED_ROLL_EFF;
+  g1g2[0][3] =  actuator_state_filt_vect[3]/1000*SQUARED_ROLL_EFF;
   Bound(g1g2[0][2], -30.0/1000, -2.0/1000);
   Bound(g1g2[0][3], 2.0/1000,  30.0/1000);
+
+  /*Make pitch gain equal to roll gain for turns forward flight*/
+  if(airspeed > 12.0) {
+    reference_acceleration.err_q = 107.0;
+  } else {
+    reference_acceleration.err_q = 200.0;
+  }
+
 }
 
 void ctrl_eff_scheduling_periodic_a(void)
