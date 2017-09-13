@@ -274,7 +274,7 @@
     <!--<module name="servo_tester"/>-->
 
     <module name="adc_generic">
-      <configure name="ADC_CHANNEL_GENERIC1" value="ADC_1" />
+      <configure name="ADC_CHANNEL_GENERIC1" value="ADC_3" />
     </module>
 
     <module name="air_data">
