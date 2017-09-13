@@ -220,10 +220,10 @@
       <define name="CE_YAW_A" value="7.1657"/>
       <define name="CE_YAW_B" value="0.0162"/>
       <!--Flap effectiveness on lift-->
-      <define name="FE_Lift_A_PITCH" value="0.00014"/>
-      <define name="FE_Lift_B_PITCH" value="0.00046"/>
-      <define name="FE_Lift_A_AS" value="0.0006"/>
-      <define name="FE_Lift_B_AS" value="0.000067"/>
+      <define name="FE_LIFT_A_PITCH" value="0.00014"/>
+      <define name="FE_LIFT_B_PITCH" value="0.00046"/>
+      <define name="FE_LIFT_A_AS" value="0.0006"/>
+      <define name="FE_LIFT_B_AS" value="0.000067"/>
     </module>
     </target>
 

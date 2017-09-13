@@ -84,11 +84,11 @@ void ctrl_eff_scheduling_periodic_b(void)
     float ratio = (pitch_interp + 30.0)/(-30.);
 
     /*pitch*/
-    g1g2[1][0] = g1g2_hover[1][0]/1000*(1-ratio) + -PITCH_EFF_AT_60/1000*ratio;
-    g1g2[1][1] = g1g2_hover[1][1]/1000*(1-ratio) +  PITCH_EFF_AT_60/1000*ratio;
+    g1g2[1][0] = g1g2_hover[1][0]*(1-ratio) + -PITCH_EFF_AT_60/1000*ratio;
+    g1g2[1][1] = g1g2_hover[1][1]*(1-ratio) +  PITCH_EFF_AT_60/1000*ratio;
     /*yaw*/
-    g1g2[2][0] = g1g2_hover[2][0]/1000*(1-ratio) + -YAW_EFF_AT_60/1000*ratio;
-    g1g2[2][1] = g1g2_hover[2][1]/1000*(1-ratio) + -YAW_EFF_AT_60/1000*ratio;
+    g1g2[2][0] = g1g2_hover[2][0]*(1-ratio) + -YAW_EFF_AT_60/1000*ratio;
+    g1g2[2][1] = g1g2_hover[2][1]*(1-ratio) + -YAW_EFF_AT_60/1000*ratio;
   } else {
     // calculate squared airspeed
     Bound(airspeed, 0.0, 30.0);

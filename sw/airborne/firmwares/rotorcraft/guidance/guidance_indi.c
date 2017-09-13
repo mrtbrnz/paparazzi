@@ -307,9 +307,9 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
     float pitch_interp = DegOfRad(eulers_zxy.theta);
     Bound(pitch_interp, -70.0, -40.0);
     float ratio = (pitch_interp + 40.0)/(-30.);
-    flap_effectiveness = FE_Lift_A_PITCH + FE_Lift_B_PITCH*ratio;
+    flap_effectiveness = FE_LIFT_A_PITCH + FE_LIFT_B_PITCH*ratio;
   } else {
-    flap_effectiveness = FE_Lift_A_AS + (airspeed - 8.0)*FE_Lift_B_AS;
+    flap_effectiveness = FE_LIFT_A_AS + (airspeed - 8.0)*FE_LIFT_B_AS;
   }
   double flap_deflection = -actuator_state_filt_vect[0] + actuator_state_filt_vect[1];
 

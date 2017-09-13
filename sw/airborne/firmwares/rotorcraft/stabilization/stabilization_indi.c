@@ -44,6 +44,7 @@
 #include "wls/wls_alloc.h"
 #include <stdio.h>
 #include "modules/sensors/airspeed_ms45xx_i2c.h"
+#include "modules/adcs/adc_generic.h"
 #include "mcu_periph/pwm_input.h"
 
 float u_min[INDI_NUM_ACT];
@@ -491,8 +492,12 @@ uint32_t raw_duty2 = 0;
 #else
   int32_t airspeed = ANGLE_BFP_OF_REAL(ms45xx.diff_pressure);
 #ifdef USE_PWM_INPUT1
+  // Log angle of attack and sideslip
   raw_duty1 = get_pwm_input_duty_in_usec(PWM_INPUT1);
   raw_duty2 = get_pwm_input_duty_in_usec(PWM_INPUT2);
+#else
+  // Log the current
+  raw_duty1 = adc_generic_val1;
 #endif
 #endif
 

@@ -223,11 +223,6 @@
       <define name="CE_PITCH_B" value="0.0307"/>
       <define name="CE_YAW_A" value="5.631"/>
       <define name="CE_YAW_B" value="0.0515"/>
-      <!--Flap effectiveness on lift-->
-      <define name="FE_Lift_A_PITCH" value="0.00018"/>
-      <define name="FE_Lift_B_PITCH" value="0.00062"/>
-      <define name="FE_Lift_A_AS" value="0.0008"/>
-      <define name="FE_Lift_B_AS" value="0.00009"/>
     </module>
     </target>
 
@@ -298,6 +293,11 @@
       <define name="GUIDANCE_INDI_MAX_AIRSPEED" value="16.0"/>
       <define name="GUIDANCE_HEADING_IS_FREE" value="FALSE"/> <!--heading can not be set by navigation-->
       <!--<define name="KNIFE_EDGE_TEST" value="TRUE"/>-->
+      <!--Flap effectiveness on lift-->
+      <define name="FE_LIFT_A_PITCH" value="0.00018"/>
+      <define name="FE_LIFT_B_PITCH" value="0.00062"/>
+      <define name="FE_LIFT_A_AS" value="0.0008"/>
+      <define name="FE_LIFT_B_AS" value="0.00009"/>
     </module>
 
     <!--<module name="ahrs"          type="int_cmpl_quat">-->
