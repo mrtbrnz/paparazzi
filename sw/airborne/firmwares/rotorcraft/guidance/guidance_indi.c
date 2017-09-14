@@ -305,8 +305,8 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
   float flap_effectiveness;
   if(airspeed < 8) {
     float pitch_interp = DegOfRad(eulers_zxy.theta);
-    Bound(pitch_interp, -70.0, -40.0);
-    float ratio = (pitch_interp + 40.0)/(-30.);
+    Bound(pitch_interp, -70.0, -20.0);
+    float ratio = (pitch_interp + 20.0)/(-50.);
     flap_effectiveness = FE_LIFT_A_PITCH + FE_LIFT_B_PITCH*ratio;
   } else {
     flap_effectiveness = FE_LIFT_A_AS + (airspeed - 8.0)*FE_LIFT_B_AS;

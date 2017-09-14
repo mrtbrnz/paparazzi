@@ -295,7 +295,7 @@
       <!--<define name="KNIFE_EDGE_TEST" value="TRUE"/>-->
       <!--Flap effectiveness on lift-->
       <define name="FE_LIFT_A_PITCH" value="0.00018"/>
-      <define name="FE_LIFT_B_PITCH" value="0.00062"/>
+      <define name="FE_LIFT_B_PITCH" value="0.00072"/>
       <define name="FE_LIFT_A_AS" value="0.0008"/>
       <define name="FE_LIFT_B_AS" value="0.00009"/>
     </module>
