@@ -209,7 +209,7 @@ void guidance_indi_run(bool UNUSED in_flight, float *heading_sp) {
   float norm_des_as = FLOAT_VECT2_NORM(desired_airspeed);
 
   // Make turn instead of straight line
-  if((airspeed > 10.0) && (norm_des_as > 14.0)) {
+  if((airspeed > 10.0) && (norm_des_as > 12.0)) {
 
   // Give the wind cancellation priority.
     if (norm_des_as > guidance_indi_max_airspeed) {
