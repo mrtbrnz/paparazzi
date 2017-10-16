@@ -1,10 +1,10 @@
 <!--Mini-Cyclone EPP Airframe
-  Chimera AP
-	Xbee API 
+  	Apogee 1.0 Chibios
+	Xbee API
 	Ublox M8T
 	SBUS Futaba -->
 
-<airframe name="foam cylone">
+<airframe name="mini cyfoam">
 
   <servos driver="Pwm">
     <servo name="ELEVON_LEFT"  no="0" min="1000" neutral="1500" max="2000"/>
@@ -32,35 +32,27 @@
 
   <section name="IMU" prefix="IMU_">
     <!-- IMU calibration, make sure to calibrate the IMU properly before flight, see the wiki for more info-->
-    <!--<define name="MAG_X_NEUTRAL" value="234"/>-->
-    <!--<define name="MAG_Y_NEUTRAL" value="-226"/>-->
-    <!--<define name="MAG_Z_NEUTRAL" value="236"/>-->
-    <!--<define name="MAG_X_SENS" value="7.38196858567" integer="16"/>-->
-    <!--<define name="MAG_Y_SENS" value="8.7577026533" integer="16"/>-->
-    <!--<define name="MAG_Z_SENS" value="8.6772551439" integer="16"/>-->
+    <define name="MAG_X_NEUTRAL" value="12"/>
+    <define name="MAG_Y_NEUTRAL" value="-103"/>
+    <define name="MAG_Z_NEUTRAL" value="-444"/>
+    <define name="MAG_X_SENS" value="3.67726438454" integer="16"/>
+    <define name="MAG_Y_SENS" value="3.72705676695" integer="16"/>
+    <define name="MAG_Z_SENS" value="3.80412188394" integer="16"/>
 
-    <!--<define name= "MAG_X_CURRENT_COEF" value="0.001455"/>-->
-    <!--<define name= "MAG_Y_CURRENT_COEF" value="0.012152"/>-->
-    <!--<define name= "MAG_Z_CURRENT_COEF" value="-0.0001088"/>-->
+    <define name= "MAG_X_CURRENT_COEF" value="0.00132143381435"/>
+    <define name= "MAG_Y_CURRENT_COEF" value="0.00613721186806"/>
+    <define name= "MAG_Z_CURRENT_COEF" value="0.0172048482992"/>
 
-    <!--Mag of gps-->
-    <define name="MAG_X_NEUTRAL" value="195"/>
-    <define name="MAG_Y_NEUTRAL" value="-47"/>
-    <define name="MAG_Z_NEUTRAL" value="-25"/>
-    <define name="MAG_X_SENS" value="3.68245686199" integer="16"/>
-    <define name="MAG_Y_SENS" value="3.81802043484" integer="16"/>
-    <define name="MAG_Z_SENS" value="4.01084591146" integer="16"/>
-
-    <define name="BODY_TO_IMU_PHI"   value="180." unit="deg"/>
+    <define name="BODY_TO_IMU_PHI"   value="0."  unit="deg"/>
     <define name="BODY_TO_IMU_THETA" value="90." unit="deg"/>
-    <define name="BODY_TO_IMU_PSI"   value="180." unit="deg"/>
+    <define name="BODY_TO_IMU_PSI"   value="0."  unit="deg"/>
   </section>
 
   <section name="AUTOPILOT">
     <define name="MODE_MANUAL"  value="AP_MODE_ATTITUDE_DIRECT"/>
-    <define name="MODE_AUTO1"   value="AP_MODE_FORWARD"/>
-    <define name="MODE_AUTO2"   value="AP_MODE_NAV"/>
-    <define name="MODE_STARTUP" value="AP_MODE_NAV"/>
+    <define name="MODE_AUTO1" value="AP_MODE_FORWARD"/>
+    <define name="MODE_AUTO2"  value="AP_MODE_NAV"/>
+    <define name="MODE_STARTUP"  value="AP_MODE_NAV"/>
   </section>
 
   <section name="BAT">
@@ -173,13 +165,11 @@
   </section>
 
   <modules main_freq="512">
-    <!--<module name="gps" type="ubx_ucenter"/>-->
-    <module name="tlsf"/>
-    <module name="pprzlog">
-      <define name="SDLOG_START_DELAY" value="10"/>
-    </module>
-    <module name="logger" type="sd_chibios"/>
-    <!--<module name="flight_recorder"/>-->
+      <module name="gps" type="ubx_ucenter"/>
+      <module name="tlsf"/>
+      <module name="pprzlog"/>
+      <module name="logger" type="sd_chibios"/>
+      <module name="flight_recorder"/>
     <!--<module name="logger_spi_link"/>-->
 
     <!--Use an airspeed sensor and get the measured airspeed in the messages-->
@@ -190,13 +180,13 @@
     </module>
 
     <!--<module name="pwm_meas"/>-->
-    <!--<module name="AOA_pwm">-->
-      <!--<define name="AOA_PWM_CHANNEL" value="PWM_INPUT1"/>-->
-    <!--</module>-->
+    <!--<module name="AOA_pwm">
+      <define name="AOA_PWM_CHANNEL" value="PWM_INPUT1"/>
+    </module>-->
 
     <module name="pwm_meas">
-      <define name="USE_PWM_INPUT1" value="PWM_PULSE_TYPE_ACTIVE_LOW"/>
-      <define name="USE_PWM_INPUT2" value="PWM_PULSE_TYPE_ACTIVE_LOW"/>
+      <define name="USE_PWM_INPUT1" value="FALSE"/>
+      <define name="USE_PWM_INPUT2" value="FALSE"/>
     </module>
   </modules>
 
@@ -208,7 +198,7 @@
   </section>
 
   <firmware name="rotorcraft">
-    <target name="ap" board="chimera_1.0">
+    <target name="ap" board="apogee_1.0_chibios">
       <module name="radio_control" type="sbus">
         <!-- Put the mode on channel AUX1-->
         <define name="RADIO_KILL_SWITCH" value="RADIO_GAIN1"/>
@@ -265,7 +255,7 @@
     <module name="sys_mon"/>
 
     <module name="telemetry"     type="xbee_api"/>
-    <module name="imu" type="chimera">
+    <module name="imu" type="apogee">
       <define name="IMU_MPU9250_GYRO_RANGE" value="MPU9250_GYRO_RANGE_2000" />
       <define name="IMU_MPU9250_ACCEL_RANGE" value="MPU9250_ACCEL_RANGE_16G" />
     </module>

@@ -1,5 +1,4 @@
 <!DOCTYPE module SYSTEM "module.dtd">
-
 <module name="airspeed_ms45xx_i2c" dir="sensors">
   <doc>
     <description>

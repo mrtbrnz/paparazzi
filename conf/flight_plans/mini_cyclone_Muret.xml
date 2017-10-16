@@ -8,10 +8,10 @@
     <waypoint name="HOME" x="4.7" y="30.2"/>
     <waypoint name="CLIMB" x="0.6" y="59.1"/>
     <waypoint name="STDBY" x="-26.2" y="46.9"/>
-    <waypoint name="p1" x="-135.2" y="69.4"/>
-    <waypoint name="p2" x="-118.1" y="199.7"/>
-    <waypoint name="p3" x="156.8" y="177.8"/>
-    <waypoint name="p4" x="146.8" y="32.2"/>
+    <waypoint name="p1" x="-135" y="70"/>
+    <waypoint name="p2" x="-135" y="150"/>
+    <waypoint name="p3" x="-55"  y="150"/>
+    <waypoint name="p4" x="-55" y="70"/>
     <waypoint name="TD" x="-12.7" y="67.6"/>
   </waypoints>
   <blocks>
@@ -44,10 +44,17 @@
       <set value="false" var="force_forward"/>
       <stay wp="p1"/>
     </block>
-    <block name="go_p2">
+    <block name="stay_p2">
       <set value="false" var="force_forward"/>
-      <go wp="p2"/>
-      <deroute block="stay_p1"/>
+      <stay wp="p2"/>
+    </block>
+    <block name="stay_p3">
+      <set value="false" var="force_forward"/>
+      <stay wp="p3"/>
+    </block>
+    <block name="stay_p4">
+      <set value="false" var="force_forward"/>
+      <stay wp="p4"/>
     </block>
     <block name="route">
       <set value="true" var="force_forward"/>
@@ -74,3 +81,4 @@
     </block>
   </blocks>
 </flight_plan>
+

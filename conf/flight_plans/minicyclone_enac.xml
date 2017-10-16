@@ -1,18 +1,18 @@
 <!DOCTYPE flight_plan SYSTEM "flight_plan.dtd">
 
-<flight_plan alt="220" ground_alt="170" lat0="43.46223" lon0="1.27289" max_dist_from_home="350" name="Rotorcraft Basic (Enac)" security_height="2">
+<flight_plan alt="40" ground_alt="0" lat0="43.56339097656971" lon0="1.484452486038208" max_dist_from_home="300" name="Rotorcraft Basic (Enac)" security_height="2">
   <header>
 #include "autopilot.h"
 </header>
   <waypoints>
-    <waypoint name="HOME" x="4.7" y="30.2"/>
-    <waypoint name="CLIMB" x="0.6" y="59.1"/>
-    <waypoint name="STDBY" x="-26.2" y="46.9"/>
-    <waypoint name="p1" x="-135.2" y="69.4"/>
-    <waypoint name="p2" x="-118.1" y="199.7"/>
-    <waypoint name="p3" x="156.8" y="177.8"/>
-    <waypoint name="p4" x="146.8" y="32.2"/>
-    <waypoint name="TD" x="-12.7" y="67.6"/>
+    <waypoint name="HOME" x="-15.8" y="16.5"/>
+    <waypoint name="CLIMB" x="-39.0" y="17.6"/>
+    <waypoint name="STDBY" x="-29.1" y="-47.5"/>
+    <waypoint name="p1" x="-4.7" y="-17.3"/>
+    <waypoint name="p2" x="40.0" y="-191.8"/>
+    <waypoint name="p3" x="-72.2" y="-217.0"/>
+    <waypoint name="p4" x="-120.9" y="-48.9"/>
+    <waypoint name="TD" x="-25.4" y="34.0"/>
   </waypoints>
   <blocks>
     <block name="Wait GPS">
@@ -65,7 +65,7 @@
     <block name="land">
       <set value="false" var="force_forward"/>
       <go wp="TD"/>
-    </block>
+    </block>-
     <block name="flare">
       <stay climb="nav_descend_vspeed" vmode="climb" wp="TD"/>
     </block>
@@ -74,3 +74,4 @@
     </block>
   </blocks>
 </flight_plan>
+
