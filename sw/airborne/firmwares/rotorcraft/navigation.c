@@ -373,7 +373,7 @@ struct FloatVect3 nav_get_speed_sp_from_line(struct FloatVect2 line_v_enu, struc
     Bound(desired_speed, 0.0, nav_max_speed);
   }
 
-  // Calculate lenght of line segment
+  // Calculate length of line segment
   float length_line = float_vect2_norm(&line_v);
   if(length_line < 0.01) {
     length_line = 0.01;
