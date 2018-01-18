@@ -67,7 +67,8 @@
   <section name="ctrl_eff_scheduling" prefix="FWD_">
     <!-- control effectiveness, scaled by INDI_G_SCALING (1000)-->
     <define name="G1_ROLL"   value="{   0,    0,   -8.9,  8.3}"/>
-    <define name="G1_PITCH"  value="{-25.0,  25.0,     0,    0}"/>
+    <define name="G1_PITCH"  value="{-22.5,  22.5,     0,    0}"/> 
+   <!-- <define name="G1_PITCH"  value="{-25.0,  25.0,     0,    0}"/>  Oscillations -->
     <define name="G1_YAW"    value="{-4.5, -6.3,   0.6, -0.6}"/>
     <define name="G1_THRUST" value="{   0,    0,   -.8,  -.8}"/>
   </section>
@@ -188,8 +189,8 @@
     <module name="airspeed" type="ms45xx_i2c">
       <define name="MS45XX_I2C_DEV"         value="i2c1"/>
       <!--<define name="MS45XX_AIRSPEED_SCALE" value="2.4"/> -->
-      <define name="MS45XX_PRESSURE_SCALE"  value="0.5557"/>
-      <define name="MS45XX_PRESSURE_OFFSET" value="4551.9"/>
+      <define name="MS45XX_PRESSURE_SCALE"  value="1.8336"/>
+      <define name="MS45XX_PRESSURE_OFFSET" value="15019"/>
       <define name="USE_AIRSPEED_MS45XX"    value="TRUE"/>
     </module>
 
