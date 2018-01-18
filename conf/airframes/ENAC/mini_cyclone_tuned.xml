@@ -137,12 +137,14 @@
     <define name="NAV_DESCEND_VSPEED" value="-0.8"/>
   </section>
 
-  <!--<section name="AHRS" prefix="AHRS_">-->
+  <section name="AHRS" prefix="AHRS_">
     <!--<define name="H_X" value="0.5138"/>-->
     <!--<define name="H_Y" value="0.00019"/>-->
     <!--<define name="H_Z" value="0.8578"/>-->
     <!--<define name="GRAVITY_HEURISTIC_FACTOR" value="0"/>-->
-  <!--</section>-->
+    <define name="USE_GPS_HEADING" value="1" />
+    <define name="HEADING_UPDATE_GPS_MIN_SPEED" value="0" />
+  </section>
 
   <section name="INS" prefix="INS_">
     <define name="H_X" value="0.5138"/>
@@ -278,7 +280,7 @@
     <module name="air_data">
       <define name="USE_AIRSPEED_AIR_DATA" value="FALSE"/>
     </module>
-    <module name="gps" type="ublox"/>
+    <module name="gps" type="datalink"/>
     <module name="stabilization" type="indi"/>
 
     <module name="guidance" type="indi">
@@ -311,9 +313,10 @@
     <!--</module>-->
 
     <module name="ahrs"          type="int_cmpl_quat">
-      <configure name="USE_MAGNETOMETER" value="TRUE"/>
+      <configure name="USE_MAGNETOMETER" value="FALSE"/>
       <!--<define name="AHRS_GRAVITY_UPDATE_COORDINATED_TURN" value="TRUE"/>-->
       <!--<define name="AHRS_GPS_SPEED_IN_NEGATIVE_Z_DIRECTION" value="TRUE"/>-->
+
     </module>
 
     <!-- <module name="ins"/> --> 
