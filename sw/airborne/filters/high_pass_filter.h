@@ -20,7 +20,7 @@
  */
 
 /** @file filters/high_pass_filter.h
- *  @brief Simple high pass filter
+ *  @brief Simple high pass filter with double precision
  *
  */
 
@@ -74,14 +74,14 @@ static inline void init_fourth_order_high_pass(struct FourthOrderHighPass *filte
 static inline double update_fourth_order_high_pass(struct FourthOrderHighPass *filter, double value)
 {
   double out = filter->b[0] * value
-              + filter->b[1] * filter->i[0]
-              + filter->b[2] * filter->i[1]
-              + filter->b[3] * filter->i[2]
-              + filter->b[0] * filter->i[3]
-              - filter->a[0] * filter->o[0]
-              - filter->a[1] * filter->o[1]
-              - filter->a[2] * filter->o[2]
-              - filter->a[3] * filter->o[3];
+               + filter->b[1] * filter->i[0]
+               + filter->b[2] * filter->i[1]
+               + filter->b[3] * filter->i[2]
+               + filter->b[0] * filter->i[3]
+               - filter->a[0] * filter->o[0]
+               - filter->a[1] * filter->o[1]
+               - filter->a[2] * filter->o[2]
+               - filter->a[3] * filter->o[3];
 
   filter->i[3] = filter->i[2];
   filter->i[2] = filter->i[1];

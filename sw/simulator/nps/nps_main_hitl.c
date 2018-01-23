@@ -37,9 +37,6 @@
 #include "pprzlink/pprz_transport.h"
 #include "generated/airframe.h"
 
-/* Message id helpers */
-#define SenderIdOfPprzMsg(x) (x[0])
-#define IdOfPprzMsg(x) (x[1])
 
 #include "nps_main.h"
 #include "nps_sensors.h"
@@ -96,12 +93,16 @@ void nps_radio_and_autopilot_init(void)
 void nps_update_launch_from_dl(uint8_t value)
 {
   nps_autopilot.launch = value;
+  printf("Launch value=%u\n",nps_autopilot.launch);
 }
 
 void nps_main_run_sim_step(void)
 {
   nps_atmosphere_update(SIM_DT);
+
   nps_fdm_run_step(nps_autopilot.launch, nps_autopilot.commands, NPS_COMMANDS_NB);
+
+  nps_sensors_run_step(nps_main.sim_time);
 }
 
 void *nps_ins_data_loop(void *data __attribute__((unused)))
@@ -173,8 +174,10 @@ void *nps_ins_data_loop(void *data __attribute__((unused)))
       nanosleep(&waitFor, NULL);
     } else {
       // task took longer than the period
+#ifdef PRINT_TIME
       printf("INS THREAD: task took longer than one period, exactly %f [ms], but the period is %f [ms]\n",
              (double)task_ns / 1E6, (double)period_ns / 1E6);
+#endif
     }
   }
   return(NULL);
@@ -209,6 +212,8 @@ void *nps_ap_data_loop(void *data __attribute__((unused)))
   pprz_t  cmd_buf[NPS_COMMANDS_NB];
 
   struct pprz_transport pprz_tp_logger;
+
+  pprz_transport_init(&pprz_tp_logger);
 
   while (TRUE) {
     // receive messages from the autopilot
@@ -253,6 +258,10 @@ void *nps_ap_data_loop(void *data __attribute__((unused)))
             case DL_MOTOR_MIXING:
               // parse actuarors message
               cmd_len = DL_MOTOR_MIXING_values_length(buf);
+              // check for out-of-bounds access
+              if (cmd_len > NPS_COMMANDS_NB) {
+                cmd_len = NPS_COMMANDS_NB;
+              }
               memcpy(&cmd_buf, DL_MOTOR_MIXING_values(buf), cmd_len * sizeof(int16_t));
               pthread_mutex_lock(&fdm_mutex);
               // update commands
@@ -306,6 +315,7 @@ void *nps_main_loop(void *data __attribute__((unused)))
     guard = 0;
     while ((real_time - fdm.time) > SIM_DT) {
       nps_main_run_sim_step();
+      nps_main.sim_time = fdm.time;
       guard++;
       if (guard > 2) {
         //If we are too much behind, catch up incrementaly
@@ -326,8 +336,10 @@ void *nps_main_loop(void *data __attribute__((unused)))
       nanosleep(&waitFor, NULL);
     } else {
       // task took longer than the period
+#ifdef PRINT_TIME
       printf("MAIN THREAD: task took longer than one period, exactly %f [ms], but the period is %f [ms]\n",
              (double)task_ns / 1E6, (double)period_ns / 1E6);
+#endif
     }
   }
   return(NULL);

@@ -483,6 +483,9 @@ void guidance_indi_propagate_filters(void) {
  * horizontal at -90 degrees pitch
  *
  * @param Gmat array to write the matrix to [3x3]
+ *
+ * Calculate the matrix of partial derivatives of the roll, pitch and thrust
+ * w.r.t. the NED accelerations
  */
 void guidance_indi_calcg_wing(struct FloatMat33 *Gmat) {
 
@@ -494,6 +497,7 @@ void guidance_indi_calcg_wing(struct FloatMat33 *Gmat) {
   float spsi = sinf(eulers_zxy.psi);
   float cpsi = cosf(eulers_zxy.psi);
   //minus gravity is a guesstimate of the thrust force, thrust measurement would be better
+  //float T = -9.81;
 
 #ifndef GUIDANCE_INDI_PITCH_EFF_SCALING
 #define GUIDANCE_INDI_PITCH_EFF_SCALING 1.0
@@ -539,3 +543,5 @@ float guidance_indi_get_liftd(float airspeed, float theta) {
   return liftd;
 }
 
+//  QUAT_BFP_OF_REAL(stab_att_sp_quat,q_sp);
+//}

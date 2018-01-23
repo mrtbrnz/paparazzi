@@ -33,7 +33,7 @@ EXT_DIR=$(PAPARAZZI_SRC)/sw/ext
 include $(PAPARAZZI_SRC)/conf/Makefile.arm-embedded-toolchain
 
 
-all: libopencm3 luftboot chibios fatfs libsbp mavlink
+all: libopencm3 luftboot chibios fatfs libsbp mavlink TRICAL hacl-c
 
 # update (and init if needed) all submodules
 update_submodules:
@@ -65,7 +65,11 @@ luftboot: libopencm3.update luftboot.update luftboot.build
 luftboot_flash: luftboot.build
 	$(Q)$(MAKE) -C luftboot/src flash BMP_PORT?=/dev/ttyACM0 LIBOPENCM3=../../libopencm3 PREFIX=$(PREFIX)
 
+hacl-c: hacl-c.update
+
 chibios: chibios.update
+
+TRICAL: TRICAL.update
 
 fatfs: fatfs.update
 
@@ -101,4 +105,4 @@ clean_opencv_bebop:
 	fi
 
 .NOTPARALLEL: libopencm3 luftboot
-.PHONY: all clean update_submodules libopencm3 luftboot chibios fatfs luftboot_flash libopencm3.build luftboot.build mavlink.build libsbp pprzlink pprzlink.build opencv_bebop opencv_bebop.build clean_opencv_bebop
+.PHONY: all clean update_submodules libopencm3 luftboot chibios fatfs luftboot_flash libopencm3.build luftboot.build mavlink.build libsbp pprzlink pprzlink.build opencv_bebop opencv_bebop.build clean_opencv_bebop TRICAL

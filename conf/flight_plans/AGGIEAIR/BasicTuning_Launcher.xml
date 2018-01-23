@@ -1,6 +1,6 @@
 <!DOCTYPE flight_plan SYSTEM "../flight_plan.dtd">
 
-<flight_plan alt="1550" ground_alt="1350" lat0="41.815562" lon0="-111.982437" max_dist_from_home="3000" name="BasicTuning" security_height="25" home_mode_height="-200" qfu="90" geofence_sector="FlightArea" geofence_max_alt="2000" geofence_max_height="500">
+<flight_plan alt="1550" ground_alt="1350" lat0="41.815562" lon0="-111.982437" max_dist_from_home="3000" name="BasicTuning" security_height="25" home_mode_height="200" qfu="90" geofence_sector="FlightArea" geofence_max_alt="2000" geofence_max_height="500">
   <header>
 #include "subsystems/datalink/datalink.h"
 </header>
@@ -22,6 +22,7 @@
     <waypoint alt="1347.0" name="TD" x="1155.4" y="-354.1"/>
     <waypoint name="CLIMB" x="1142.0" y="-97.9"/>
     <waypoint name="_BASELEG" x="168.8" y="-13.8"/>
+    <waypoint name="PAYLOAD" x="100" y="50"/>
   </waypoints>
   <sectors>
     <sector name="Section1">
@@ -41,7 +42,6 @@
     <include name="L" procedure="AGGIEAIR/aggieair_landing.xml"/>
   </includes>
   <exceptions>
-    <!--exception cond="datalink_time > 30" deroute="Standby"/-->
     <exception cond="InsideFlightArea(GetPosX(), GetPosY()) == FALSE" deroute="Go Home"/>
   </exceptions>
   <blocks>
@@ -57,6 +57,7 @@
       <while cond="TRUE"/>
     </block>
     <block name="Launch" strip_button="TakeOff (wp CLIMB)" strip_icon="takeoff.png">
+      <set value="0" var="autopilot.kill_throttle"/>
       <call_once fun="nav_launcher_setup()"/>
       <call fun="nav_launcher_run()"/>
       <deroute block="Standby"/>

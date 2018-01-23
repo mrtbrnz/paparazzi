@@ -60,33 +60,16 @@ static void send_ins_ref(struct transport_tx *trans, struct link_device *dev)
 
 static void send_vn_info(struct transport_tx *trans, struct link_device *dev)
 {
-  // we want at least 75% of periodic frequency to be able to control the airfcraft
-  if (ins_vn.vn_freq < (PERIODIC_FREQUENCY*0.75)) {
-    gps.fix = GPS_FIX_NONE;
-  }
-
-  static uint16_t last_cnt = 0;
-  static uint16_t sec_cnt = 0;
-
-  sec_cnt = ins_vn.vn_packet.counter -  last_cnt;
-  ins_vn.vn_freq = sec_cnt; // update frequency counter
-
   pprz_msg_send_VECTORNAV_INFO(trans, dev, AC_ID,
                                &ins_vn.vn_data.timestamp,
                                &ins_vn.vn_packet.chksm_error,
                                &ins_vn.vn_packet.hdr_error,
-                               &sec_cnt,
+                               &ins_vn.vn_rate,
                                &ins_vn.vn_data.mode,
                                &ins_vn.vn_data.err,
                                &ins_vn.vn_data.ypr_u.phi,
                                &ins_vn.vn_data.ypr_u.theta,
                                &ins_vn.vn_data.ypr_u.psi);
-
-  // update counter
-  last_cnt = ins_vn.vn_packet.counter;
-
-  // reset mode
-  ins_vn.vn_data.mode = 0;
 }
 
 static void send_accel(struct transport_tx *trans, struct link_device *dev)
@@ -119,6 +102,44 @@ static void send_gyro_scaled(struct transport_tx *trans, struct link_device *dev
 PRINT_CONFIG_MSG("USE_INS_NAV_INIT defaulting to TRUE");
 #endif
 
+
+/**
+ * Monitors vectornav data rate
+ * and changes GPS lock if the data rate
+ * is too low.
+ *
+ */
+void ins_vectornav_monitor(void)
+{
+  static uint16_t last_cnt = 0;
+  static uint16_t sec_cnt = 0;
+
+  sec_cnt = ins_vn.vn_packet.counter -  last_cnt;
+  ins_vn.vn_rate = sec_cnt; // update frequency counter
+
+  // we want at least 75% of periodic frequency to be able to control the airfcraft
+  if (ins_vn.vn_rate < (PERIODIC_FREQUENCY*0.75)) {
+    gps.fix = GPS_FIX_NONE;
+  }
+
+  // Make gps pacc available in GPS page on GCS
+  static uint32_t last_pacc = 0;
+  // update only if pacc changes
+  if (last_pacc != gps.pacc) {
+    last_pacc = gps.pacc;
+    // we don't know the value of CNO, hence oscillate
+    // between 0 and 1 to not confuse the user
+    gps.svinfos[0].cno = (gps.svinfos[0].cno + 1) % 2;
+  }
+
+  // update counter
+  last_cnt = ins_vn.vn_packet.counter;
+
+  // reset mode
+  ins_vn.vn_data.mode = 0;
+}
+
+
 /**
  * Event handling for Vectornav
  */
@@ -143,7 +164,7 @@ void ins_vectornav_init(void)
 {
   // Initialize variables
   ins_vn.vn_status = VNNotTracking;
-  ins_vn.vn_freq = 0;
+  ins_vn.vn_rate = 0;
 
   // Initialize packet
   ins_vn.vn_packet.status = VNMsgSync;
@@ -271,15 +292,10 @@ void ins_vectornav_propagate()
   SetBit(gps.valid_fields, GPS_VALID_POS_LLA_BIT);
   stateSetPositionLla_i(&gps.lla_pos);
 
-  // ECEF position
-  struct LtpDef_f def;
-  ltp_def_from_lla_f(&def, &ins_vn.lla_pos);
-  struct EcefCoor_f ecef_vel;
-  ecef_of_ned_point_f(&ecef_vel, &def, &ins_vn.vn_data.vel_ned);
-  ECEF_BFP_OF_REAL(gps.ecef_vel, ecef_vel);
-  SetBit(gps.valid_fields, GPS_VALID_VEL_ECEF_BIT);
-
   // ECEF velocity
+  // TODO: properly implement
+
+  // ECEF position
   gps.ecef_pos.x = stateGetPositionEcef_i()->x;
   gps.ecef_pos.y = stateGetPositionEcef_i()->y;
   gps.ecef_pos.z = stateGetPositionEcef_i()->z;
@@ -298,6 +314,12 @@ void ins_vectornav_propagate()
   float geoid_h = wgs84_ellipsoid_to_geoid_f(ins_vn.lla_pos.lat, ins_vn.lla_pos.lon);
   gps.hmsl =  (int32_t)((ins_vn.lla_pos.alt - geoid_h)* 1000.0f);
   SetBit(gps.valid_fields, GPS_VALID_HMSL_BIT);
+
+  // Set GPS fix
+  gps.fix = ins_vn.vn_data.gps_fix;
+
+  // Set GPS num_sv
+  gps.num_sv = ins_vn.vn_data.num_sv;
 
   // set position uncertainty
   ins_vectornav_set_pacc();

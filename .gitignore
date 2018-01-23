@@ -8,6 +8,7 @@
 
 *~
 *.swp
+*.swo
 
 *.pyc
 
@@ -42,7 +43,7 @@ paparazzi.sublime-workspace
 
 # QtCreator IDE
 *.creator
-*.creator.user
+*.creator.user*
 *.config
 *.files
 *.includes
@@ -65,6 +66,7 @@ paparazzi.sublime-workspace
 /conf/maps_data/*
 /conf/maps.xml
 /conf/gps/ublox_conf
+!/conf/simulator/gazebo/**/*.config
 
 # /doc/pprz_algebra/
 /doc/pprz_algebra/headfile.log
@@ -159,6 +161,7 @@ paparazzi.sublime-workspace
 /sw/ground_segment/misc/kestrel2ivy
 /sw/ground_segment/misc/natnet2ivy
 /sw/ground_segment/misc/sbp2ivy
+/sw/ground_segment/misc/rtcm2ivy
 /sw/ground_segment/misc/video_synchronizer
 /sw/ground_segment/misc/ivy2serial
 /sw/ground_segment/misc/sbs2ivy

@@ -26,7 +26,6 @@
 ## COMMON FIXEDWING ALL TARGETS (SIM + AP + FBW ...)
 ##
 
-
 #
 # Board config + Include paths
 #
@@ -84,7 +83,7 @@ $(TARGET).srcs 		+= $(SRC_FIXEDWING)/inter_mcu.c
 # Math functions
 #
 ifneq ($(TARGET),fbw)
-$(TARGET).srcs += math/pprz_geodetic_int.c math/pprz_geodetic_float.c math/pprz_geodetic_double.c math/pprz_trig_int.c math/pprz_orientation_conversion.c math/pprz_algebra_int.c math/pprz_algebra_float.c math/pprz_algebra_double.c
+$(TARGET).srcs += math/pprz_geodetic_int.c math/pprz_geodetic_float.c math/pprz_geodetic_double.c math/pprz_trig_int.c math/pprz_orientation_conversion.c math/pprz_algebra_int.c math/pprz_algebra_float.c math/pprz_algebra_double.c math/pprz_stat.c
 endif
 
 #
@@ -112,6 +111,10 @@ ifeq ($(ARCH), stm32)
 endif
 
 ifeq ($(ARCH), chibios)
+  ns_srcs       += $(SRC_ARCH)/mcu_periph/gpio_arch.c
+endif
+
+ifeq ($(ARCH), linux)
   ns_srcs       += $(SRC_ARCH)/mcu_periph/gpio_arch.c
 endif
 
@@ -244,7 +247,11 @@ ap.srcs 		+= $(ap_srcs) $(ns_srcs)
 ##
 ## include firmware independent nps makefile and add fixedwing specifics
 ##
-include $(CFG_SHARED)/nps.makefile
+ifneq ($(TARGET), hitl)
+  include $(CFG_SHARED)/nps.makefile
+else
+  include $(CFG_SHARED)/hitl.makefile
+endif
 nps.srcs += nps/nps_autopilot_fixedwing.c
 
 # add normal ap and fbw sources

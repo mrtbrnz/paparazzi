@@ -95,15 +95,15 @@ let check_altitude_srtm = fun a x wgs84 ->
   Srtm.add_path (Env.paparazzi_home ^ "/data/srtm");
   try
     let srtm_alt = float (Srtm.of_wgs84 wgs84) in
-    if a < srtm_alt then begin
-      fprintf stderr "\nMAJOR WARNING: below SRTM ground altitude (%.0f<%.0f) in %s\n" a srtm_alt (Xml.to_string x)
+    if a < srtm_alt then begin (* Not fully correct, Flightplan "alt" is not alt as we know it *)
+      fprintf stderr "MAJOR NOTICE: below SRTM ground altitude (%.0f<%.0f) in %s\n" a srtm_alt (Xml.to_string x)
     end
   with Srtm.Tile_not_found e ->
     fprintf stderr "No SRTM data found to check altitude.\n"
 
 let check_altitude = fun a x ->
   if a < !ground_alt +. !security_height then begin
-    fprintf stderr "\nWarning: low altitude (%.0f<%.0f+%.0f) in %s\n\n" a !ground_alt !security_height (Xml.to_string x)
+    fprintf stderr "\nNOTICE: low altitude (%.0f<%.0f+%.0f) in %s\n\n" a !ground_alt !security_height (Xml.to_string x)
   end
 
 
@@ -355,6 +355,7 @@ let rec print_stage = fun index_of_waypoints x ->
         lprintf "GotoBlock(%d);\n" (get_index_block (ExtXml.attrib x "block"));
         lprintf "break;\n"
       | "exit_block" ->
+        lprintf "/* Falls through. */\n";
         lprintf "default:\n";
         stage ();
         lprintf "NextBlock();\n";
@@ -817,13 +818,88 @@ let parse_wpt_sector = fun indexes waypoints xml ->
   (sector_name, List.map p2D_of (Xml.children xml))
 
 
+(** FP variables and ABI auto bindings *)
+type fp_var = FP_var of (string * string * string) | FP_binding of (string * string list option * string * string option)
+
+(* get a Hashtbl of ABI messages (name, field_types) *)
+let extract_abi_msg = fun filename class_ ->
+    let xml = ExtXml.parse_file filename in
+    try
+      let xml_class = ExtXml.child ~select:(fun x -> Xml.attrib x "name" = class_) xml "msg_class" in
+      let t = Hashtbl.create (List.length (Xml.children xml_class)) in
+      List.iter (fun x ->
+        let name = ExtXml.attrib x "name"
+        and field_types = List.map (fun field -> ExtXml.attrib field "type") (Xml.children x) in
+        Hashtbl.add t name field_types
+      ) (Xml.children xml_class);
+      t
+    with
+        Not_found -> failwith (sprintf "No msg_class '%s' found" class_)
+
 let parse_variables = fun xml ->
+  let some_attrib_or_none = fun v n cb ->
+    try Some (cb (ExtXml.attrib v n)) with _ -> None
+  in
   List.map (fun var ->
-    let v = ExtXml.attrib var "var"
-    and t = ExtXml.attrib_or_default var "type" "float"
-    and i = ExtXml.attrib_or_default var "init" "0" in
-    (t, v, i)
+    match Xml.tag var with
+    | "variable" ->
+        let v = ExtXml.attrib var "var"
+        and t = ExtXml.attrib_or_default var "type" "float"
+        and i = ExtXml.attrib_or_default var "init" "0" in
+        FP_var (v, t, i)
+    | "abi_binding" ->
+        let n = ExtXml.attrib var "name"
+        and vs = some_attrib_or_none var "vars" (fun x -> Str.split (Str.regexp "[ ]*,[ ]*") x)
+        and i = ExtXml.attrib_or_default var "id" "ABI_BROADCAST"
+        and h = some_attrib_or_none var "handler" (fun x -> x) in
+        begin match vs, h with
+        | Some _, Some _ | None, None -> failwith "Gen_flight_plan: either 'vars' or 'handler' should be defined, not both"
+        | _, _ -> FP_binding (n, vs, i, h)
+        end
+    | _ -> failwith "Gen_flight_plan: unexpected variables tag"
   ) xml
+
+let print_var_decl abi_msgs = function
+  | FP_var (v, t, _) -> printf "extern %s %s;\n" t v
+  | _ -> () (* ABI variables are not public *)
+
+let print_var_impl abi_msgs = function
+  | FP_var (v, t, i) -> printf "%s %s = %s;\n" t v i
+  | FP_binding (n, Some vs, _, None) ->
+      printf "static abi_event FP_%s_ev;\n" n;
+      let field_types = Hashtbl.find abi_msgs n in
+      List.iter2 (fun abi_t user -> if not (user = "_") then printf "static %s %s;\n" abi_t user) field_types vs
+  | FP_binding (n, None, _, Some _) ->
+      printf "static abi_event FP_%s_ev;\n" n
+  | _ -> ()
+
+let print_auto_init_bindings = fun abi_msgs variables ->
+  let print_cb = function
+    | FP_binding (n, Some vs, _, None) ->
+        let field_types = Hashtbl.find abi_msgs n in
+        printf "static void FP_%s_cb(uint8_t sender_id __attribute__((unused))" n;
+        List.iteri (fun i v ->
+          if v = "_" then printf ", %s _unused_%d __attribute__((unused))" (List.nth field_types i) i
+          else printf ", %s _%s" (List.nth field_types i) v
+        ) vs;
+        printf ") {\n";
+        List.iter (fun v ->
+          if not (v = "_") then printf "  %s = _%s;\n" v v
+        ) vs;
+        printf "}\n\n"
+    | _ -> ()
+  in
+  let print_bindings = function
+    | FP_binding (n, _, i, None) ->
+        printf "  AbiBindMsg%s(%s, &FP_%s_ev, FP_%s_cb);\n" n i n n
+    | FP_binding (n, _, i, Some h) ->
+        printf "  AbiBindMsg%s(%s, &FP_%s_ev, %s);\n" n i n h
+    | _ -> ()
+  in
+  List.iter print_cb variables;
+  printf "static inline void auto_nav_init(void) {\n";
+  List.iter print_bindings variables;
+  printf "}\n\n"
 
 let write_settings = fun xml_file out_set variables ->
   fprintf out_set "<!-- This file has been generated by gen_flight_plan from %s -->\n" xml_file;
@@ -831,6 +907,14 @@ let write_settings = fun xml_file out_set variables ->
   fprintf out_set "<!-- Please DO NOT EDIT -->\n\n";
   fprintf out_set "<settings>\n";
   fprintf out_set " <dl_settings>\n";
+  (* remove some incompatible variables and all ABI bindings *)
+  let att_exists = fun x a ->
+    try let _ = Xml.attrib x a in true with Xml.No_attribute _ -> false
+  in
+  let variables = List.filter (fun x ->
+    if Xml.tag x = "variable" && att_exists x "min" && att_exists x "max" && att_exists x "step" then
+      true
+    else false) variables in
   (* add tab only if their are some variables *)
   if List.length variables > 0 then
     fprintf out_set "   <dl_settings name=\"Flight Plan\">\n";
@@ -905,11 +989,13 @@ let () =
 
       printf "#include \"std.h\"\n";
       printf "#include \"generated/modules.h\"\n";
+      printf "#include \"subsystems/abi.h\"\n";
+      printf "#include \"autopilot.h\"\n\n";
 
       begin
         try
           let header = ExtXml.child (ExtXml.child xml "header") "0" in
-          printf "%s\n" (Xml.pcdata header)
+          printf "%s\n\n" (Xml.pcdata header)
         with _ -> ()
       end;
 
@@ -940,6 +1026,7 @@ let () =
       check_altitude (float_of_string alt) xml;
       check_altitude_srtm (float_of_string alt) xml !fp_wgs84;
 
+      Xml2h.define "NAV_DEFAULT_ALT" (sprintf "%.0f /* nominal altitude of the flight plan */" (float_of_string alt));
       Xml2h.define "NAV_UTM_EAST0" (sprintf "%.0f" utm0.utm_x);
       Xml2h.define "NAV_UTM_NORTH0" (sprintf "%.0f" utm0.utm_y);
       Xml2h.define "NAV_UTM_ZONE0" (sprintf "%d" utm0.utm_zone);
@@ -1043,12 +1130,14 @@ let () =
       end;
       lprintf "\n";
       let variables = parse_variables variables in
-      List.iter (fun (t, v, _) -> printf "extern %s %s;\n" t v) variables;
+      let abi_msgs = extract_abi_msg (Env.paparazzi_home ^ "/conf/abi.xml") "airborne" in
+      List.iter (fun v -> print_var_decl abi_msgs v) variables;
 
       lprintf "\n#ifdef NAV_C\n\n";
 
-      List.iter (fun (t, v, i) -> printf "%s %s = %s;\n" t v i) variables;
+      List.iter (fun v -> print_var_impl abi_msgs v) variables;
       lprintf "\n";
+      print_auto_init_bindings abi_msgs variables;
 
       let index_of_waypoints =
         let i = ref (-1) in
