@@ -54,7 +54,7 @@
 
   <section name="AUTOPILOT">
     <define name="MODE_MANUAL"  value="AP_MODE_ATTITUDE_DIRECT"/>
-    <define name="MODE_AUTO1"   value="AP_MODE_FORWARD"/>
+    <define name="MODE_AUTO1"   value="AP_MODE_ATTITUDE_Z_HOLD"/>
     <define name="MODE_AUTO2"   value="AP_MODE_NAV"/>
     <define name="MODE_STARTUP" value="AP_MODE_NAV"/>
   </section>
@@ -319,11 +319,11 @@
 
     </module>
 
-    <!-- <module name="ins"/> --> 
-    <module name="ins" type="float_invariant">
+    <module name="ins" type="gps_passthrough"/>
+    <!--module name="ins" type="float_invariant">
       <define name="INS_PROPAGATE_FREQUENCY" value="500"/>
       <define name="INS_FINV_MAG_ID" value="MAG_HMC58XX_SENDER_ID"/>
-    </module>
+    </module-->
 
   </firmware>
 </airframe>
