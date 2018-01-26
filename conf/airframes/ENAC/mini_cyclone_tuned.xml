@@ -284,12 +284,12 @@
     <module name="stabilization" type="indi"/>
 
     <module name="guidance" type="indi">
-      <define name="GUIDANCE_INDI_RC_DEBUG"          value="FALSE"/>
+      <define name="GUIDANCE_INDI_RC_DEBUG"          value="TRUE"/>
       <define name="GUIDANCE_INDI_POS_GAIN" 	     value="0.5"/>
       <define name="GUIDANCE_INDI_SPEED_GAIN"        value="1.2"/>
       <define name="GUIDANCE_INDI_POS_GAINZ"         value="0.5"/>  <!-- 0.5 for CYFOAM-->
       <define name="GUIDANCE_INDI_SPEED_GAINZ"       value="1.8"/>  <!-- 1.8 for CYFOAM-->
-      <define name="GUIDANCE_INDI_PITCH_LIFT_EFF"    value="25.0"/>
+      <define name="GUIDANCE_INDI_PITCH_LIFT_EFF"    value="0.0"/>
       <define name="GUIDANCE_INDI_PITCH_EFF_SCALING" value="1.0"/>
       <define name="GUIDANCE_H_REF_MAX_SPEED"        value="20.0"/> <!--not used-->
       <define name="GUIDANCE_INDI_MIN_THROTTLE"      value="3000"/>
@@ -319,7 +319,7 @@
 
     </module>
 
-    <module name="ins" type="gps_passthrough"/>
+    <module name="ins" /> <!--gps_passthrough-->
     <!--module name="ins" type="float_invariant">
       <define name="INS_PROPAGATE_FREQUENCY" value="500"/>
       <define name="INS_FINV_MAG_ID" value="MAG_HMC58XX_SENDER_ID"/>
