@@ -70,7 +70,7 @@
       <define name="USE_PWM1" value="FALSE"/>
     </module>
     
-    <module name="AOA_pwm">  
+<!--     <module name="AOA_pwm">  
       <configure name="AOA_PWM_CHANNEL" value="PWM_INPUT1"/>
       <configure name="SSA_PWM_CHANNEL" value="PWM_INPUT2"/>
     </module>
@@ -81,7 +81,7 @@
       <define name="AIRSPEED_ADC_BIAS" value="430"/>
       <define name="MEASURE_AIRSPEED"/>
       <define name="AIRSPEED_SEND_RAW"/>
-    </module>
+    </module> -->
 
   </firmware>
 
@@ -163,12 +163,12 @@
     <define name="ACCEL_Y_SIGN" value="1"/>
     <define name="ACCEL_Z_SIGN" value="1"/>
 
-    <define name="ACCEL_X_NEUTRAL" value="25"/>
-    <define name="ACCEL_Y_NEUTRAL" value="-41"/>
-    <define name="ACCEL_Z_NEUTRAL" value="379"/>
-    <define name="ACCEL_X_SENS" value="2.4537713161" integer="16"/>
-    <define name="ACCEL_Y_SENS" value="2.44806379634" integer="16"/>
-    <define name="ACCEL_Z_SENS" value="2.42823219968" integer="16"/>
+    <define name="ACCEL_X_NEUTRAL" value="-177"/>
+    <define name="ACCEL_Y_NEUTRAL" value="71"/>
+    <define name="ACCEL_Z_NEUTRAL" value="29"/>
+    <define name="ACCEL_X_SENS" value="2.4443427068" integer="16"/>
+    <define name="ACCEL_Y_SENS" value="2.44036761477" integer="16"/>
+    <define name="ACCEL_Z_SENS" value="2.44183758244" integer="16"/>
 
     <define name="BODY_TO_IMU_PHI" value="0"/>
     <define name="BODY_TO_IMU_THETA" value="0"/>
