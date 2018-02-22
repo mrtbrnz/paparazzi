@@ -145,15 +145,15 @@
     <define name="ACCEL_Y_SIGN" value="1"/>
     <define name="ACCEL_Z_SIGN" value="1"/>
 
-    <define name="ACCEL_X_NEUTRAL" value="-25"/>
-    <define name="ACCEL_Y_NEUTRAL" value="-113"/>
-    <define name="ACCEL_Z_NEUTRAL" value="4"/>
-    <define name="ACCEL_X_SENS" value="2.44599670824" integer="16"/>
-    <define name="ACCEL_Y_SENS" value="2.44740997439" integer="16"/>
-    <define name="ACCEL_Z_SENS" value="2.43161716003" integer="16"/>
+    <define name="ACCEL_X_NEUTRAL" value="-51"/>
+    <define name="ACCEL_Y_NEUTRAL" value="39"/>
+    <define name="ACCEL_Z_NEUTRAL" value="-64"/>
+    <define name="ACCEL_X_SENS" value="2.44102417391" integer="16"/>
+    <define name="ACCEL_Y_SENS" value="2.44710148243" integer="16"/>
+    <define name="ACCEL_Z_SENS" value="2.43282457098" integer="16"/>
 
     <define name="BODY_TO_IMU_PHI" value="0"/>
-    <define name="BODY_TO_IMU_THETA" value="-0.153589"/>
+    <define name="BODY_TO_IMU_THETA" value="0.0"/>
     <define name="BODY_TO_IMU_PSI" value="0"/>
   </section>
 
