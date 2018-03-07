@@ -93,7 +93,7 @@ let print_includes = fun includes out_h ->
   ) (Xml.children includes)
 
 let print_mode_name = fun sm_name name ->
-  String.concat "" [(String.uppercase sm_name); "_MODE_"; (String.uppercase name)]
+  String.concat "" [(Compat.uppercase_ascii sm_name); "_MODE_"; (Compat.uppercase_ascii name)]
 
 (** Define modes *)
 let print_modes = fun modes sm_name out_h ->
@@ -340,7 +340,7 @@ let parse_and_gen_modes xml_file ap_name main_freq h_dir sm =
   try
     (* Get state machine name *)
     let name = Xml.attrib sm "name" in
-    let name_up = String.uppercase name in
+    let name_up = Compat.uppercase_ascii name in
     (* Generate start of header *)
     begin_out xml_file ("AUTOPILOT_CORE_"^name_up^"_H") out_h;
     fprintf out_h "/*** %s ***/\n\n" ap_name;
@@ -394,7 +394,7 @@ let write_settings = fun xml_file out_set ap ->
   fprintf out_set "  <dl_settings>\n";
   (* Filter state machines that need to be displayed *)
   let sm_filtered = List.filter (fun sm ->
-    try (String.lowercase (Xml.attrib sm "settings_mode")) = "true" with _ -> false
+    try (Compat.lowercase_ascii (Xml.attrib sm "settings_mode")) = "true" with _ -> false
     ) (Xml.children ap) in
   if List.length sm_filtered > 0 then begin
     (* Create node if there is at least one to display *)
@@ -404,7 +404,7 @@ let write_settings = fun xml_file out_set ap ->
       let name = Xml.attrib sm "name" in
       (* Iter on modes and store min, max and values *)
       let (_, min, max, values) = List.fold_left (fun (current, min, max, values) m ->
-        let print = try String.lowercase (Xml.attrib m "settings") <> "hide" with _ -> true in
+        let print = try Compat.lowercase_ascii (Xml.attrib m "settings") <> "hide" with _ -> true in
         let name = Xml.attrib m "name" in
         if print then begin
           let min = match min with
@@ -427,7 +427,7 @@ let write_settings = fun xml_file out_set ap ->
         match s with
         | [m; h] -> sprintf " module=\"%s\" handler=\"%s\"" m h
         | _ -> failwith "invalid handler format"
-        with _ -> "" in
+        with _ -> sprintf " module=\"autopilot_core_%s\"" name in
       (* Print if at least one mode has been found *)
       begin match min, max with
       | Some min_idx, Some max_idx ->
@@ -473,7 +473,8 @@ let () =
   and h_dir = Sys.argv.(2)
   and out_set = open_out Sys.argv.(3) in
   let (autopilot, ap_freq) = try
-    Gen_common.get_autopilot_of_airframe (Xml.parse_file xml_file)
+    let target = try Some (Sys.getenv "TARGET") with _ -> None in
+    Gen_common.get_autopilot_of_airframe ?target (Xml.parse_file xml_file)
     with
       Xml.Error e -> fprintf stderr "%s: XML error:%s\n" xml_file (Xml.error e); exit 1
     | Dtd.Prove_error e -> fprintf stderr "%s: DTD error:%s\n%!" xml_file (Dtd.prove_error e); exit 1

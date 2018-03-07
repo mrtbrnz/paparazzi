@@ -42,9 +42,6 @@
 
 #include "subsystems/commands.h"
 #include "subsystems/actuators.h"
-#if USE_MOTOR_MIXING
-#include "subsystems/actuators/motor_mixing.h"
-#endif
 
 #if USE_IMU
 #include "subsystems/imu.h"
@@ -64,13 +61,7 @@ PRINT_CONFIG_MSG_VALUE("USE_BARO_BOARD is TRUE, reading onboard baro: ", BARO_BO
 
 #include "subsystems/radio_control.h"
 
-#include "firmwares/rotorcraft/stabilization.h"
-#include "firmwares/rotorcraft/guidance.h"
-
 #include "subsystems/ahrs.h"
-#if USE_AHRS_ALIGNER
-#include "subsystems/ahrs/ahrs_aligner.h"
-#endif
 
 #include "state.h"
 
@@ -89,6 +80,10 @@ PRINT_CONFIG_MSG_VALUE("USE_BARO_BOARD is TRUE, reading onboard baro: ", BARO_BO
 
 /* if PRINT_CONFIG is defined, print some config options */
 PRINT_CONFIG_VAR(PERIODIC_FREQUENCY)
+/* SYS_TIME_FREQUENCY/PERIODIC_FREQUENCY should be an integer, otherwise the timer will not be correct */
+#if !(SYS_TIME_FREQUENCY/PERIODIC_FREQUENCY*PERIODIC_FREQUENCY == SYS_TIME_FREQUENCY)
+#warning "The SYS_TIME_FREQUENCY can not be divided by PERIODIC_FREQUENCY. Make sure this is the case for correct timing."
+#endif
 
 /* TELEMETRY_FREQUENCY is defined in generated/periodic_telemetry.h
  * defaults to 60Hz or set by TELEMETRY_FREQUENCY configure option in airframe file
@@ -140,20 +135,12 @@ void main_init(void)
   intermcu_init();
 #endif
 
-#if USE_MOTOR_MIXING
-  motor_mixing_init();
-#endif
-
 #ifndef INTER_MCU_AP
   radio_control_init();
 #endif
 
 #if USE_BARO_BOARD
   baro_init();
-#endif
-
-#if USE_AHRS_ALIGNER
-  ahrs_aligner_init();
 #endif
 
 #if USE_AHRS

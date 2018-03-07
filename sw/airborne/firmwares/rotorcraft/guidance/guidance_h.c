@@ -173,9 +173,9 @@ void guidance_h_init(void)
 
   INT_VECT2_ZERO(guidance_h.sp.pos);
   INT_VECT2_ZERO(guidance_h_trim_att_integrator);
-  INT_EULERS_ZERO(guidance_h.rc_sp);
-  guidance_h.sp.heading = 0;
-  guidance_h.sp.heading_rate = 0;
+  FLOAT_EULERS_ZERO(guidance_h.rc_sp);
+  guidance_h.sp.heading = 0.0;
+  guidance_h.sp.heading_rate = 0.0;
   guidance_h.gains.p = GUIDANCE_H_PGAIN;
   guidance_h.gains.i = GUIDANCE_H_IGAIN;
   guidance_h.gains.d = GUIDANCE_H_DGAIN;
@@ -233,6 +233,7 @@ void guidance_h_mode_changed(uint8_t new_mode)
 
     case GUIDANCE_H_MODE_CARE_FREE:
       stabilization_attitude_reset_care_free_heading();
+      /* Falls through. */
     case GUIDANCE_H_MODE_FORWARD:
     case GUIDANCE_H_MODE_ATTITUDE:
 #if NO_ATTITUDE_RESET_ON_MODE_CHANGE
@@ -318,7 +319,7 @@ void guidance_h_read_rc(bool  in_flight)
       stabilization_attitude_read_rc(in_flight, FALSE, FALSE);
       break;
     case GUIDANCE_H_MODE_HOVER:
-      stabilization_attitude_read_rc_setpoint_eulers(&guidance_h.rc_sp, in_flight, FALSE, FALSE);
+      stabilization_attitude_read_rc_setpoint_eulers_f(&guidance_h.rc_sp, in_flight, FALSE, FALSE);
 #if GUIDANCE_H_USE_SPEED_REF
       read_rc_setpoint_speed_i(&guidance_h.sp.speed, in_flight);
       /* enable x,y velocity setpoints */
@@ -334,9 +335,9 @@ void guidance_h_read_rc(bool  in_flight)
 
     case GUIDANCE_H_MODE_NAV:
       if (radio_control.status == RC_OK) {
-        stabilization_attitude_read_rc_setpoint_eulers(&guidance_h.rc_sp, in_flight, FALSE, FALSE);
+        stabilization_attitude_read_rc_setpoint_eulers_f(&guidance_h.rc_sp, in_flight, FALSE, FALSE);
       } else {
-        INT_EULERS_ZERO(guidance_h.rc_sp);
+        FLOAT_EULERS_ZERO(guidance_h.rc_sp);
       }
       break;
     case GUIDANCE_H_MODE_FLIP:
@@ -366,12 +367,19 @@ void guidance_h_run(bool  in_flight)
       if (transition_percentage < (100 << INT32_PERCENTAGE_FRAC)) {
         transition_run(true);
       }
+      /* Falls through. */
     case GUIDANCE_H_MODE_CARE_FREE:
     case GUIDANCE_H_MODE_ATTITUDE:
       if ((!(guidance_h.mode == GUIDANCE_H_MODE_FORWARD)) && transition_percentage > 0) {
         transition_run(false);
       }
       stabilization_attitude_run(in_flight);
+#if (STABILIZATION_FILTER_CMD_ROLL_PITCH || STABILIZATION_FILTER_CMD_YAW)
+      if (in_flight) {
+        stabilization_filter_commands();
+      }
+#endif
+
       break;
 
     case GUIDANCE_H_MODE_HOVER:
@@ -379,6 +387,7 @@ void guidance_h_run(bool  in_flight)
       guidance_h.sp.heading = guidance_h.rc_sp.psi;
       /* fall trough to GUIDED to update ref, run traj and set final attitude setpoint */
 
+      /* Falls through. */
     case GUIDANCE_H_MODE_GUIDED:
       guidance_h_guided_run(in_flight);
       break;
@@ -434,8 +443,8 @@ static void guidance_h_update_reference(void)
 
   /* update heading setpoint from rate */
   if (bit_is_set(guidance_h.sp.mask, 7)) {
-    guidance_h.sp.heading += (guidance_h.sp.heading_rate >> (INT32_ANGLE_FRAC - INT32_RATE_FRAC)) / PERIODIC_FREQUENCY;
-    INT32_ANGLE_NORMALIZE(guidance_h.sp.heading);
+    guidance_h.sp.heading += guidance_h.sp.heading_rate / PERIODIC_FREQUENCY;
+    FLOAT_ANGLE_NORMALIZE(guidance_h.sp.heading);
   }
 }
 
@@ -540,7 +549,7 @@ void guidance_h_hover_enter(void)
   reset_guidance_reference_from_current_position();
 
   /* set guidance to current heading and position */
-  guidance_h.rc_sp.psi = stateGetNedToBodyEulers_i()->psi;
+  guidance_h.rc_sp.psi = stateGetNedToBodyEulers_f()->psi;
   guidance_h.sp.heading = guidance_h.rc_sp.psi;
 }
 
@@ -555,6 +564,7 @@ void guidance_h_nav_enter(void)
   reset_guidance_reference_from_current_position();
 
   nav_heading = stateGetNedToBodyEulers_i()->psi;
+  guidance_h.sp.heading = stateGetNedToBodyEulers_f()->psi;
 }
 
 void guidance_h_from_nav(bool in_flight)
@@ -590,8 +600,8 @@ void guidance_h_from_nav(bool in_flight)
     guidance_h_update_reference();
 
     /* set psi command */
-    guidance_h.sp.heading = nav_heading;
-    INT32_ANGLE_NORMALIZE(guidance_h.sp.heading);
+    guidance_h.sp.heading = ANGLE_FLOAT_OF_BFP(nav_heading);
+    FLOAT_ANGLE_NORMALIZE(guidance_h.sp.heading);
 
 #if GUIDANCE_INDI
     guidance_indi_run(in_flight, guidance_h.sp.heading);
@@ -599,8 +609,9 @@ void guidance_h_from_nav(bool in_flight)
     /* compute x,y earth commands */
     guidance_h_traj_run(in_flight);
     /* set final attitude setpoint */
+    int32_t heading_sp_i = ANGLE_BFP_OF_REAL(guidance_h.sp.heading);
     stabilization_attitude_set_earth_cmd_i(&guidance_h_cmd_earth,
-        guidance_h.sp.heading);
+                                           heading_sp_i);
 #endif
 
 #endif
@@ -678,7 +689,8 @@ void guidance_h_guided_run(bool in_flight)
   /* compute x,y earth commands */
   guidance_h_traj_run(in_flight);
   /* set final attitude setpoint */
-  stabilization_attitude_set_earth_cmd_i(&guidance_h_cmd_earth, guidance_h.sp.heading);
+  int32_t heading_sp_i = ANGLE_BFP_OF_REAL(guidance_h.sp.heading);
+  stabilization_attitude_set_earth_cmd_i(&guidance_h_cmd_earth, heading_sp_i);
 #endif
   stabilization_attitude_run(in_flight);
 }
@@ -698,8 +710,8 @@ bool guidance_h_set_guided_heading(float heading)
 {
   if (guidance_h.mode == GUIDANCE_H_MODE_GUIDED) {
     ClearBit(guidance_h.sp.mask, 7);
-    guidance_h.sp.heading = ANGLE_BFP_OF_REAL(heading);
-    INT32_ANGLE_NORMALIZE(guidance_h.sp.heading);
+    guidance_h.sp.heading = heading;
+    FLOAT_ANGLE_NORMALIZE(guidance_h.sp.heading);
     return true;
   }
   return false;
@@ -728,7 +740,7 @@ bool guidance_h_set_guided_heading_rate(float rate)
 {
   if (guidance_h.mode == GUIDANCE_H_MODE_GUIDED) {
     SetBit(guidance_h.sp.mask, 7);
-    guidance_h.sp.heading_rate = RATE_BFP_OF_REAL(rate);
+    guidance_h.sp.heading_rate = rate;
     return true;
   }
   return false;

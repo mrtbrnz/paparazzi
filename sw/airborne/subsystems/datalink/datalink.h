@@ -36,10 +36,6 @@
 #include "std.h"
 #include "pprzlink/dl_protocol.h"
 
-/* Message id helpers */
-#define SenderIdOfPprzMsg(x) (x[0])
-#define IdOfPprzMsg(x) (x[1])
-
 /** Datalink kinds */
 #define PPRZ 1
 #define XBEE 2
@@ -70,8 +66,9 @@ EXTERN bool datalink_enabled;
 #endif
 
 /** Convenience macro to fill dl_buffer */
+// TODO: replace with a memcpy for efficiency
 #define DatalinkFillDlBuffer(_buf, _len) { \
-  uint8_t _i = 0; \
+  uint16_t _i = 0; \
   for (_i = 0; _i < _len; _i++) { \
     dl_buffer[_i] = _buf[_i]; \
   } \

@@ -23,8 +23,13 @@
  * @file firmwares/rotorcraft/guidance/guidance_indi.c
  *
  * A guidance mode based on Incremental Nonlinear Dynamic Inversion
- * Come to IROS2016 to learn more!
  *
+ * Based on the papers:
+ * Cascaded Incremental Nonlinear Dynamic Inversion Control for MAV Disturbance Rejection
+ * https://www.researchgate.net/publication/312907985_Cascaded_Incremental_Nonlinear_Dynamic_Inversion_Control_for_MAV_Disturbance_Rejection
+ *
+ * Gust Disturbance Alleviation with Incremental Nonlinear Dynamic Inversion
+ * https://www.researchgate.net/publication/309212603_Gust_Disturbance_Alleviation_with_Incremental_Nonlinear_Dynamic_Inversion
  */
 
 #include "generated/airframe.h"
@@ -107,26 +112,26 @@ static void guidance_indi_calcG(struct FloatMat33 *Gmat);
  * Call upon entering indi guidance
  */
 void guidance_indi_enter(void) {
-  thrust_in = 0.0;
-  thrust_act = 0;
+  thrust_in = stabilization_cmd[COMMAND_THRUST];
+  thrust_act = thrust_in;
 
   float tau = 1.0/(2.0*M_PI*filter_cutoff);
   float sample_time = 1.0/PERIODIC_FREQUENCY;
   for(int8_t i=0; i<3; i++) {
     init_butterworth_2_low_pass(&filt_accel_ned[i], tau, sample_time, 0.0);
   }
-  init_butterworth_2_low_pass(&roll_filt, tau, sample_time, 0.0);
-  init_butterworth_2_low_pass(&pitch_filt, tau, sample_time, 0.0);
-  init_butterworth_2_low_pass(&thrust_filt, tau, sample_time, 0.0);
+  init_butterworth_2_low_pass(&roll_filt, tau, sample_time, stateGetNedToBodyEulers_f()->phi);
+  init_butterworth_2_low_pass(&pitch_filt, tau, sample_time, stateGetNedToBodyEulers_f()->theta);
+  init_butterworth_2_low_pass(&thrust_filt, tau, sample_time, thrust_in);
 }
 
 /**
  * @param in_flight in flight boolean
- * @param heading the desired heading [rad]
+ * @param heading_sp the desired heading [rad]
  *
  * main indi guidance function
  */
-void guidance_indi_run(bool in_flight, int32_t heading) {
+void guidance_indi_run(bool in_flight, float heading_sp) {
 
   //filter accel to get rid of noise and filter attitude to synchronize with accel
   guidance_indi_propagate_filters();
@@ -209,7 +214,7 @@ void guidance_indi_run(bool in_flight, int32_t heading) {
   Bound(guidance_euler_cmd.theta, -GUIDANCE_H_MAX_BANK, GUIDANCE_H_MAX_BANK);
 
   //set the quat setpoint with the calculated roll and pitch
-  stabilization_attitude_set_setpoint_rp_quat_f(&guidance_euler_cmd, in_flight, heading);
+  stabilization_attitude_set_setpoint_rp_quat_f(&guidance_euler_cmd, in_flight, heading_sp);
 }
 
 #ifdef GUIDANCE_INDI_SPECIFIC_FORCE_GAIN
@@ -278,7 +283,7 @@ void guidance_indi_calcG(struct FloatMat33 *Gmat) {
  *
  * function that creates a quaternion from a roll, pitch and yaw setpoint
  */
-void stabilization_attitude_set_setpoint_rp_quat_f(struct FloatEulers* indi_rp_cmd, bool in_flight, int32_t heading)
+void stabilization_attitude_set_setpoint_rp_quat_f(struct FloatEulers* indi_rp_cmd, bool in_flight, float heading)
 {
   struct FloatQuat q_rp_cmd;
   //this is a quaternion without yaw! add the desired yaw before you use it!
@@ -300,7 +305,7 @@ void stabilization_attitude_set_setpoint_rp_quat_f(struct FloatEulers* indi_rp_c
   if (in_flight) {
     /* get current heading setpoint */
     struct FloatQuat q_yaw_sp;
-    float_quat_of_axis_angle(&q_yaw_sp, &zaxis, ANGLE_FLOAT_OF_BFP(heading));
+    float_quat_of_axis_angle(&q_yaw_sp, &zaxis, heading);
 
 
     /* rotation between current yaw and yaw setpoint */

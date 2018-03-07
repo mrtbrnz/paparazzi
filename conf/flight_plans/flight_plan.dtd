@@ -14,8 +14,9 @@
 <!ELEMENT corner EMPTY>
 <!ELEMENT kml EMPTY>
 
-<!ELEMENT variables (variable*)>
+<!ELEMENT variables (variable|abi_binding)*>
 <!ELEMENT variable EMPTY>
+<!ELEMENT abi_binding EMPTY>
 
 <!ELEMENT modules (module*)>
 <!ELEMENT module  (configure|define)*>
@@ -113,6 +114,12 @@ unit CDATA #IMPLIED
 alt_unit CDATA #IMPLIED
 alt_unit_coef CDATA #IMPLIED
 values CDATA #IMPLIED>
+
+<!ATTLIST abi_binding
+name CDATA #REQUIRED
+vars CDATA #IMPLIED
+id CDATA #IMPLIED
+handler CDATA #IMPLIED>
 
 <!ATTLIST modules>
 

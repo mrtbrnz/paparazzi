@@ -143,7 +143,18 @@ static void gps_cb(uint8_t sender_id, uint32_t stamp, struct GpsState *gps_s);
 #define INS_INT_VEL_ID ABI_BROADCAST
 #endif
 static abi_event vel_est_ev;
-static void vel_est_cb(uint8_t sender_id, uint32_t stamp, float x, float y, float z, float noise);
+static void vel_est_cb(uint8_t sender_id,
+                       uint32_t stamp,
+                       float x, float y, float z,
+                       float noise_x, float noise_y, float noise_z);
+#ifndef INS_INT_POS_ID
+#define INS_INT_POS_ID ABI_BROADCAST
+#endif
+static abi_event pos_est_ev;
+static void pos_est_cb(uint8_t sender_id,
+                       uint32_t stamp,
+                       float x, float y, float z,
+                       float noise_x, float noise_y, float noise_z);
 
 struct InsInt ins_int;
 
@@ -211,7 +222,7 @@ void ins_int_init(void)
   /* init vertical and horizontal filters */
   vff_init_zero();
 #if USE_HFF
-  b2_hff_init(0., 0., 0., 0.);
+  hff_init(0., 0., 0., 0.);
 #endif
 
   INT32_VECT3_ZERO(ins_int.ltp_pos);
@@ -230,6 +241,7 @@ void ins_int_init(void)
   AbiBindMsgIMU_ACCEL_INT32(INS_INT_IMU_ID, &accel_ev, accel_cb);
   AbiBindMsgGPS(INS_INT_GPS_ID, &gps_ev, gps_cb);
   AbiBindMsgVELOCITY_ESTIMATE(INS_INT_VEL_ID, &vel_est_ev, vel_est_cb);
+  AbiBindMsgPOSITION_ESTIMATE(INS_INT_POS_ID, &pos_est_ev, pos_est_cb);
 }
 
 void ins_reset_local_origin(void)
@@ -257,14 +269,16 @@ void ins_reset_local_origin(void)
 void ins_reset_altitude_ref(void)
 {
 #if USE_GPS
-  struct LlaCoor_i lla = {
-    .lat = state.ned_origin_i.lla.lat,
-    .lon = state.ned_origin_i.lla.lon,
-    .alt = gps.lla_pos.alt
-  };
-  ltp_def_from_lla_i(&ins_int.ltp_def, &lla);
-  ins_int.ltp_def.hmsl = gps.hmsl;
-  stateSetLocalOrigin_i(&ins_int.ltp_def);
+  if (GpsFixValid()) {
+    struct LlaCoor_i lla = {
+      .lat = state.ned_origin_i.lla.lat,
+      .lon = state.ned_origin_i.lla.lon,
+      .alt = gps.lla_pos.alt
+    };
+    ltp_def_from_lla_i(&ins_int.ltp_def, &lla);
+    ins_int.ltp_def.hmsl = gps.hmsl;
+    stateSetLocalOrigin_i(&ins_int.ltp_def);
+  }
 #endif
   ins_int.vf_reset = true;
 }
@@ -298,7 +312,7 @@ void ins_int_propagate(struct Int32Vect3 *accel, float dt)
 
 #if USE_HFF
   /* propagate horizontal filter */
-  b2_hff_propagate();
+  hff_propagate();
   /* convert and copy result to ins_int */
   ins_update_from_hff();
 #else
@@ -333,11 +347,11 @@ static void baro_cb(uint8_t __attribute__((unused)) sender_id, float pressure)
 
       // Calculate the distance to the origin
       struct EnuCoor_f *enu = stateGetPositionEnu_f();
-      double dist2_to_origin = enu->x*enu->x + enu->y*enu->y;
+      double dist2_to_origin = enu->x * enu->x + enu->y * enu->y;
 
       // correction for the earth's curvature
       const double earth_radius = 6378137.0;
-      float height_correction = (float) (sqrt(earth_radius*earth_radius + dist2_to_origin) - earth_radius);
+      float height_correction = (float)(sqrt(earth_radius * earth_radius + dist2_to_origin) - earth_radius);
 
       // The VFF will update in the NED frame
       ins_int.baro_z = -(baro_up - height_correction);
@@ -406,15 +420,14 @@ void ins_int_update_gps(struct GpsState *gps_s)
 
   struct FloatVect2 gps_speed_m_s_ned;
   VECT2_ASSIGN(gps_speed_m_s_ned, gps_speed_cm_s_ned.x, gps_speed_cm_s_ned.y);
-  VECT2_SDIV(gps_speed_m_s_ned, gps_speed_m_s_ned, 100.);
+  VECT2_SDIV(gps_speed_m_s_ned, gps_speed_m_s_ned, 100.f);
 
   if (ins_int.hf_realign) {
     ins_int.hf_realign = false;
-    const struct FloatVect2 zero = {0.0f, 0.0f};
-    b2_hff_realign(gps_pos_m_ned, zero);
+    hff_realign(gps_pos_m_ned, gps_speed_m_s_ned);
   }
   // run horizontal filter
-  b2_hff_update_gps(&gps_pos_m_ned, &gps_speed_m_s_ned);
+  hff_update_gps(&gps_pos_m_ned, &gps_speed_m_s_ned);
   // convert and copy result to ins_int
   ins_update_from_hff();
 
@@ -489,12 +502,12 @@ static void ins_update_from_vff(void)
 /** update ins state from horizontal filter */
 static void ins_update_from_hff(void)
 {
-  ins_int.ltp_accel.x = ACCEL_BFP_OF_REAL(b2_hff_state.xdotdot);
-  ins_int.ltp_accel.y = ACCEL_BFP_OF_REAL(b2_hff_state.ydotdot);
-  ins_int.ltp_speed.x = SPEED_BFP_OF_REAL(b2_hff_state.xdot);
-  ins_int.ltp_speed.y = SPEED_BFP_OF_REAL(b2_hff_state.ydot);
-  ins_int.ltp_pos.x   = POS_BFP_OF_REAL(b2_hff_state.x);
-  ins_int.ltp_pos.y   = POS_BFP_OF_REAL(b2_hff_state.y);
+  ins_int.ltp_accel.x = ACCEL_BFP_OF_REAL(hff.xdotdot);
+  ins_int.ltp_accel.y = ACCEL_BFP_OF_REAL(hff.ydotdot);
+  ins_int.ltp_speed.x = SPEED_BFP_OF_REAL(hff.xdot);
+  ins_int.ltp_speed.y = SPEED_BFP_OF_REAL(hff.ydot);
+  ins_int.ltp_pos.x   = POS_BFP_OF_REAL(hff.x);
+  ins_int.ltp_pos.y   = POS_BFP_OF_REAL(hff.y);
 }
 #endif
 
@@ -520,15 +533,15 @@ static void gps_cb(uint8_t sender_id __attribute__((unused)),
   ins_int_update_gps(gps_s);
 }
 
+/* body relative velocity estimate
+ *
+ */
 static void vel_est_cb(uint8_t sender_id __attribute__((unused)),
-                       uint32_t stamp,
+                       uint32_t stamp __attribute__((unused)),
                        float x, float y, float z,
-                       float noise __attribute__((unused)))
+                       float noise_x, float noise_y, float noise_z)
 {
-
   struct FloatVect3 vel_body = {x, y, z};
-  static uint32_t last_stamp = 0;
-  float dt = 0;
 
   /* rotate velocity estimate to nav/ltp frame */
   struct FloatQuat q_b2n = *stateGetNedToBodyQuat_f();
@@ -536,28 +549,79 @@ static void vel_est_cb(uint8_t sender_id __attribute__((unused)),
   struct FloatVect3 vel_ned;
   float_quat_vmult(&vel_ned, &q_b2n, &vel_body);
 
-  if (last_stamp > 0) {
-    dt = (float)(stamp - last_stamp) * 1e-6;
-  }
-
-  last_stamp = stamp;
-
+  // abi message contains an update to the horizontal velocity estimate
 #if USE_HFF
-  (void)dt; //dt is unused variable in this define
-
   struct FloatVect2 vel = {vel_ned.x, vel_ned.y};
-  struct FloatVect2 Rvel = {noise, noise};
+  struct FloatVect2 Rvel = {noise_x, noise_y};
 
-  b2_hff_update_vel(vel,  Rvel);
+  hff_update_vel(vel,  Rvel);
   ins_update_from_hff();
 #else
-  ins_int.ltp_speed.x = SPEED_BFP_OF_REAL(vel_ned.x);
-  ins_int.ltp_speed.y = SPEED_BFP_OF_REAL(vel_ned.y);
-  if (last_stamp > 0) {
-    ins_int.ltp_pos.x = ins_int.ltp_pos.x + POS_BFP_OF_REAL(dt * vel_ned.x);
-    ins_int.ltp_pos.y = ins_int.ltp_pos.y + POS_BFP_OF_REAL(dt * vel_ned.y);
+  if (noise_x >= 0.f)
+  {
+    ins_int.ltp_speed.x = SPEED_BFP_OF_REAL(vel_ned.x);
+  }
+  if (noise_y >= 0.f)
+  {
+    ins_int.ltp_speed.y = SPEED_BFP_OF_REAL(vel_ned.y);
+  }
+
+  static uint32_t last_stamp_x = 0, last_stamp_y = 0;
+  if (noise_x >= 0.f) {
+    if (last_stamp_x > 0)
+    {
+      float dt = (float)(stamp - last_stamp_x) * 1e-6;
+      ins_int.ltp_pos.x += POS_BFP_OF_REAL(dt * vel_ned.x);
+    }
+    last_stamp_x = stamp;
+  }
+
+  if (noise_y >= 0.f)
+  {
+    if (last_stamp_y > 0)
+    {
+      float dt = (float)(stamp - last_stamp_y) * 1e-6;
+      ins_int.ltp_pos.y += POS_BFP_OF_REAL(dt * vel_ned.y);
+    }
+    last_stamp_y = stamp;
   }
 #endif
+
+  // abi message contains an update to the vertical velocity estimate
+  vff_update_vz_conf(vel_ned.z, noise_z);
+
+  ins_ned_to_state();
+
+  /* reset the counter to indicate we just had a measurement update */
+  ins_int.propagation_cnt = 0;
+}
+
+/* NED position estimate relative to ltp origin
+ */
+static void pos_est_cb(uint8_t sender_id __attribute__((unused)),
+                       uint32_t stamp __attribute__((unused)),
+                       float x, float y, float z,
+                       float noise_x, float noise_y, float noise_z)
+{
+  
+#if USE_HFF
+  struct FloatVect2 pos = {x, y};
+  struct FloatVect2 Rpos = {noise_x, noise_y};
+
+  hff_update_pos(pos, Rpos);
+  ins_update_from_hff();
+#else
+  if (noise_x >= 0.f)
+  {
+    ins_int.ltp_pos.x = POS_BFP_OF_REAL(x);
+  }
+  if (noise_y >= 0.f)
+  {
+    ins_int.ltp_pos.y = POS_BFP_OF_REAL(y);
+  }
+#endif
+
+  vff_update_z_conf(z, noise_z);
 
   ins_ned_to_state();
 

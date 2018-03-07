@@ -80,7 +80,7 @@ endif
 # Math functions
 #
 ifneq ($(TARGET), fbw)
-$(TARGET).srcs += math/pprz_geodetic_int.c math/pprz_geodetic_float.c math/pprz_geodetic_double.c math/pprz_trig_int.c math/pprz_orientation_conversion.c math/pprz_algebra_int.c math/pprz_algebra_float.c math/pprz_algebra_double.c
+$(TARGET).srcs += math/pprz_geodetic_int.c math/pprz_geodetic_float.c math/pprz_geodetic_double.c math/pprz_trig_int.c math/pprz_orientation_conversion.c math/pprz_algebra_int.c math/pprz_algebra_float.c math/pprz_algebra_double.c math/pprz_stat.c
 
 $(TARGET).srcs += subsystems/settings.c
 $(TARGET).srcs += $(SRC_ARCH)/subsystems/settings_arch.c
@@ -218,6 +218,10 @@ fbw.srcs 		+= $(ns_srcs)
 ##
 ## include firmware independent nps makefile and add rotorcraft specifics
 ##
-include $(CFG_SHARED)/nps.makefile
-nps.srcs += nps/nps_autopilot_rotorcraft.c
+ifneq ($(TARGET), hitl)
+  include $(CFG_SHARED)/nps.makefile
+else
+  include $(CFG_SHARED)/hitl.makefile
+endif
 
+nps.srcs += nps/nps_autopilot_rotorcraft.c

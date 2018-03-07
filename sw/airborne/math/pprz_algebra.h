@@ -229,8 +229,8 @@ extern "C" {
 /*  */
 #define VECT3_BOUND_BOX(_v, _v_min, _v_max) {       \
     if ((_v).x > (_v_max).x) (_v).x = (_v_max).x; else if ((_v).x < (_v_min).x) (_v).x = (_v_min).x; \
-    if ((_v).y > (_v_max).y) (_v).y = (_v_max).y; else if ((_v).y < (_v_min).y) (_v).y = (_v_min).z; \
-    if ((_v).z > (_v_max).y) (_v).z = (_v_max).z; else if ((_v).z < (_v_min).z) (_v).z = (_v_min).z; \
+    if ((_v).y > (_v_max).y) (_v).y = (_v_max).y; else if ((_v).y < (_v_min).y) (_v).y = (_v_min).y; \
+    if ((_v).z > (_v_max).z) (_v).z = (_v_max).z; else if ((_v).z < (_v_min).z) (_v).z = (_v_min).z; \
   }
 
 /*  */
@@ -531,7 +531,7 @@ extern "C" {
     (_q).qz = (_z);         \
   }
 
-/* _qc = _qa - _qc */
+/* _qc = _qa - _qb */
 #define QUAT_DIFF(_qc, _qa, _qb) {      \
     (_qc).qi = (_qa).qi - (_qb).qi;     \
     (_qc).qx = (_qa).qx - (_qb).qx;     \
@@ -592,6 +592,9 @@ extern "C" {
     (_qo).qy = (_qi).qy / (_s); \
     (_qo).qz = (_qi).qz / (_s); \
   }
+
+/* return = _qa * _qb */
+#define QUAT_DOT_PRODUCT(_qa, _qb) ((_qa).qi * (_qb).qi + (_qa).qx * (_qb).qx + (_qa).qy * (_qb).qy + (_qa).qz * (_qb).qz)
 
 //
 //
