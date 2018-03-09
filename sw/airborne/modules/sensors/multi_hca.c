@@ -24,6 +24,7 @@
 #include "mcu_periph/i2c.h"
 #include "subsystems/abi.h"
 #include <math.h>
+#include "filters/median_filter.h"
 
 //Messages
 #include "mcu_periph/uart.h"
@@ -59,6 +60,8 @@ struct hca_sensor hca_sensors[HCA_NB_SENSORS];
 
 struct i2c_transaction multi_hca_i2c_trans[HCA_NB_SENSORS];
 
+struct MedianFilterFloat multi_hca_filtered[HCA_NB_SENSORS];
+
 #ifndef HCA_SENSORS_ADDR
 #define HCA_SENSORS_ADDR { 0x70<<1, 0x71<<1, 0x72<<1, 0x73<<1 }
 #endif
@@ -74,6 +77,7 @@ void multi_hca_init(void)
     hca_sensors[i].raw = 0;
     hca_sensors[i].scaled = 0.f;
     multi_hca_i2c_trans[i].status = I2CTransDone;
+    init_median_filter_f(&multi_hca_filtered[i], MULTI_HCA_MEDIAN_LENGTH);
   }
 }
 
@@ -119,7 +123,8 @@ void multi_hca_read_event(void)
       }
       hca_sensors[i].raw = pBaroRaw;
       //FIXME apply scale
-      hca_sensors[i].scaled = (float) pBaroRaw;
+      //hca_sensors[i].scaled = (float) pBaroRaw;
+      hca_sensors[i].scaled = update_median_filter_f(&multi_hca_filtered[i], (float) pBaroRaw);
 
       multi_hca_i2c_trans[i].status = I2CTransDone;
     } else if (multi_hca_i2c_trans[0].status == I2CTransFailed) {
@@ -129,17 +134,20 @@ void multi_hca_read_event(void)
 
 #if SENSOR_SYNC_SEND || defined FLIGHTRECORDER_SDLOG
   if (new_data >= HCA_NB_SENSORS) {
-    float tab[HCA_NB_SENSORS];
+    float tab[2*HCA_NB_SENSORS];
     for (i = 0; i < HCA_NB_SENSORS; i++) {
-      tab[i] = hca_sensors[i].scaled;
+      tab[i] = hca_sensors[i].raw;
+    }
+    for (i = HCA_NB_SENSORS; i < 2*HCA_NB_SENSORS; i++) {
+      tab[i] = hca_sensors[i-HCA_NB_SENSORS].scaled;
     }
 #if SENSOR_SYNC_SEND
-    DOWNLINK_SEND_PAYLOAD_FLOAT(DefaultChannel, DefaultDevice, HCA_NB_SENSORS, tab);
+    DOWNLINK_SEND_PAYLOAD_FLOAT(DefaultChannel, DefaultDevice, 2*HCA_NB_SENSORS, tab);
 #endif
 
 #if FLIGHTRECORDER_SDLOG
     if (flightRecorderLogFile != -1) {
-      DOWNLINK_SEND_PAYLOAD_FLOAT(pprzlog_tp, flightrecorder_sdlog, HCA_NB_SENSORS, tab);
+      DOWNLINK_SEND_PAYLOAD_FLOAT(pprzlog_tp, flightrecorder_sdlog, 2*HCA_NB_SENSORS, tab);
     }
 #endif
 
