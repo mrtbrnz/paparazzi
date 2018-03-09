@@ -4,6 +4,7 @@
   <doc>
     <description>Baro sensortechnics HCA (I2C)</description>
     <configure name="MULTI_HCA_I2C_DEV" value="i2cX" description="select which i2c peripheral to use (default i2c0)"/>
+    <configure name="MULTI_HCA_MEDIAN_LENGTH" value="7" description="Length of median filter for multi-hca sensor measurements"/>
   </doc>
 
   <header>
@@ -15,8 +16,10 @@
 
   <makefile target="ap">
     <configure name="MULTI_HCA_I2C_DEV" default="i2c0" case="upper|lower"/>
+    <configure name="MULTI_HCA_MEDIAN_LENGTH" default="7"/>
     <define name="USE_$(MULTI_HCA_I2C_DEV_UPPER)"/>
     <define name="MULTI_HCA_I2C_DEV" value="$(MULTI_HCA_I2C_DEV_LOWER)"/>
+    <define name="MULTI_HCA_MEDIAN_LENGTH" value="$(MULTI_HCA_MEDIAN_LENGTH)"/>
     <file name="multi_hca.c"/>
   </makefile>
 
