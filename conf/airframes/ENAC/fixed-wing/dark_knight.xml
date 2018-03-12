@@ -27,7 +27,7 @@
     </target>
     <target name="nps" board="pc">
       <module name="radio_control" type="ppm"/>
-      <module name="fdm"   type="jsbsim"/>
+      <module name="fdm" type="jsbsim"/>
     </target>
 
     <module name="telemetry" type="xbee_api"/>
@@ -86,10 +86,10 @@
   </firmware>
 
   <servos>
-    <servo name="MOTOR_RIGHT"   no="0" min="1040" neutral="1040" max="2000"/>
-    <servo name="MOTOR_LEFT"    no="4" min="1040" neutral="1040" max="2000"/>
+    <servo name="MOTOR_RIGHT" no="0" min="1040" neutral="1040" max="2000"/>
+    <servo name="MOTOR_LEFT" no="4" min="1040" neutral="1040" max="2000"/>
     <servo name="AILEVON_RIGHT" no="2" max="1900" neutral="1591" min="1100"/>
-    <servo name="AILEVON_LEFT"  no="3" max="1100" neutral="1458" min="1900"/>
+    <servo name="AILEVON_LEFT" no="3" max="1100" neutral="1458" min="1900"/>
   </servos>
 
   <commands>
@@ -171,7 +171,7 @@
     <define name="ACCEL_Z_SENS" value="2.44183758244" integer="16"/>
 
     <define name="BODY_TO_IMU_PHI" value="0"/>
-    <define name="BODY_TO_IMU_THETA" value="0"/>
+    <define name="BODY_TO_IMU_THETA" value="0.143117"/>
     <define name="BODY_TO_IMU_PSI" value="0"/>
   </section>
 
@@ -221,11 +221,11 @@
     <define name="AUTO_THROTTLE_PGAIN" value="0.004"/>
     <define name="AUTO_THROTTLE_DGAIN" value="0.0"/>
     <define name="AUTO_THROTTLE_IGAIN" value="0."/>
-    <define name="AUTO_THROTTLE_PITCH_OF_VZ_PGAIN" value="0.077"/>
+    <define name="AUTO_THROTTLE_PITCH_OF_VZ_PGAIN" value="0.1"/>
 
     <!-- Climb loop (pitch) -->
-    <define name="AUTO_PITCH_PGAIN" value="0.027"/>
-    <define name="AUTO_PITCH_DGAIN" value="0.01"/>
+    <define name="AUTO_PITCH_PGAIN" value="0.018"/>
+    <define name="AUTO_PITCH_DGAIN" value="0.006"/>
     <define name="AUTO_PITCH_IGAIN" value="0.0"/>
     <define name="AUTO_PITCH_MAX_PITCH" value="20" unit="deg"/>
     <define name="AUTO_PITCH_MIN_PITCH" value="-20" unit="deg"/>
@@ -259,27 +259,27 @@
   <section name="HORIZONTAL CONTROL" prefix="H_CTL_">
   	
   	<define name="YAW_LOOP" value="TRUE"/>
-    <define name="YAW_DGAIN" value="10000."/>
+    <define name="YAW_DGAIN" value="5012"/>
 
     <define name="YAW_TRIM_NY" value="TRUE"/>
-    <define name="YAW_NY_IGAIN" value="0."/>
+    <define name="YAW_NY_IGAIN" value="502"/>
 
     <define name="COURSE_PGAIN" value="0.743"/>
     <!--XPA NOT USED />
     <define name="COURSE_TAU" value="0.5"/-->
-    <define name="ROLL_MAX_SETPOINT" value="30." unit="deg"/>
+    <define name="ROLL_MAX_SETPOINT" value="34.9999863923" unit="deg"/>
     <define name="PITCH_MAX_SETPOINT" value="30." unit="deg"/>
     <define name="PITCH_MIN_SETPOINT" value="-30." unit="deg"/>
 
-    <define name="ROLL_ATTITUDE_GAIN" value="11000."/>
-    <define name="ROLL_RATE_GAIN" value="1000."/>
+    <define name="ROLL_ATTITUDE_GAIN" value="8922"/>
+    <define name="ROLL_RATE_GAIN" value="757"/>
     <define name="ROLL_IGAIN" value="100."/>
     <!--XPA NOT USED />
     <define name="ROLL_KFFA" value="0"/>
     <define name="ROLL_KFFD" value="0"/-->
 
-    <define name="PITCH_PGAIN" value="10250"/>
-    <define name="PITCH_DGAIN" value="500."/>
+    <define name="PITCH_PGAIN" value="9514"/>
+    <define name="PITCH_DGAIN" value="308"/>
     <define name="PITCH_IGAIN" value="400"/>
 
     <!--XPA NOT USED />
