@@ -267,7 +267,7 @@
     <define name="COURSE_PGAIN" value="0.743"/>
     <!--XPA NOT USED />
     <define name="COURSE_TAU" value="0.5"/-->
-    <define name="ROLL_MAX_SETPOINT" value="34.9999863923" unit="deg"/>
+    <define name="ROLL_MAX_SETPOINT" value="40.0" unit="deg"/>
     <define name="PITCH_MAX_SETPOINT" value="30." unit="deg"/>
     <define name="PITCH_MIN_SETPOINT" value="-30." unit="deg"/>
 
@@ -278,7 +278,7 @@
     <define name="ROLL_KFFA" value="0"/>
     <define name="ROLL_KFFD" value="0"/-->
 
-    <define name="PITCH_PGAIN" value="9514"/>
+    <define name="PITCH_PGAIN" value="11000"/>
     <define name="PITCH_DGAIN" value="308"/>
     <define name="PITCH_IGAIN" value="400"/>
 
