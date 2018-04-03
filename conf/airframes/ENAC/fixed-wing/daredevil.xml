@@ -12,14 +12,16 @@
     - Autopilot;        Chimera
 -->
 
-<airframe name="Zagi3">
+<airframe name="Former_Zagi3">
 
   <firmware name="fixedwing">
     <define name="USE_I2C1"/>
     <define name="USE_GYRO_PITCH_RATE"/>
 
     <!-- To have synchronized multi_hda store data-->
-    <configure name="PERIODIC_FREQUENCY" value="100"/>
+    <configure name="PERIODIC_FREQUENCY" value="120"/>
+    <define name="CONTROL_FREQUENCY" value="60"/>
+    <autopilot name="gust_autopilot.xml"/>
 
     <target name="ap" board="chimera_1.0">
       <module name="radio_control" type="sbus"/>
