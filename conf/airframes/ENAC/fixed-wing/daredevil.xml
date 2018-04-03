@@ -67,9 +67,12 @@
 
     <module name="airspeed" type="ms45xx_i2c">
       <define name="MS45XX_I2C_DEV" value="i2c1"/>
+      <define name="USE_AIRSPEED_MS45XX" value="TRUE"/>
     </module>
 
+    <!-- <define name="USE_AIRSPEED" value="TRUE"/> -->
 
+    <module name="energy_extraction"/>
     
     <module name="current_sensor">
       <configure name="ADC_CURRENT_SENSOR" value="ADC_1"/>
@@ -109,6 +112,7 @@
   </command_laws>
 
   <section name="AOA">
+    <define name="USE_AOA" value="TRUE"/>
     <define name="AOA_REVERSE" value="TRUE"/>
     <define name="AOA_SENS" value="(0.7235*2.0*M_PI/4096.)"/>
     <define name="SSA_SENS" value="(1.0*2.0*M_PI/4096.)"/>
