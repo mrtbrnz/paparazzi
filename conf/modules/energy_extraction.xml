@@ -1,0 +1,26 @@
+<!DOCTYPE module SYSTEM "module.dtd">
+
+<module name="energy_extraction" dir="energy">
+  <doc>
+    <description>Briefly estimates the in-plane wind gradients and defines a longitudinal control via pitch angle.</description>
+  </doc>
+  <settings>
+    <dl_settings>
+      <dl_settings name="gust">
+        <dl_setting MAX="10." MIN="0." STEP="0.01" module="modules/energy/energy_extraction" VAR="gust_gains.p_wx" shortname="P_WX" handler="Set_WX_P"/>
+        <dl_setting MAX="10." MIN="0." STEP="0.01" module="modules/energy/energy_extraction" VAR="gust_gains.d_wx" shortname="D_WX" handler="Set_WX_D"/>
+      </dl_settings>
+    </dl_settings>
+  </settings>
+  <header>
+    <file name="energy_extraction.h"/>
+  </header>
+  <init fun="gust_init()"/>
+  <periodic fun="gust_periodic()" freq="50"/>
+  <!-- <event fun="gust_event()"/> -->
+  <!--datalink message="gust_datalink()" fun="gust_datalink_callback()"/-->
+  <makefile>
+    <file name="energy_extraction.c"/>
+  </makefile>
+</module>
+
