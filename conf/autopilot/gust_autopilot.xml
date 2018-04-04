@@ -127,7 +127,6 @@
     </mode>
 
     <mode name="GUST">
-      <select cond="$DEFAULT_MODE"/>
       <select cond="RCMode2() && RCAuxMode1()" exception="HOME"/>
       <control freq="4">
         <call fun="common_nav_periodic_task_4Hz()"/>
