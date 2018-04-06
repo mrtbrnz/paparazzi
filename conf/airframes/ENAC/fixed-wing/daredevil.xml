@@ -116,9 +116,9 @@
   <section name="AOA">
     <define name="USE_AOA" value="TRUE"/>
     <define name="AOA_REVERSE" value="TRUE"/>
-    <define name="AOA_SENS" value="(0.7235*2.0*M_PI/4096.)"/>
+    <define name="AOA_SENS" value="(0.955299263038*2.0*M_PI/4096.)"/>
     <define name="SSA_SENS" value="(1.0*2.0*M_PI/4096.)"/>
-    <define name="AOA_OFFSET" value="0.0" unit="deg"/>
+    <define name="AOA_OFFSET" value="-49.5269787469" unit="deg"/>
     <define name="SSA_OFFSET" value="0.0" unit="deg"/>
     <define name="LOG_AOA" value="FALSE"/>
     <define name="USE_AIRSPEED_AIR_DATA" value="TRUE"/>
