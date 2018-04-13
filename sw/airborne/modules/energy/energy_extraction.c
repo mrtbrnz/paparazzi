@@ -140,7 +140,7 @@ void gust_periodic(void) {
     gust_states.dt = GUST_PERIODIC_PERIOD;
     last_periodic_time = get_sys_time_msec();
   } else {
-    gust_states.dt = (get_sys_time_msec() - last_periodic_time) / 1000.f;
+    gust_states.dt = (get_sys_time_msec() - last_periodic_time); //   / 1000.f;
     last_periodic_time = get_sys_time_msec();
   }
 

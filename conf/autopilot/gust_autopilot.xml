@@ -59,6 +59,11 @@
       <call fun="v_ctl_guidance_loop()"/>
     </control_block>
 
+    <control_block name="guidance_gust">
+      <call fun="h_ctl_guidance_loop()"/>
+      <call fun="v_ctl_guidance_loop_gust()"/>
+    </control_block>
+
     <exceptions>
       <exception cond="too_far_from_home && autopilot_in_flight()" deroute="HOME"/>
     </exceptions>
@@ -127,13 +132,13 @@
     </mode>
 
     <mode name="GUST">
-      <select cond="RCMode2() && RCAuxMode1()" exception="HOME"/>
+      <select cond="RCMode2() && RCAuxMode0()" exception="HOME"/>
       <control freq="4">
         <call fun="common_nav_periodic_task_4Hz()"/>
         <call fun="nav_periodic_task()"/>
       </control>
       <control>
-        <call_block name="guidance"/>
+        <call_block name="guidance_gust"/>
         <call_block name="attitude"/>
         <call_block name="actuators_ap"/>
       </control>

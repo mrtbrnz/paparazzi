@@ -32,6 +32,8 @@
 #include "generated/airframe.h"
 #include "autopilot.h"
 
+#include "modules/energy/energy_extraction.h"
+
 /* mode */
 uint8_t v_ctl_mode;
 
@@ -216,6 +218,15 @@ void v_ctl_guidance_loop(void)
     v_ctl_throttle_setpoint = 0;
   }
 }
+
+
+void v_ctl_guidance_loop_gust(void){
+  v_ctl_pitch_setpoint = gust_states.theta_cmd;
+  controlled_throttle  = v_ctl_auto_throttle_cruise_throttle;
+}
+
+
+
 
 /**
  * outer loop

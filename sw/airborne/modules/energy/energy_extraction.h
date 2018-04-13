@@ -50,6 +50,9 @@ struct Gust_gains {
 
 extern struct Gust_gains gust_gains;
 
+// Access from guidance loop
+extern struct Gust_states gust_states;
+
 extern void gust_init(void);
 extern void gust_periodic(void);
 // extern void gust_event();
