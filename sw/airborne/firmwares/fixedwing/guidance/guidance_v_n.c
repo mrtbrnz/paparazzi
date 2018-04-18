@@ -222,6 +222,9 @@ void v_ctl_guidance_loop(void)
 
 void v_ctl_guidance_loop_gust(void){
   v_ctl_pitch_setpoint = gust_states.theta_cmd;
+  // Set Pitch output
+  Bound(v_ctl_pitch_setpoint, V_CTL_AUTO_PITCH_MIN_PITCH, V_CTL_AUTO_PITCH_MAX_PITCH);
+  
   controlled_throttle  = v_ctl_auto_throttle_cruise_throttle;
 }
 

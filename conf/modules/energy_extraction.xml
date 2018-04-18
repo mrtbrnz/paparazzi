@@ -7,8 +7,10 @@
   <settings>
     <dl_settings>
       <dl_settings name="gust">
-        <dl_setting MAX="10." MIN="0." STEP="0.01" module="modules/energy/energy_extraction" VAR="gust_gains.p_wx" shortname="P_WX" handler="Set_WX_P"/>
-        <dl_setting MAX="10." MIN="0." STEP="0.01" module="modules/energy/energy_extraction" VAR="gust_gains.d_wx" shortname="D_WX" handler="Set_WX_D"/>
+        <dl_setting MAX="1." MIN="0." STEP="0.0002" module="modules/energy/energy_extraction" VAR="gust_gains.p_wx" shortname="P_WX" handler="Set_WX_P"/>
+        <dl_setting MAX="1." MIN="0." STEP="0.0002" module="modules/energy/energy_extraction" VAR="gust_gains.d_wx" shortname="D_WX" handler="Set_WX_D"/>
+        <dl_setting MAX="1." MIN="0." STEP="0.0002" module="modules/energy/energy_extraction" VAR="gust_gains.p_wz" shortname="P_WZ" handler="Set_WZ_P"/>
+        <dl_setting MAX="1." MIN="0." STEP="0.0002" module="modules/energy/energy_extraction" VAR="gust_gains.d_wz" shortname="D_WZ" handler="Set_WZ_D"/>
       </dl_settings>
     </dl_settings>
   </settings>

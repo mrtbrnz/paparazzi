@@ -116,7 +116,7 @@ static inline void gust_run_step(){
 	wx_old = gust_states.wx;
 	wz_old = gust_states.wz;
 	if (va > 5.0f){
-		gust_states.theta_cmd = gust_gains.p_wx*gust_states.wx + gust_gains.d_wx*d_wx; // stateGetBodyRates_f()->q // just to try for now...
+		gust_states.theta_cmd = gust_gains.p_wx*gust_states.wx + gust_gains.d_wx*d_wx + gust_gains.p_wz*gust_states.wz + gust_gains.d_wz*d_wz; // stateGetBodyRates_f()->q // just to try for now...
 	} else {
 		gust_states.theta_cmd = 0.0;
 	}
@@ -157,6 +157,15 @@ void energy_extraction_Set_WX_D(float _v)
   gust_gains.d_wx = _v;
 }
 
+void energy_extraction_Set_WZ_P(float _v)
+{
+  gust_gains.p_wz = _v;
+}
+
+void energy_extraction_Set_WZ_D(float _v)
+{
+  gust_gains.d_wz = _v;
+}
 // float gain = (float)fabs( (double) (cosf(phi) * cosf(theta)));
 
 

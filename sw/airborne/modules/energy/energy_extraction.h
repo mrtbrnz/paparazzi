@@ -62,6 +62,7 @@ extern void gust_periodic(void);
 // paramenters settings handler
 extern void energy_extraction_Set_WX_P(float _v);
 extern void energy_extraction_Set_WX_D(float _v);
-
+extern void energy_extraction_Set_WZ_P(float _v);
+extern void energy_extraction_Set_WZ_D(float _v);
 #endif
 
