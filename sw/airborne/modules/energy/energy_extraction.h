@@ -46,6 +46,8 @@ struct Gust_gains {
 	float d_wx;
 	float p_wz;
 	float d_wz;
+  float wx_sign;
+  float wz_sign;
 };
 
 extern struct Gust_gains gust_gains;
@@ -60,6 +62,9 @@ extern void gust_periodic(void);
 
 
 // paramenters settings handler
+extern void energy_extraction_Set_WX_Sign(float _v);
+extern void energy_extraction_Set_WZ_Sign(float _v);
+
 extern void energy_extraction_Set_WX_P(float _v);
 extern void energy_extraction_Set_WX_D(float _v);
 extern void energy_extraction_Set_WZ_P(float _v);

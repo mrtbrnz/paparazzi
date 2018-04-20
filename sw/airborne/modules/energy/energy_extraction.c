@@ -98,6 +98,8 @@ void gust_init(void) {
 	gust_gains.p_wz = WZ_P;
 	gust_gains.d_wz = WZ_D;
 
+	gust_gains.wx_sign = 1;
+	gust_gains.wz_sign = 1;
 
 	#if PERIODIC_TELEMETRY
   register_periodic_telemetry(DefaultPeriodic, PPRZ_MSG_ID_GUST, gust_msg_send);
@@ -107,8 +109,8 @@ void gust_init(void) {
 static inline void gust_run_step(){
 	float va = gust_states.va;
 	gust_states.gama = gust_states.theta - gust_states.aoa;
-	gust_states.wx = va*cosf(gust_states.gama) - gust_states.Vx;
-	gust_states.wz = va*sinf(gust_states.gama) - gust_states.Vz;
+	gust_states.wx = gust_gains.wx_sign*(va*cosf(gust_states.gama) - gust_states.Vx);
+	gust_states.wz = gust_gains.wz_sign*(va*sinf(gust_states.gama) - gust_states.Vz);
 
 	// Calculate the derivatives
 	float d_wx = (gust_states.wx - wx_old) / gust_states.dt;
@@ -145,6 +147,16 @@ void gust_periodic(void) {
   }
 
   gust_run_step();
+}
+
+void energy_extraction_Set_WX_Sign(float _v)
+{
+  gust_gains.wx_sign = _v;
+}
+
+void energy_extraction_Set_WZ_Sign(float _v)
+{
+  gust_gains.wz_sign = _v;
 }
 
 void energy_extraction_Set_WX_P(float _v)

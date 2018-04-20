@@ -11,6 +11,8 @@
         <dl_setting MAX="1." MIN="0." STEP="0.0002" module="modules/energy/energy_extraction" VAR="gust_gains.d_wx" shortname="D_WX" handler="Set_WX_D"/>
         <dl_setting MAX="1." MIN="0." STEP="0.0002" module="modules/energy/energy_extraction" VAR="gust_gains.p_wz" shortname="P_WZ" handler="Set_WZ_P"/>
         <dl_setting MAX="1." MIN="0." STEP="0.0002" module="modules/energy/energy_extraction" VAR="gust_gains.d_wz" shortname="D_WZ" handler="Set_WZ_D"/>
+        <dl_setting MAX="1." MIN="-1." STEP="1.0" module="modules/energy/energy_extraction" VAR="gust_gains.wx_sign" shortname="WX_S" handler="Set_WX_Sign"/>
+        <dl_setting MAX="1." MIN="-1." STEP="1.0" module="modules/energy/energy_extraction" VAR="gust_gains.wz_sign" shortname="WZ_S" handler="Set_WZ_Sign"/>
       </dl_settings>
     </dl_settings>
   </settings>
