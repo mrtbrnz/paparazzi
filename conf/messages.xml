@@ -622,6 +622,14 @@
     </message>
 
     <!-- 80 is free -->
+    <message name="GUST" id="80">
+     <field name="wx" type="float" unit="m/s"/>
+     <field name="wz" type="float" unit="m/s"/>
+     <field name="va" type="float" unit="m/s"/>
+     <field name="gama" type="float" unit="rad"/>
+     <field name="aoa" type="float" unit="rad"/>
+     <field name="theta_cmd" type="float" unit="rad"/>
+    </message>
 
     <message name="GENERIC_COM" id="81">
       <field name="lat" type="int32" unit="1e7deg" alt_unit="deg" alt_unit_coef="0.0000001"/>

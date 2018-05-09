@@ -40,10 +40,10 @@
     <module name="control" type="new"/>
     
     <module name="navigation"/>
-    <module name="nav" type="survey_polygon"/>
+    <!-- Optional Modules -->
+    <!--<module name="nav" type="survey_polygon"/>
     <module name="nav" type="catapult"/>
-
-    <module name="takeoff_detect"/>
+    <module name="takeoff_detect"/> -->
 
     <define name="USE_I2C2"/>
     <module name="multi_hca">

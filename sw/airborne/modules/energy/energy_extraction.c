@@ -55,21 +55,22 @@
 static uint32_t last_periodic_time;     // last periodic time
 static float wx_old;
 static float wz_old;
+static int sampling;
 
 /**
  * Default parameters
  */
 #ifndef WX_P
-#define WX_P 1.f           // 
+#define WX_P 0.f           // 
 #endif
 #ifndef WX_D
-#define WX_D 1.f           // 
+#define WX_D 0.f           // 
 #endif
 #ifndef WZ_P
-#define WZ_P 1.f           // 
+#define WZ_P 0.f           // 
 #endif
 #ifndef WZ_D
-#define WZ_D 1.f           // 
+#define WZ_D 0.f           // 
 #endif
 
 struct Gust_states gust_states;
@@ -145,9 +146,16 @@ void gust_periodic(void) {
     gust_states.dt = (get_sys_time_msec() - last_periodic_time); //   / 1000.f;
     last_periodic_time = get_sys_time_msec();
   }
-
-  gust_run_step();
+  if (sampling > gust_gains.sample_nr){
+	gust_run_step();
+	sampling = 0;	
+  }
+  sampling += 1;
 }
+
+
+
+
 
 void energy_extraction_Set_WX_Sign(float _v)
 {
@@ -177,6 +185,11 @@ void energy_extraction_Set_WZ_P(float _v)
 void energy_extraction_Set_WZ_D(float _v)
 {
   gust_gains.d_wz = _v;
+}
+
+void energy_extraction_Set_Sampling(int _v)
+{
+  gust_gains.sample_nr = _v;
 }
 // float gain = (float)fabs( (double) (cosf(phi) * cosf(theta)));
 
