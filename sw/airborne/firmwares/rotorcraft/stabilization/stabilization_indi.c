@@ -490,7 +490,8 @@ uint32_t raw_duty2 = 0;
   raw_duty2 = 0;
   int32_t airspeed = 0;
 #else
-  int32_t airspeed = ANGLE_BFP_OF_REAL(ms45xx.diff_pressure);
+  // int32_t airspeed = ANGLE_BFP_OF_REAL(ms45xx.diff_pressure);
+  float airspeed = stateGetAirspeed_i();
 #ifdef USE_PWM_INPUT1
   // Log angle of attack and sideslip
   raw_duty1 = get_pwm_input_duty_in_usec(PWM_INPUT1);
