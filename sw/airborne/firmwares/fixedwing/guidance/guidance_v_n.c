@@ -220,16 +220,6 @@ void v_ctl_guidance_loop(void)
 }
 
 
-void v_ctl_guidance_loop_gust(void){
-  v_ctl_pitch_setpoint = gust_states.theta_cmd;
-  // Set Pitch output
-  Bound(v_ctl_pitch_setpoint, V_CTL_AUTO_PITCH_MIN_PITCH, V_CTL_AUTO_PITCH_MAX_PITCH);
-  
-  controlled_throttle  = v_ctl_auto_throttle_cruise_throttle; // v_ctl_auto_throttle_nominal_cruise_throttle;
-  // Set Throttle output
-  v_ctl_throttle_setpoint = TRIM_UPPRZ(controlled_throttle * MAX_PPRZ);
-}
-
 
 
 
@@ -320,6 +310,23 @@ static inline void v_ctl_set_throttle(void)
                         + v_ctl_auto_throttle_igain * v_ctl_auto_throttle_sum_err;
 
 }
+
+
+void v_ctl_guidance_loop_gust(void){
+  v_ctl_pitch_setpoint = gust_states.theta_cmd;
+  // Set Pitch output
+  Bound(v_ctl_pitch_setpoint, V_CTL_AUTO_PITCH_MIN_PITCH, V_CTL_AUTO_PITCH_MAX_PITCH);
+  
+
+  if (gust_gains.throttle_control == 0)
+    { controlled_throttle  = v_ctl_auto_throttle_cruise_throttle; } // v_ctl_auto_throttle_nominal_cruise_throttle;
+  else
+    { v_ctl_set_throttle(); }
+  // Set Throttle output
+  v_ctl_throttle_setpoint = TRIM_UPPRZ(controlled_throttle * MAX_PPRZ);
+}
+
+
 
 #if USE_AIRSPEED
 #define AIRSPEED_LOOP_PERIOD (1./60.)

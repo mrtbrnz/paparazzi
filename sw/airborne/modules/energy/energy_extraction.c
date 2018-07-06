@@ -100,7 +100,8 @@ void gust_init(void) {
 	gust_gains.d_wz = WZ_D;
 
 	gust_gains.wx_sign = 1;
-	gust_gains.wz_sign = 1;
+	gust_gains.wz_sign = -1;
+	gust_gains.throttle_control = 0;
 
 	#if PERIODIC_TELEMETRY
   register_periodic_telemetry(DefaultPeriodic, PPRZ_MSG_ID_GUST, gust_msg_send);
@@ -190,6 +191,11 @@ void energy_extraction_Set_WZ_D(float _v)
 void energy_extraction_Set_Sampling(int _v)
 {
   gust_gains.sample_nr = _v;
+}
+
+void energy_extraction_Set_Throttle_Control(int _v)
+{
+  gust_gains.throttle_control = _v;
 }
 // float gain = (float)fabs( (double) (cosf(phi) * cosf(theta)));
 

@@ -49,6 +49,7 @@ struct Gust_gains {
   float wx_sign;
   float wz_sign;
   int sample_nr;
+  int throttle_control;
 };
 
 extern struct Gust_gains gust_gains;
@@ -72,5 +73,6 @@ extern void energy_extraction_Set_WZ_P(float _v);
 extern void energy_extraction_Set_WZ_D(float _v);
 
 extern void energy_extraction_Set_Sampling(int _v);
+extern void energy_extraction_Set_Throttle_Control(int _v);
 #endif
 

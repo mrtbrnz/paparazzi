@@ -14,6 +14,7 @@
         <dl_setting MAX="1." MIN="-1." STEP="1.0" module="modules/energy/energy_extraction" VAR="gust_gains.wx_sign" shortname="WX_S" handler="Set_WX_Sign"/>
         <dl_setting MAX="1." MIN="-1." STEP="1.0" module="modules/energy/energy_extraction" VAR="gust_gains.wz_sign" shortname="WZ_S" handler="Set_WZ_Sign"/>
         <dl_setting MAX="500" MIN="1" STEP="1" module="modules/energy/energy_extraction" VAR="gust_gains.sample_nr" shortname="Sample" handler="Set_Sampling"/>
+    <dl_setting MIN="0" STEP="1" MAX="1" module="modules/energy/energy_extraction" VAR="gust_gains.throttle_control" shortname="Throt_Ctl" handler="Set_Throttle_Control"/>
         <dl_setting MAX="1" MIN="0.0" STEP="0.01" VAR="v_ctl_auto_throttle_cruise_throttle" shortname="cruise throttle" module="guidance/guidance_v" handler="SetCruiseThrottle" param="V_CTL_AUTO_THROTTLE_NOMINAL_CRUISE_THROTTLE"/>
       </dl_settings>
     </dl_settings>
