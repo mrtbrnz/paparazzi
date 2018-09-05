@@ -72,6 +72,9 @@ static int sampling;
 #ifndef WZ_D
 #define WZ_D 0.f           // 
 #endif
+#ifndef FLIGHT_CORIDOR
+#define FLIGHT_CORIDOR 20.f// 
+#endif
 
 struct Gust_states gust_states;
 struct Gust_gains gust_gains;
@@ -102,6 +105,8 @@ void gust_init(void) {
 	gust_gains.wx_sign = 1;
 	gust_gains.wz_sign = -1;
 	gust_gains.throttle_control = 0;
+	gust_gains.sample_nr = 1;
+	gust_gains.flight_coridor = FLIGHT_CORIDOR;
 
 	#if PERIODIC_TELEMETRY
   register_periodic_telemetry(DefaultPeriodic, PPRZ_MSG_ID_GUST, gust_msg_send);
@@ -138,7 +143,7 @@ void gust_periodic(void) {
   gust_states.aoa = stateGetAngleOfAttack_f();      // rad.
   gust_states.theta = stateGetNedToBodyEulers_f()->theta; // pitch angle in rad.
   gust_states.Vx = stateGetHorizontalSpeedNorm_f(); // Ground speedNorm, used as in-plane forward direction groundspeed
-	gust_states.Vz = stateGetSpeedNed_f()->z;         // Vertical speed  m/s
+  gust_states.Vz = stateGetSpeedNed_f()->z;         // Vertical speed  m/s
 
   if (last_periodic_time == 0) {
     gust_states.dt = GUST_PERIODIC_PERIOD;
@@ -196,6 +201,11 @@ void energy_extraction_Set_Sampling(int _v)
 void energy_extraction_Set_Throttle_Control(int _v)
 {
   gust_gains.throttle_control = _v;
+}
+
+void energy_extraction_Set_Flight_Coridor(float _v)
+{
+  gust_gains.flight_coridor = _v;
 }
 // float gain = (float)fabs( (double) (cosf(phi) * cosf(theta)));
 

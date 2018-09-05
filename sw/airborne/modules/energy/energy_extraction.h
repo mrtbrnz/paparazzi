@@ -50,6 +50,7 @@ struct Gust_gains {
   float wz_sign;
   int sample_nr;
   int throttle_control;
+  float flight_coridor;
 };
 
 extern struct Gust_gains gust_gains;
@@ -62,8 +63,7 @@ extern void gust_periodic(void);
 // extern void gust_event();
 // extern void gust_datalink_callback();
 
-
-// paramenters settings handler
+// paramenter setting handlers
 extern void energy_extraction_Set_WX_Sign(float _v);
 extern void energy_extraction_Set_WZ_Sign(float _v);
 
@@ -74,5 +74,6 @@ extern void energy_extraction_Set_WZ_D(float _v);
 
 extern void energy_extraction_Set_Sampling(int _v);
 extern void energy_extraction_Set_Throttle_Control(int _v);
+extern void energy_extraction_Set_Flight_Coridor(float _v);
 #endif
 

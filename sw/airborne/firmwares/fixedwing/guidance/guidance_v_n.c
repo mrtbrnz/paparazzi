@@ -321,7 +321,15 @@ void v_ctl_guidance_loop_gust(void){
   if (gust_gains.throttle_control == 0)
     { controlled_throttle  = v_ctl_auto_throttle_cruise_throttle; } // v_ctl_auto_throttle_nominal_cruise_throttle;
   else
-    { v_ctl_set_throttle(); }
+    { v_ctl_altitude_error = v_ctl_altitude_setpoint - stateGetPositionUtm_f()->alt;
+      if (fabsf(v_ctl_altitude_error) > gust_gains.flight_coridor) {
+        v_ctl_altitude_loop();
+        v_ctl_set_throttle();
+      }
+      else{
+        controlled_throttle  = v_ctl_auto_throttle_cruise_throttle;
+      }
+    }
   // Set Throttle output
   v_ctl_throttle_setpoint = TRIM_UPPRZ(controlled_throttle * MAX_PPRZ);
 }
