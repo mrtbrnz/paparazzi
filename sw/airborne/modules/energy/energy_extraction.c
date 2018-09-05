@@ -25,7 +25,7 @@
 
 #include "modules/energy/energy_extraction.h"
 
-// State interface for rotation compensation
+// State interface
 #include "state.h"
 
 // Time and uint32_t 
@@ -55,6 +55,7 @@
 static uint32_t last_periodic_time;     // last periodic time
 static float wx_old;
 static float wz_old;
+static float theta_cmd_old;
 static int sampling;
 
 /**
@@ -74,6 +75,9 @@ static int sampling;
 #endif
 #ifndef FLIGHT_CORIDOR
 #define FLIGHT_CORIDOR 20.f// 
+#endif
+#ifndef MAX_AOA
+#define MAX_AOA 15.f           // 
 #endif
 
 struct Gust_states gust_states;
@@ -96,6 +100,7 @@ void gust_init(void) {
 	last_periodic_time = 0;
 	wx_old = 0.0;
 	wz_old = 0.0;
+	theta_cmd_old = 0.0;
 
 	gust_gains.p_wx = WX_P;
 	gust_gains.d_wx = WX_D;
@@ -107,6 +112,8 @@ void gust_init(void) {
 	gust_gains.throttle_control = 0;
 	gust_gains.sample_nr = 1;
 	gust_gains.flight_coridor = FLIGHT_CORIDOR;
+
+	gust_gains.max_aoa = MAX_AOA;
 
 	#if PERIODIC_TELEMETRY
   register_periodic_telemetry(DefaultPeriodic, PPRZ_MSG_ID_GUST, gust_msg_send);
@@ -129,6 +136,8 @@ static inline void gust_run_step(){
 	} else {
 		gust_states.theta_cmd = 0.0;
 	}
+	// Keep the last pitch command
+	theta_cmd_old = gust_states.theta_cmd;
 }
 	
 
@@ -152,11 +161,16 @@ void gust_periodic(void) {
     gust_states.dt = (get_sys_time_msec() - last_periodic_time); //   / 1000.f;
     last_periodic_time = get_sys_time_msec();
   }
-  if (sampling > gust_gains.sample_nr){
-	gust_run_step();
-	sampling = 0;	
-  }
-  sampling += 1;
+  if (gust_states.aoa < gust_gains.max_aoa){
+	  if (sampling > gust_gains.sample_nr){
+		gust_run_step();
+		sampling = 0;	
+	  }
+	  sampling += 1;} // FIXME should we stop sampling during stall ?
+	else{
+		gust_states.theta_cmd = theta_cmd_old - (5.0*3.1415/180.0);
+		theta_cmd_old = gust_states.theta_cmd;
+	}  
 }
 
 
@@ -206,6 +220,11 @@ void energy_extraction_Set_Throttle_Control(int _v)
 void energy_extraction_Set_Flight_Coridor(float _v)
 {
   gust_gains.flight_coridor = _v;
+}
+
+void energy_extraction_Set_Max_AoA(float _v)
+{
+  gust_gains.max_aoa = _v;
 }
 // float gain = (float)fabs( (double) (cosf(phi) * cosf(theta)));
 

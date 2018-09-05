@@ -51,6 +51,7 @@ struct Gust_gains {
   int sample_nr;
   int throttle_control;
   float flight_coridor;
+  float max_aoa;
 };
 
 extern struct Gust_gains gust_gains;
@@ -75,5 +76,7 @@ extern void energy_extraction_Set_WZ_D(float _v);
 extern void energy_extraction_Set_Sampling(int _v);
 extern void energy_extraction_Set_Throttle_Control(int _v);
 extern void energy_extraction_Set_Flight_Coridor(float _v);
+
+extern void energy_extraction_Set_Max_AoA(float _v);
 #endif
 
