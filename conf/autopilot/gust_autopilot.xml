@@ -118,7 +118,7 @@
 
     <mode name="AUTO2">
       <select cond="$DEFAULT_MODE"/>
-      <select cond="RCMode2() && RCAuxMode1()" exception="HOME"/>
+      <select cond="RCMode2() && RCAuxMode0()" exception="HOME"/>
       <control freq="4">
         <call fun="common_nav_periodic_task_4Hz()"/>
         <call fun="nav_periodic_task()"/>
@@ -132,7 +132,7 @@
     </mode>
 
     <mode name="GUST">
-      <select cond="RCMode2() && RCAuxMode0()" exception="HOME"/>
+      <select cond="RCMode2() && RCAuxMode1()" exception="HOME"/>
       <control freq="4">
         <call fun="common_nav_periodic_task_4Hz()"/>
         <call fun="nav_periodic_task()"/>

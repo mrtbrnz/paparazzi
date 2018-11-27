@@ -323,11 +323,15 @@ void v_ctl_guidance_loop_gust(void){
   else
     { v_ctl_altitude_error = v_ctl_altitude_setpoint - stateGetPositionUtm_f()->alt;
       if (fabsf(v_ctl_altitude_error) > gust_gains.flight_coridor) {
+        // controlled_throttle  = v_ctl_auto_throttle_cruise_throttle;
         v_ctl_altitude_loop();
         v_ctl_set_throttle();
       }
       else{
-        controlled_throttle  = v_ctl_auto_throttle_cruise_throttle;
+        if (gust_gains.throttle_control == 2)
+          {controlled_throttle  = 0 ;}
+        else
+          {controlled_throttle  = v_ctl_auto_throttle_cruise_throttle; }
       }
     }
   // Set Throttle output
