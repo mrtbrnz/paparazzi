@@ -2,6 +2,7 @@
 
 <!--
   Zagi 3 with Surface AoA Sensors 
+  AkA DareDevil-3
 
     - Propeller:        
     - Motor:             rpm/v
@@ -12,7 +13,7 @@
     - Autopilot;        Chimera
 -->
 
-<airframe name="Former_Zagi3">
+<airframe name="DareDevil3">
 
   <firmware name="fixedwing">
     <define name="USE_I2C1"/>
@@ -46,16 +47,18 @@
     <module name="takeoff_detect"/> -->
 
     <define name="USE_I2C2"/>
+    <define name="USE_AOA_PRESSURE" value="TRUE"/>
+    <define name="MULTI_HCA_BARO_DIFF_ID" value="MS45XX_SENDER_ID"/>
     <module name="multi_hca">
       <configure name="MULTI_HCA_I2C_DEV" value="i2c2"/>
     </module>
 
-    <module name="pwm_meas.xml"/>  
+<!--     <module name="pwm_meas.xml"/>  
     <module name="AOA_pwm.xml">  
       <configure name="AOA_PWM_CHANNEL" value="PWM_INPUT1"/>
       <configure name="SSA_PWM_CHANNEL" value="PWM_INPUT2"/>
     </module>
-
+ -->
     <module name="tlsf"/>
     <module name="pprzlog"/>
     <module name="logger" type="sd_chibios"/>
@@ -70,6 +73,8 @@
     <module name="airspeed" type="ms45xx_i2c">
       <define name="MS45XX_I2C_DEV" value="i2c1"/>
       <define name="USE_AIRSPEED_MS45XX" value="TRUE"/>
+      <define name="MS45XX_PRESSURE_SCALE" value="0.5724"/>
+      <define name="MS45XX_PRESSURE_OFFSET" value="4662.8"/>
     </module>
 
     <!-- <define name="USE_AIRSPEED" value="TRUE"/> -->
@@ -113,7 +118,7 @@
     <set servo="AILEVON_RIGHT" value="$elevator + $aileron"/>
   </command_laws>
 
-  <section name="AOA">
+<!--   <section name="AOA">
     <define name="USE_AOA" value="TRUE"/>
     <define name="AOA_REVERSE" value="TRUE"/>
     <define name="AOA_SENS" value="(0.955299263038*2.0*M_PI/4096.)"/>
@@ -122,7 +127,7 @@
     <define name="SSA_OFFSET" value="0.0" unit="deg"/>
     <define name="LOG_AOA" value="FALSE"/>
     <define name="USE_AIRSPEED_AIR_DATA" value="TRUE"/>
-  </section>
+  </section> -->
 
   <section name="AUTO1" prefix="AUTO1_">
     <define name="MAX_ROLL" value="0.85"/>
@@ -160,7 +165,7 @@
     <define name="ACCEL_Z_SENS" value="2.43282457098" integer="16"/>
 
     <define name="BODY_TO_IMU_PHI" value="0"/>
-    <define name="BODY_TO_IMU_THETA" value="0.0"/>
+    <define name="BODY_TO_IMU_THETA" value="7.5" unit="deg"/>
     <define name="BODY_TO_IMU_PSI" value="0"/>
   </section>
 

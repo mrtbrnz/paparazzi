@@ -25,6 +25,9 @@
 #include "subsystems/abi.h"
 #include <math.h>
 #include "filters/median_filter.h"
+#include "generated/airframe.h"
+
+#include "subsystems/actuators.h"
 
 //Messages
 #include "mcu_periph/uart.h"
@@ -54,7 +57,18 @@
 #define MULTI_HCA_I2C_DEV i2c0
 #endif
 
+#ifndef USE_AOA_PRESSURE
+#define USE_AOA_PRESSURE 1
+#endif
+
 #define SENSOR_SYNC_SEND  1
+
+/** ABI binding for differential pressure
+ */
+#ifndef MULTI_HCA_BARO_DIFF_ID
+#define MULTI_HCA_BARO_DIFF_ID ABI_BROADCAST
+#endif
+static abi_event pressure_diff_ev;
 
 struct hca_sensor hca_sensors[HCA_NB_SENSORS];
 
@@ -67,10 +81,17 @@ struct MedianFilterFloat multi_hca_filtered[HCA_NB_SENSORS];
 #endif
 uint8_t multi_hca_addr[] = HCA_SENSORS_ADDR;
 
+float p_diff;
+
+static void pressure_diff_cb(uint8_t __attribute__((unused)) sender_id, float pressure)
+{
+  p_diff = pressure;
+}
 
 void multi_hca_init(void)
 {
   uint8_t i = 0;
+  p_diff = -1.0f;
 
   for (i = 0; i < HCA_NB_SENSORS; i++) {
     hca_sensors[i].valid = false;
@@ -79,6 +100,7 @@ void multi_hca_init(void)
     multi_hca_i2c_trans[i].status = I2CTransDone;
     init_median_filter_f(&multi_hca_filtered[i], MULTI_HCA_MEDIAN_LENGTH);
   }
+  AbiBindMsgBARO_DIFF(MULTI_HCA_BARO_DIFF_ID, &pressure_diff_ev, pressure_diff_cb);
 }
 
 
@@ -150,6 +172,19 @@ void multi_hca_read_event(void)
       DOWNLINK_SEND_PAYLOAD_FLOAT(pprzlog_tp, flightrecorder_sdlog, 2*HCA_NB_SENSORS, tab);
     }
 #endif
+
+// If we have wing surface mounted pressure sensors to measure AoA:
+// #if USE_AOA_PRESSURE
+  
+  //int16_t act_1 =  actuators_pprz[1];
+  int16_t act_1 =  actuators[1];
+  float value = act_1;
+  // differential pressure comes from p_diff
+  float cp = tab[5]/(p_diff+1000.0f);
+  float aoa_pressure_f = (-15.05) + (-3.91*cp) + 0.3185*cp*cp;
+
+  stateSetAngleOfAttack_f(aoa_pressure_f);
+// #endif
 
     new_data = 0;
   }
