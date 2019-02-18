@@ -177,13 +177,15 @@ void multi_hca_read_event(void)
 // #if USE_AOA_PRESSURE
   
   //int16_t act_1 =  actuators_pprz[1];
-  int16_t act_1 =  actuators[1];
-  float value = act_1;
+  int16_t val_1 =  actuators[1] -1500;
+  int16_t val_2 =  actuators[2] -1500;
+  float act_1 = val_1;
+  float act_2 = val_2;
   // differential pressure comes from p_diff
-  float cp = tab[5]/(p_diff+1000.0f);
-  float aoa_pressure_f = (-15.05) + (-3.91*cp) + 0.3185*cp*cp;
+  float cp = tab[5]/(p_diff+600.0f);
+  float aoa_pressure_f = (2.17465) + (-4.023*cp) + 0.162138*cp*cp + 0.0100652362 * act_1 + (-0.0147789388*act_2);
 
-  stateSetAngleOfAttack_f(aoa_pressure_f);
+  stateSetAngleOfAttack_f((aoa_pressure_f*0.017452));
 // #endif
 
     new_data = 0;

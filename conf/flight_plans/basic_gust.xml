@@ -15,6 +15,7 @@
     <waypoint alt="215.0" name="AF" x="177.4" y="45.1"/>
     <waypoint alt="185.0" name="TD" x="28.8" y="57.0"/>
     <waypoint name="_BASELEG" x="168.8" y="-13.8"/>
+    <waypoint name="_BASELEG2" x="168.8" y="-13.8"/>
     <waypoint name="CLIMB" x="-114.5" y="162.3"/>
   </waypoints>
 
@@ -72,6 +73,29 @@
       <path wpts="S1, S2 STDBY" approaching_time="1" pitch="auto" throttle="0.4"/>
       <deroute block="Standby"/>
     </block>
+
+        <block name="Glide" strip_button="Glide Manual" strip_icon="line.png" group="base_pattern">
+      <exception cond="GetAltRef() + 40 > GetPosAlt()" deroute="Oval 1-2"/>
+      <call_once fun="nav_compute_baseleg(WP_1, WP_2, WP__BASELEG, nav_radius)"/>
+      <circle radius="nav_radius" until="NavCircleCount() > 0.5" wp="_BASELEG"/>
+      <circle radius="nav_radius" until="And(NavQdrCloseTo(DegOfRad(baseleg_out_qdr)-(nav_radius/fabs(nav_radius))*10), 10 > fabs(GetPosAlt() - WaypointAlt(WP__BASELEG)))" wp="_BASELEG"/>
+      <go wp="2" from="1" hmode="route" vmode="throttle" throttle="0." pitch="fp_pitch"/>
+      <deroute block="Standby"/>
+    </block>
+
+    <block name="Glide auto" strip_button="Glide Auto" group="extra_pattern">
+      <for var="i" from="-3" to="0">
+        <call_once fun="nav_compute_baseleg(WP_1, WP_2, WP__BASELEG, nav_radius)"/>
+        <circle radius="nav_radius" until="NavCircleCount() > 0.5" wp="_BASELEG" alt="WaypointAlt(WP_1)"/>
+        <circle radius="nav_radius" until="And(NavQdrCloseTo(DegOfRad(baseleg_out_qdr)-(nav_radius/fabs(nav_radius))*10), 10 > fabs(GetPosAlt() - WaypointAlt(WP_1)))" wp="_BASELEG" alt="WaypointAlt(WP_1)"/>
+        <go wp="2" from="1" hmode="route" vmode="throttle" throttle="0." pitch="$i*4" until="GetAltRef() + 40 > GetPosAlt()" approaching_time="1"/>
+        <call_once fun="nav_compute_baseleg(WP_2, WP_1, WP__BASELEG2, -nav_radius)"/>
+        <set var="nav_radius" value="-nav_radius"/>
+        <circle radius="nav_radius" until="NavCircleCount() > 0.5" wp="_BASELEG2" alt="WaypointAlt(WP_1)"/>
+      </for>
+      <deroute block="Standby"/>
+    </block>
+    
     <block name="Land Right AF-TD" strip_button="Land right (wp AF-TD)" strip_icon="land-right.png" group="land">
       <set value="DEFAULT_CIRCLE_RADIUS" var="nav_radius"/>
       <deroute block="land"/>
