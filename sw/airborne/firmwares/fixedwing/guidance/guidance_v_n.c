@@ -32,6 +32,8 @@
 #include "generated/airframe.h"
 #include "autopilot.h"
 
+#include "modules/energy/energy_extraction.h"
+
 /* mode */
 uint8_t v_ctl_mode;
 
@@ -206,8 +208,8 @@ void v_ctl_guidance_loop(void)
 #endif
 
 #ifdef V_CTL_POWER_CTL_BAT_NOMINAL
-  if (ap_electrical.vsupply > 0.) {
-    v_ctl_throttle_setpoint *= V_CTL_POWER_CTL_BAT_NOMINAL / ap_electrical.vsupply;
+  if (vsupply > 0.) {
+    v_ctl_throttle_setpoint *= 10. * V_CTL_POWER_CTL_BAT_NOMINAL / (float)vsupply;
     v_ctl_throttle_setpoint = TRIM_UPPRZ(v_ctl_throttle_setpoint);
   }
 #endif
@@ -216,6 +218,10 @@ void v_ctl_guidance_loop(void)
     v_ctl_throttle_setpoint = 0;
   }
 }
+
+
+
+
 
 /**
  * outer loop
@@ -304,6 +310,35 @@ static inline void v_ctl_set_throttle(void)
                         + v_ctl_auto_throttle_igain * v_ctl_auto_throttle_sum_err;
 
 }
+
+
+void v_ctl_guidance_loop_gust(void){
+  v_ctl_pitch_setpoint = gust_states.theta_cmd;
+  // Set Pitch output
+  Bound(v_ctl_pitch_setpoint, V_CTL_AUTO_PITCH_MIN_PITCH, V_CTL_AUTO_PITCH_MAX_PITCH);
+  
+
+  if (gust_gains.throttle_control == 0)
+    { controlled_throttle  = v_ctl_auto_throttle_cruise_throttle; } // v_ctl_auto_throttle_nominal_cruise_throttle;
+  else
+    { v_ctl_altitude_error = v_ctl_altitude_setpoint - stateGetPositionUtm_f()->alt;
+      if (fabsf(v_ctl_altitude_error) > gust_gains.flight_coridor) {
+        // controlled_throttle  = v_ctl_auto_throttle_cruise_throttle;
+        v_ctl_altitude_loop();
+        v_ctl_set_throttle();
+      }
+      else{
+        if (gust_gains.throttle_control == 2)
+          {controlled_throttle  = 0 ;}
+        else
+          {controlled_throttle  = v_ctl_auto_throttle_cruise_throttle; }
+      }
+    }
+  // Set Throttle output
+  v_ctl_throttle_setpoint = TRIM_UPPRZ(controlled_throttle * MAX_PPRZ);
+}
+
+
 
 #if USE_AIRSPEED
 #define AIRSPEED_LOOP_PERIOD (1./60.)
