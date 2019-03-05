@@ -79,9 +79,9 @@
     </module>
 
 
-    <module name="airspeed" type="sdp3x">
+<!--     <module name="airspeed" type="sdp3x">
       <define name="USE_AIRSPEED_SDP3X" value="FALSE"/>
-    </module>
+    </module> -->
 
     <!-- <define name="USE_AIRSPEED" value="TRUE"/> -->
 
@@ -168,15 +168,23 @@
     <define name="ACCEL_Y_SIGN" value="1"/>
     <define name="ACCEL_Z_SIGN" value="1"/>
 
-    <define name="ACCEL_X_NEUTRAL" value="-25"/>
+<!--     <define name="ACCEL_X_NEUTRAL" value="-25"/>
     <define name="ACCEL_Y_NEUTRAL" value="-29"/>
     <define name="ACCEL_Z_NEUTRAL" value="-362"/>
     <define name="ACCEL_X_SENS" value="2.44547715553" integer="16"/>
     <define name="ACCEL_Y_SENS" value="2.44697593157" integer="16"/>
-    <define name="ACCEL_Z_SENS" value="2.42694742836" integer="16"/>
+    <define name="ACCEL_Z_SENS" value="2.42694742836" integer="16"/> -->
+
+
+    <define name="ACCEL_X_NEUTRAL" value="5"/>
+	<define name="ACCEL_Y_NEUTRAL" value="-14"/>
+	<define name="ACCEL_Z_NEUTRAL" value="-180"/>
+	<define name="ACCEL_X_SENS" value="2.4460596189" integer="16"/>
+	<define name="ACCEL_Y_SENS" value="2.44691947459" integer="16"/>
+	<define name="ACCEL_Z_SENS" value="2.425592482" integer="16"/>
 
     <define name="BODY_TO_IMU_PHI" value="0"/>
-    <define name="BODY_TO_IMU_THETA" value="5.7" unit="deg"/>
+    <define name="BODY_TO_IMU_THETA" value="6.6" unit="deg"/>
     <define name="BODY_TO_IMU_PSI" value="0"/>
   </section>
 
