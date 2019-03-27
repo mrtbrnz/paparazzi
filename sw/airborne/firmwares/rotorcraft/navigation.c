@@ -374,12 +374,16 @@ struct FloatVect3 nav_get_speed_sp_from_circle(struct EnuCoor_i wp_center, int32
   float wy = ned_target.y;
 
   // Calculate magnitude of the desired speed vector based on distance to waypoint
-  float dist_to_target = float_vect2_norm(&wp_center); // CHECK THIS OUT ??
+  struct FloatVect2  wp_center_vector = {wx, wy};
+  struct FloatVect2  current_p_vector = {px, py};
+  struct FloatVect2 diff_between_pts;
+  VECT2_DIFF(diff_between_pts, wp_center_vector, current_p_vector);
+  float dist_to_target = float_vect2_norm(&diff_between_pts);
   float desired_speed;
   if(force_forward) {
     desired_speed = nav_max_speed;
   } else {
-    desired_speed = dist_to_target * pos_gain;
+    desired_speed = dist_to_target * 0.3 * pos_gain; // Diverges over time!!! FIXME
     Bound(desired_speed, 0.0, nav_max_speed);
   }
 
@@ -409,7 +413,7 @@ struct FloatVect3 nav_get_speed_sp_from_circle(struct EnuCoor_i wp_center, int32
   float tx = -s * ny;
   float ty =  s * nx;
 
-  float ke = 0.5;
+  float ke = 1.1;
 
   // Calculation of the desired angular velocity in the vector field
   float pdx_dot = tx - ke * e * nx;
