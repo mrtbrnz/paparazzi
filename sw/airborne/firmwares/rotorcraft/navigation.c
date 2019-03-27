@@ -343,6 +343,8 @@ struct FloatVect3 nav_get_speed_setpoint(float pos_gain) {
   struct FloatVect3 speed_sp;
   if(horizontal_mode == HORIZONTAL_MODE_ROUTE) {
     speed_sp = nav_get_speed_sp_from_line(line_vect, to_end_vect, navigation_target, pos_gain);
+  } else if(horizontal_mode == HORIZONTAL_MODE_CIRCLE){
+    speed_sp = nav_get_speed_sp_from_circle(nav_circle_center, nav_circle_radius, pos_gain);
   } else {
     speed_sp = nav_get_speed_sp_from_go(navigation_target, pos_gain);
   }
@@ -350,10 +352,97 @@ struct FloatVect3 nav_get_speed_setpoint(float pos_gain) {
 }
 
 /**
+ * @brief follow a circle by using vector field.
+ *
+ * @param wp_center for circle center in enu
+ * @param circle radius
+ * @param pos gain (from hybrid indi guidance)
+ *
+ * @return desired speed setpoint FloatVect3
+ */
+struct FloatVect3 nav_get_speed_sp_from_circle(struct EnuCoor_i wp_center, int32_t radius, float pos_gain){
+
+  // Get current position in NED
+  struct NedCoor_f *p = stateGetPositionNed_f();
+  float px = p->x;
+  float py = p->y;
+
+  // Target in NED instead of ENU
+  struct NedCoor_f ned_target;
+  VECT3_ASSIGN(ned_target, POS_FLOAT_OF_BFP(wp_center.y), POS_FLOAT_OF_BFP(wp_center.x), -POS_FLOAT_OF_BFP(wp_center.z));
+  float wx = ned_target.x;
+  float wy = ned_target.y;
+
+  // Calculate magnitude of the desired speed vector based on distance to waypoint
+  float dist_to_target = float_vect2_norm(&wp_center); // CHECK THIS OUT ??
+  float desired_speed;
+  if(force_forward) {
+    desired_speed = nav_max_speed;
+  } else {
+    desired_speed = dist_to_target * pos_gain;
+    Bound(desired_speed, 0.0, nav_max_speed);
+  }
+
+  // Lets keep it a circle for now...
+  float radius_circle = POS_FLOAT_OF_BFP(radius);
+  float a = radius_circle;
+  float b = radius_circle;
+  float alpha = 0.;
+
+  float cosa = cosf(alpha);
+  float sina = sinf(alpha);
+
+  // Phi(x,y)
+  float xel = (px - wx) * cosa - (py - wy) * sina;
+  float yel = (px - wx) * sina + (py - wy) * cosa;
+  float phi = (xel / a) * (xel / a) + (yel / b) * (yel / b) - 1;
+  float e = phi;
+
+  // grad Phi
+  float nx = (2 * xel / (a * a)) * cosa + (2 * yel / (b * b)) * sina;
+  float ny = (2 * yel / (b * b)) * cosa - (2 * xel / (a * a)) * sina;
+
+  // direction of rotation
+  int8_t s = radius > 0 ? 1 : -1;
+
+  // tangent to Phi
+  float tx = -s * ny;
+  float ty =  s * nx;
+
+  float ke = 0.5;
+
+  // Calculation of the desired angular velocity in the vector field
+  float pdx_dot = tx - ke * e * nx;
+  float pdy_dot = ty - ke * e * ny;
+
+  float norm_pd_dot = sqrtf(pdx_dot * pdx_dot + pdy_dot * pdy_dot);
+  float md_x = pdx_dot / norm_pd_dot;
+  float md_y = pdy_dot / norm_pd_dot;
+
+  // Calculate the desired direction to converge to the line
+  struct FloatVect2 direction;
+  VECT2_ASSIGN(direction, md_x*desired_speed, md_y*desired_speed);
+
+  struct FloatVect3 speed_sp_return = {direction.x, direction.y, guidance_indi_pos_gainz*(ned_target.z - stateGetPositionNed_f()->z)};
+  if((guidance_v_mode == GUIDANCE_V_MODE_NAV) && (vertical_mode == VERTICAL_MODE_CLIMB)) {
+    speed_sp_return.z = SPEED_FLOAT_OF_BFP(guidance_v_zd_sp);
+  }
+
+  // Bound vertical speed setpoint
+  if(stateGetAirspeed_f() > 13.0) {
+    Bound(speed_sp_return.z, -4.0, 5.0);
+  } else {
+    Bound(speed_sp_return.z, -nav_climb_vspeed, -nav_descend_vspeed);
+  }
+
+  return speed_sp_return;
+}
+
+/**
  * @brief follow a line.
  *
  * @param line_v_enu 2d vector from beginning (0) line to end in enu
- * @param to_end_v_enu 2d vector from curremtn position to end in enu
+ * @param to_end_v_enu 2d vector from current position to end in enu
  * @param target end waypoint in enu
  *
  * @return desired speed setpoint FloatVect3

@@ -120,6 +120,7 @@ extern void scale_two_d_to_max(struct FloatVect3 *vect3, float max);
 extern struct FloatVect3 nav_get_speed_sp_from_go(struct EnuCoor_i target, float pos_gain);
 extern struct FloatVect3 nav_get_speed_setpoint(float pos_gain);
 extern struct FloatVect3 nav_get_speed_sp_from_line(struct FloatVect2 line_v, struct FloatVect2 to_end_v, struct EnuCoor_i target, float pos_gain);
+extern struct FloatVect3 nav_get_speed_sp_from_circle(struct EnuCoor_i wp_center, int32_t radius, float pos_gain);
 
 extern float get_dist2_to_waypoint(uint8_t wp_id);
 extern float get_dist2_to_point(struct EnuCoor_i *p);

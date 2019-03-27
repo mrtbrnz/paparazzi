@@ -1,6 +1,6 @@
 <!DOCTYPE flight_plan SYSTEM "flight_plan.dtd">
 
-<flight_plan alt="200" ground_alt="170" lat0="43.46223" lon0="1.27289" max_dist_from_home="350" name="Rotorcraft Basic (Enac)" security_height="2">
+<flight_plan alt="200" ground_alt="170" lat0="43.46223" lon0="1.27289" max_dist_from_home="450" name="Rotorcraft Basic (Enac)" security_height="2">
   <header>
 #include "autopilot.h"
 </header>
@@ -62,6 +62,10 @@
         <go from="p6" hmode="route" wp="p1"/>
       </while>
       <deroute block="stay_p1"/>
+    </block>
+    <block name="GVF_circle_STDBY">
+      <set value="true" var="force_forward"/>
+      <circle radius="nav_radius" hmode="circle" wp="STDBY"/>
     </block>
     <block name="land here" strip_button="Land Here" strip_icon="land-right.png">
       <call_once fun="NavSetWaypointHere(WP_TD)"/>
