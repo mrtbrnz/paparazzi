@@ -1,4 +1,4 @@
-<!-- DarkO Onyx Airframe
+<!-- DarkO2 Onyx Airframe
 	Apogee v1.0 Chibios
 	Xbee API
 	Ublox M8T
@@ -106,28 +106,28 @@
 
   <section name="ctrl_eff_scheduling" prefix="FWD_">
     <!-- control effectiveness, scaled by INDI_G_SCALING (1000)-->
-    <define name="G1_ROLL"   value="{    0,    0,  -8.5,  8.5}"/>
+    <define name="G1_ROLL"   value="{    0,    0,  -6.5,  6.5}"/>
     <define name="G1_PITCH"  value="{-13.0, 13.0,     0,    0}"/> 
-    <define name="G1_YAW"    value="{ -5.0, -5.0,   0.6, -0.6}"/>
-    <define name="G1_THRUST" value="{    0,    0,  -0.8, -0.8}"/>
+    <define name="G1_YAW"    value="{ -7.5, -7.5,   0.6, -0.6}"/>
+    <define name="G1_THRUST" value="{    0,    0,  -1.0, -1.0}"/>
   </section>
 
   <section name="STABILIZATION_ATTITUDE_INDI" prefix="STABILIZATION_INDI_">
     <!-- control effectiveness, scaled by INDI_G_SCALING (1000)-->
     <define name="G1_ROLL"   value="{   0,    0, -10.,  10.}"/>
     <define name="G1_PITCH"  value="{-4.0,  4.0,    0,    0}"/>
-    <define name="G1_YAW"    value="{-1.4, -1.4,  0.0,  0.0}"/>
+    <define name="G1_YAW"    value="{-1.7, -1.7,  0.0,  0.0}"/>
     <define name="G1_THRUST" value="{   0,    0,  -2.,  -2.}"/>
     <!--Counter torque effect of spinning up a rotor-->
     <define name="G2" value="{0, 0, 0, 0}"/>
 
     <!-- reference acceleration for attitude control -->
-    <define name="REF_ERR_P" value="70"/>
-    <define name="REF_ERR_Q" value="70"/>
-    <define name="REF_ERR_R" value="70"/>
-    <define name="REF_RATE_P" value="10."/>
-    <define name="REF_RATE_Q" value="10.0"/>
-    <define name="REF_RATE_R" value="10.0"/> 
+    <define name="REF_ERR_P" value="100"/>
+    <define name="REF_ERR_Q" value="100"/>
+    <define name="REF_ERR_R" value="100"/>
+    <define name="REF_RATE_P" value="12."/>
+    <define name="REF_RATE_Q" value="12.0"/>
+    <define name="REF_RATE_R" value="12.0"/> 
 
     <!--<define name="REF_ERR_P" value="90.0"/>
     <define name="REF_ERR_Q" value="130.0"/>
@@ -358,7 +358,7 @@
       <define name="GUIDANCE_INDI_PITCH_LIFT_EFF" value="0.12"/>
       <define name="GUIDANCE_INDI_PITCH_EFF_SCALING" value="2.0"/>
       <define name="GUIDANCE_H_REF_MAX_SPEED" value="18.0"/> <!--not used-->
-      <define name="GUIDANCE_INDI_MIN_THROTTLE" value="4000"/>
+      <define name="GUIDANCE_INDI_MIN_THROTTLE" value="2700"/>
       <define name="GUIDANCE_INDI_MIN_THROTTLE_FWD" value="1500"/>
       <define name="GUIDANCE_INDI_MAX_AIRSPEED" value="16.0"/>
       <define name="GUIDANCE_HEADING_IS_FREE" value="FALSE"/> <!--heading can not be set by navigation-->
