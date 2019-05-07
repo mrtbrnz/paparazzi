@@ -67,6 +67,10 @@
       <set value="true" var="force_forward"/>
       <circle radius="nav_radius" hmode="circle" wp="STDBY"/>
     </block>
+    <block name="Slow_GVF_circle_STDBY">
+      <set value="false" var="force_forward"/>
+      <circle radius="nav_radius" hmode="circle" wp="STDBY"/>
+    </block>
     <block name="land here" strip_button="Land Here" strip_icon="land-right.png">
       <call_once fun="NavSetWaypointHere(WP_TD)"/>
     </block>
