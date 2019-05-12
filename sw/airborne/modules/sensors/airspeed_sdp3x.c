@@ -25,6 +25,7 @@
 #include "std.h"
 #include "mcu_periph/i2c.h"
 #include "modules/sensors/airspeed_sdp3x.h"
+#include "filters/low_pass_filter.h"
 #include "subsystems/abi.h"
 
 #include "mcu_periph/uart.h"
@@ -44,6 +45,12 @@ PRINT_CONFIG_MSG("USE_AIRSPEED_SDP3X set to TRUE since this is set USE_AIRSPEED"
 
 #if USE_AIRSPEED_SDP3X
 #include "state.h"
+#endif
+
+/** Use low pass filter on pressure values
+ */
+#ifndef USE_AIRSPEED_LOWPASS_FILTER
+#define USE_AIRSPEED_LOWPASS_FILTER TRUE
 #endif
 
 /** Commands and scales
@@ -102,10 +109,21 @@ PRINT_CONFIG_VAR(SDP3X_PRESSURE_OFFSET)
 #define SDP3X_AIRSPEED_SCALE 1.6327
 #endif
 
+/** Time constant for second order Butterworth low pass filter
+ * Default of 0.15 should give cut-off freq of 1/(2*pi*tau) ~= 1Hz
+ */
+#ifndef SDP3X_LOWPASS_TAU
+#define SDP3X_LOWPASS_TAU 0.15
+#endif
+
 #define SDP3X_SENDER_ID 42 //FIXME
 
 struct AirspeedSdp3x sdp3x;
 static struct i2c_transaction sdp3x_trans;
+
+#ifdef USE_AIRSPEED_LOWPASS_FILTER
+static Butterworth2LowPass sdp3x_filter;
+#endif
 
 static bool sdp3x_crc(const uint8_t data[], unsigned size, uint8_t checksum)
 {
@@ -151,6 +169,10 @@ void sdp3x_init(void)
 
   sdp3x_trans.status = I2CTransDone;
   // setup low pass filter with time constant and 100Hz sampling freq
+#ifdef USE_AIRSPEED_LOWPASS_FILTER
+  init_butterworth_2_low_pass(&sdp3x_filter, SDP3X_LOWPASS_TAU,
+                              SDP3X_I2C_PERIODIC_PERIOD, 0);
+#endif
 
 #if PERIODIC_TELEMETRY
   register_periodic_telemetry(DefaultPeriodic, PPRZ_MSG_ID_AIRSPEED_MS45XX, sdp3x_downlink); // FIXME
@@ -201,7 +223,15 @@ void sdp3x_event(void)
 
       int16_t p_raw = ((int16_t)(buf[0]) << 8) | (int16_t)(buf[1]);
 
-      sdp3x.pressure = ((float)p_raw / sdp3x.pressure_scale) - sdp3x.pressure_offset;
+      float p_out = ((float)p_raw / sdp3x.pressure_scale) - sdp3x.pressure_offset;
+
+#ifdef USE_AIRSPEED_LOWPASS_FILTER
+      sdp3x.pressure = update_butterworth_2_low_pass(&sdp3x_filter, p_out);
+#else
+      sdp3x.pressure = p_out;
+#endif
+
+      //sdp3x.pressure = ((float)p_raw / sdp3x.pressure_scale) - sdp3x.pressure_offset;
 
       if (sdp3x.autoset_offset) {
         if (autoset_nb < AUTOSET_NB_MAX) {
