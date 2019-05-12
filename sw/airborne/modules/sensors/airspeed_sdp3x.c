@@ -171,7 +171,7 @@ void sdp3x_init(void)
   // setup low pass filter with time constant and 100Hz sampling freq
 #ifdef USE_AIRSPEED_LOWPASS_FILTER
   init_butterworth_2_low_pass(&sdp3x_filter, SDP3X_LOWPASS_TAU,
-                              SDP3X_I2C_PERIODIC_PERIOD, 0);
+                              SDP3X_PERIODIC_PERIOD, 0);
 #endif
 
 #if PERIODIC_TELEMETRY
