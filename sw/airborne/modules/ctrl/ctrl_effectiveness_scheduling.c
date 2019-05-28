@@ -70,7 +70,7 @@ void ctrl_eff_scheduling_init(void)
 void ctrl_eff_scheduling_periodic(void)
 {
   if(radio_control.values[INDI_FUNCTIONS_RC_CHANNEL] > 0) {
-    ctrl_eff_scheduling_periodic_b();
+    ctrl_eff_scheduling_periodic_a();
   } else {
     ctrl_eff_scheduling_periodic_a();
   }
@@ -147,9 +147,9 @@ void ctrl_eff_scheduling_periodic_b(void)
 
   /*Make pitch gain equal to roll gain for turns forward flight*/
   if(airspeed > 12.0) {
-    reference_acceleration.err_q = 107.0;
+    reference_acceleration.err_q = 120.0; // keep constant for DarkO
   } else {
-    reference_acceleration.err_q = 200.0;
+    reference_acceleration.err_q = 120.0;
   }
 
 }

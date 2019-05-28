@@ -322,10 +322,10 @@
         <define name="PITCH_EFF_AT_60" value="8.0"/>
         <define name="YAW_EFF_AT_60" value="6.5"/>
         <!--function of the form: A + B*airspeed^2-->
-        <define name="CE_PITCH_A" value="2.4169"/>
-        <define name="CE_PITCH_B" value="0.0307"/>
-        <define name="CE_YAW_A" value="5.631"/>
-        <define name="CE_YAW_B" value="0.0515"/>
+        <define name="CE_PITCH_A" value="4.5"/>
+        <define name="CE_PITCH_B" value="0.051"/>
+        <define name="CE_YAW_A" value="5.5"/>
+        <define name="CE_YAW_B" value="0.022"/>
       </module>
 
       <!--Switch advanced INDI scheduling functions on or off-->
