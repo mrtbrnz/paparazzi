@@ -189,8 +189,8 @@
   </section>
 
   <section name="NAV">
-    <define name="NAV_CLIMB_VSPEED" 	value="1.0"/>
-    <define name="NAV_DESCEND_VSPEED" 	value="-0.5"/>
+    <define name="NAV_CLIMB_VSPEED" 	value="1.5"/>
+    <define name="NAV_DESCEND_VSPEED" 	value="-1.5"/>
   </section>
 
   <!-- <section name="AHRS" prefix="AHRS_"> -->
@@ -240,7 +240,7 @@
     <define name="INDI_FUNCTIONS_RC_CHANNEL" value="6"/>
   </section>
 
-  <modules main_freq="512">
+  <modules main_freq="500">
     <!--<module name="gps" type="ubx_ucenter"/>-->
     <module name="tlsf"/>
     <module name="pprzlog">
@@ -267,6 +267,8 @@
 
     <module name="airspeed" type="sdp3x">
       <define name="SDP3X_i2C_DEV" value="i2c2"/>
+      <define name="SDP3X_PRESSURE_SCALE" value="1.05"/>
+      <define name="SDP3X_PRESSURE_OFFSET" value="8618.4"/>
       <!--define name="SDP3X_AIRSPEED_SCALE" value="1.7508"/--> <!-- 15% increased -->
       <define name="USE_AIRSPEED_SDP3X" value="TRUE"/>
     </module>
@@ -380,7 +382,9 @@
 
     <module name="stabilization" type="indi">
       <define name="INDI_THRUST_ON_PITCH_EFF" value="23.0"/>
+      <define name="STABILIZATION_INDI_HYBRID" />
     </module>
+
     <module name="guidance"      type="indi_hybrid">
       <define name="GUIDANCE_INDI_RC_DEBUG" value="FALSE"/>
       <define name="GUIDANCE_INDI_POS_GAIN" value="0.2"/>

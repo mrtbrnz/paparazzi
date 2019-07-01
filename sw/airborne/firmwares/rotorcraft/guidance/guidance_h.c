@@ -610,12 +610,14 @@ void guidance_h_from_nav(bool in_flight)
 
     guidance_h_update_reference();
 
+#if GUIDANCE_HEADING_IS_FREE
     /* set psi command */
     guidance_h.sp.heading = ANGLE_FLOAT_OF_BFP(nav_heading);
     FLOAT_ANGLE_NORMALIZE(guidance_h.sp.heading);
+#endif
 
 #if GUIDANCE_INDI
-    guidance_indi_run(guidance_h.sp.heading);
+    guidance_indi_run(&guidance_h.sp.heading);
 #else
     /* compute x,y earth commands */
     guidance_h_traj_run(in_flight);
@@ -695,7 +697,7 @@ void guidance_h_guided_run(bool in_flight)
   guidance_h_update_reference();
 
 #if GUIDANCE_INDI
-  guidance_indi_run(guidance_h.sp.heading);
+  guidance_indi_run(&guidance_h.sp.heading);
 #else
   /* compute x,y earth commands */
   guidance_h_traj_run(in_flight);
