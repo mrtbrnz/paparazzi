@@ -29,7 +29,13 @@
 #include "firmwares/rotorcraft/guidance/guidance_hybrid.h"
 #include "firmwares/rotorcraft/guidance/guidance_h.h"
 #include "firmwares/rotorcraft/guidance/guidance_flip.h"
+
+#if GUIDANCE_INDI_HYBRID
+#include "firmwares/rotorcraft/guidance/guidance_indi_hybrid.h"
+#else
 #include "firmwares/rotorcraft/guidance/guidance_indi.h"
+#endif
+
 #include "firmwares/rotorcraft/guidance/guidance_module.h"
 #include "firmwares/rotorcraft/stabilization.h"
 #include "firmwares/rotorcraft/stabilization/stabilization_attitude_rc_setpoint.h"
@@ -75,6 +81,12 @@ PRINT_CONFIG_VAR(GUIDANCE_H_USE_SPEED_REF)
 
 #ifndef GUIDANCE_INDI
 #define GUIDANCE_INDI FALSE
+#endif
+
+// Navigation can set heading freely
+// This is false if sideslip is a problem
+#ifndef GUIDANCE_HEADING_IS_FREE
+#define GUIDANCE_HEADING_IS_FREE TRUE
 #endif
 
 struct HorizontalGuidance guidance_h;
