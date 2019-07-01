@@ -44,6 +44,9 @@
 #include "filters/low_pass_filter.h"
 #include "wls/wls_alloc.h"
 #include <stdio.h>
+//#include "modules/sensors/airspeed_ms45xx_i2c.h"
+#include "modules/adcs/adc_generic.h"
+#include "mcu_periph/pwm_input.h"
 
 // Factor that the estimated G matrix is allowed to deviate from initial one
 #define INDI_ALLOWED_G_FACTOR 2.0
@@ -118,6 +121,9 @@ float actuator_state[INDI_NUM_ACT];
 float indi_u[INDI_NUM_ACT];
 float indi_du[INDI_NUM_ACT];
 float g2_times_du;
+
+float q_filt = 0.0;
+float r_filt = 0.0;
 
 // variables needed for estimation
 float g1g2_trans_mult[INDI_OUTPUTS][INDI_OUTPUTS];
@@ -365,10 +371,18 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
 
   struct FloatRates *body_rates = stateGetBodyRates_f();
 
+  q_filt = (q_filt*3+body_rates->q)/4;
+  r_filt = (r_filt*3+body_rates->r)/4;
+
   //calculate the virtual control (reference acceleration) based on a PD controller
   angular_accel_ref.p = (rate_ref.p - body_rates->p) * reference_acceleration.rate_p;
+#if STABILIZATION_INDI_HYBRID
+  angular_accel_ref.q = (rate_ref.q - q_filt) * reference_acceleration.rate_q;
+  angular_accel_ref.r = (rate_ref.r - r_filt) * reference_acceleration.rate_r;
+#else
   angular_accel_ref.q = (rate_ref.q - body_rates->q) * reference_acceleration.rate_q;
   angular_accel_ref.r = (rate_ref.r - body_rates->r) * reference_acceleration.rate_r;
+#endif
 
   g2_times_du = 0.0;
   int8_t i;
@@ -417,6 +431,20 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
     du_min[i] = -MAX_PPRZ * act_is_servo[i] - actuator_state_filt_vect[i];
     du_max[i] = MAX_PPRZ - actuator_state_filt_vect[i];
     du_pref[i] = act_pref[i] - actuator_state_filt_vect[i];
+
+#ifdef GUIDANCE_INDI_MIN_THROTTLE
+    float airspeed = stateGetAirspeed_f();
+    //limit minimum thrust ap can give
+    if(!act_is_servo[i]) {
+      if((guidance_h.mode == GUIDANCE_H_MODE_HOVER) || (guidance_h.mode == GUIDANCE_H_MODE_NAV)) {
+        if(airspeed < 8.0) {
+          du_min[i] = GUIDANCE_INDI_MIN_THROTTLE - actuator_state_filt_vect[i];
+        } else {
+          du_min[i] = GUIDANCE_INDI_MIN_THROTTLE_FWD - actuator_state_filt_vect[i];
+        }
+      }
+    }
+#endif
   }
 
   // WLS Control Allocator
@@ -464,6 +492,85 @@ static void stabilization_indi_calc_cmd(struct Int32Quat *att_err, bool rate_con
   for (i = 0; i < INDI_NUM_ACT; i++) {
     actuators_pprz[i] = (int16_t) indi_u[i];
   }
+
+#ifndef SITL
+
+#define LOG_LENGTH_INT 12
+#define LOG_LENGTH_FLOAT 26
+
+  int32_t sd_buffer_i[LOG_LENGTH_INT] = {0};
+  float sd_buffer_f[LOG_LENGTH_FLOAT] = {0};
+
+  static uint32_t log_counter = 0;
+  struct FloatQuat *quat = stateGetNedToBodyQuat_f();
+  struct FloatRates *body_rates_f = stateGetBodyRates_f();
+  struct NedCoor_f *accelned = stateGetAccelNed_f();
+
+uint32_t raw_duty1 = 0;
+uint32_t raw_duty2 = 0;
+
+#if CYCLONE_MINI
+  raw_duty1 = 0;
+  raw_duty2 = 0;
+  int32_t airspeed = 0;
+#else
+  // int32_t airspeed = ANGLE_BFP_OF_REAL(ms45xx.diff_pressure);
+  int32_t airspeed = stateGetAirspeed_i();
+#ifdef USE_PWM_INPUT1
+  // Log angle of attack and sideslip
+  raw_duty1 = get_pwm_input_duty_in_usec(PWM_INPUT1);
+  raw_duty2 = get_pwm_input_duty_in_usec(PWM_INPUT2);
+#else
+  // Log the current
+  raw_duty1 = adc_generic_val1;
+#endif
+#endif
+
+  sd_buffer_i[0] = log_counter;
+  sd_buffer_i[1] = actuators_pprz[0];
+  sd_buffer_i[2] = actuators_pprz[1];
+  sd_buffer_i[3] = actuators_pprz[2];
+  sd_buffer_i[4] = actuators_pprz[3];
+  sd_buffer_i[5] = stab_att_sp_quat.qi;
+  sd_buffer_i[6] = stab_att_sp_quat.qx;
+  sd_buffer_i[7] = stab_att_sp_quat.qy;
+  sd_buffer_i[8] = stab_att_sp_quat.qz;
+  sd_buffer_i[9] = raw_duty1;
+  sd_buffer_i[10] = raw_duty2;
+  sd_buffer_i[11] = airspeed;
+
+  sd_buffer_f[0] = body_rates_f->p;
+  sd_buffer_f[1] = body_rates_f->q;
+  sd_buffer_f[2] = body_rates_f->r;
+  sd_buffer_f[3] = quat->qi;
+  sd_buffer_f[4] = quat->qx;
+  sd_buffer_f[5] = quat->qy;
+  sd_buffer_f[6] = quat->qz;
+  sd_buffer_f[7] = stateGetPositionNed_f()->x;
+  sd_buffer_f[8] = stateGetPositionNed_f()->y;
+  sd_buffer_f[9] = stateGetPositionNed_f()->z;
+  sd_buffer_f[10] = stateGetSpeedNed_f()->x;
+  sd_buffer_f[11] = stateGetSpeedNed_f()->y;
+  sd_buffer_f[12] = stateGetSpeedNed_f()->z;
+  sd_buffer_f[13] = indi_v[0];
+  sd_buffer_f[14] = indi_v[1];
+  sd_buffer_f[15] = indi_v[2];
+  sd_buffer_f[16] = indi_v[3];
+  sd_buffer_f[17] = sp_accel.x;
+  sd_buffer_f[18] = sp_accel.y;
+  sd_buffer_f[19] = sp_accel.z;
+  sd_buffer_f[20] = accelned->x;
+  sd_buffer_f[21] = accelned->y;
+  sd_buffer_f[22] = accelned->z;
+  sd_buffer_f[23] = speed_sp.x;
+  sd_buffer_f[24] = speed_sp.y;
+  sd_buffer_f[25] = speed_sp.z;
+
+  sdLogWriteRaw(pprzLogFile, (uint8_t*) sd_buffer_i, LOG_LENGTH_INT*4);
+  sdLogWriteRaw(pprzLogFile, (uint8_t*) sd_buffer_f, LOG_LENGTH_FLOAT*4);
+  log_counter += 1;
+#endif
+
 }
 
 /**
