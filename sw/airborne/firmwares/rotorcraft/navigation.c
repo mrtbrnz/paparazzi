@@ -360,6 +360,7 @@ struct FloatVect3 nav_get_speed_setpoint(float pos_gain) {
  *
  * @return desired speed setpoint FloatVect3
  */
+#if GUIDANCE_INDI
 struct FloatVect3 nav_get_speed_sp_from_circle(struct EnuCoor_i wp_center, int32_t radius, float pos_gain){
 
   // Get current position in NED
@@ -441,7 +442,7 @@ struct FloatVect3 nav_get_speed_sp_from_circle(struct EnuCoor_i wp_center, int32
 
   return speed_sp_return;
 }
-
+#endif
 /**
  * @brief follow a line.
  *
@@ -451,6 +452,7 @@ struct FloatVect3 nav_get_speed_sp_from_circle(struct EnuCoor_i wp_center, int32
  *
  * @return desired speed setpoint FloatVect3
  */
+#if GUIDANCE_INDI
 struct FloatVect3 nav_get_speed_sp_from_line(struct FloatVect2 line_v_enu, struct FloatVect2 to_end_v_enu, struct EnuCoor_i target, float pos_gain) {
 
   // enu -> ned
@@ -529,6 +531,7 @@ struct FloatVect3 nav_get_speed_sp_from_line(struct FloatVect2 line_v_enu, struc
 
   return speed_sp_return;
 }
+#endif
 
 /**
  * @brief Go to a waypoint in the shortest way
@@ -537,6 +540,7 @@ struct FloatVect3 nav_get_speed_sp_from_line(struct FloatVect2 line_v_enu, struc
  *
  * @return desired speed FloatVect3
  */
+#if GUIDANCE_INDI
 struct FloatVect3 nav_get_speed_sp_from_go(struct EnuCoor_i target, float pos_gain) {
   // The speed sp that will be returned
   struct FloatVect3 speed_sp_return;
@@ -578,6 +582,7 @@ struct FloatVect3 nav_get_speed_sp_from_go(struct EnuCoor_i target, float pos_ga
 
   return speed_sp_return;
 }
+#endif
 
 bool nav_check_wp_time(struct EnuCoor_i *wp, uint16_t stay_time)
 {
