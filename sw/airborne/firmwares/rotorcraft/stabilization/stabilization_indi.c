@@ -521,8 +521,10 @@ uint32_t raw_duty2 = 0;
   raw_duty1 = get_pwm_input_duty_in_usec(PWM_INPUT1);
   raw_duty2 = get_pwm_input_duty_in_usec(PWM_INPUT2);
 #else
-  // Log the current
-  raw_duty1 = adc_generic_val1;
+  // Log the current and Voltage
+#include "subsystems/electrical.h"
+  raw_duty1 = (int32_t) (electrical.current*1000.f); //adc_generic_val1;
+  raw_duty2 = (int32_t) (electrical.vsupply*1000.f);
 #endif
 #endif
 

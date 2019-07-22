@@ -10,8 +10,8 @@
   <servos driver="Pwm">
     <servo name="ELEVON_LEFT" no="1" min="560" neutral="760" max="960"/>
     <servo name="ELEVON_RIGHT" no="2" min="560" neutral="760" max="960"/>
-    <servo name="RM" no="5" min="1000" neutral="1100" max="2000"/>
-    <servo name="LM" no="6" min="1000" neutral="1100" max="2000"/>
+    <servo name="RM" no="5" min="125" neutral="135" max="250"/>
+    <servo name="LM" no="6" min="125" neutral="135" max="250"/>
   </servos>
 
   <commands>
@@ -31,17 +31,16 @@
   <section name="IMU" prefix="IMU_">
     <!-- IMU calibration, make sure to calibrate the IMU properly before flight, see the wiki for more info-->
 
-    <define name="MAG_X_NEUTRAL" value="0"/>
-    <define name="MAG_Y_NEUTRAL" value="0"/>
-    <define name="MAG_Z_NEUTRAL" value="0"/>
-    <define name="MAG_X_SENS" value="1.0" integer="16"/>
-    <define name="MAG_Y_SENS" value="1.0" integer="16"/>
-    <define name="MAG_Z_SENS" value="1.0" integer="16"/>
+    <define name= "MAG_X_CURRENT_COEF" value="4.34013840688"/>
+    <define name= "MAG_Y_CURRENT_COEF" value="11.0327837316"/>
+    <define name= "MAG_Z_CURRENT_COEF" value="51.1994190926"/>
 
-  	<define name= "MAG_X_CURRENT_COEF" value="0.0"/>
-  	<define name= "MAG_Y_CURRENT_COEF" value="0.0"/>
-  	<define name= "MAG_Z_CURRENT_COEF" value="0.0"/>
-
+    <define name="MAG_X_NEUTRAL" value="-349"/>
+    <define name="MAG_Y_NEUTRAL" value="-46"/>
+    <define name="MAG_Z_NEUTRAL" value="245"/>
+    <define name="MAG_X_SENS" value="3.70438540876" integer="16"/>
+    <define name="MAG_Y_SENS" value="3.95463177272" integer="16"/>
+    <define name="MAG_Z_SENS" value="3.61799715737" integer="16"/>
 
     <define name="ACCEL_X_SIGN" value="1"/>
     <define name="ACCEL_Y_SIGN" value="1"/>
@@ -81,6 +80,7 @@
   <section name="BAT">
     <define name="LOW_BAT_LEVEL" value="10.0" units="V"/>
     <define name="CATASTROPHIC_BAT_LEVEL" value="9.5" unit="V"/>
+    <define name="MilliAmpereOfAdc(_adc)" value="(_adc-496.0353)*21.5422"/>
   </section>
 
   <section name="STABILIZATION_ATTITUDE" prefix="STABILIZATION_ATTITUDE_">
@@ -95,7 +95,7 @@
 
   <section name="ctrl_eff_scheduling" prefix="FWD_">
     <!-- control effectiveness, scaled by INDI_G_SCALING (1000)-->
-    <define name="G1_ROLL"   value="{    0,    0,  -6.0,  5.0}"/>
+    <define name="G1_ROLL"   value="{    0,    0, -20.0, 20.0}"/>
     <define name="G1_PITCH"  value="{-19.0, 23.0,     0,    0}"/> 
     <define name="G1_YAW"    value="{-11.5, -11.5,  0.6, -0.6}"/>
     <define name="G1_THRUST" value="{    0,    0,  -2.0, -2.0}"/>
@@ -103,10 +103,10 @@
 
   <section name="STABILIZATION_ATTITUDE_INDI" prefix="STABILIZATION_INDI_">
     <!-- control effectiveness, scaled by INDI_G_SCALING (1000)-->
-    <define name="G1_ROLL"   value="{   0,    0, -6.0,  6.0}"/> <!-- 4.3 4.0-->
-    <define name="G1_PITCH"  value="{-3.0,  4.0,    0,    0}"/>
-    <define name="G1_YAW"    value="{-3.5, -3.5,  0.0,  0.0}"/>
-    <define name="G1_THRUST" value="{   0,    0, -1.0, -1.5}"/>
+    <define name="G1_ROLL"   value="{   0,    0,-19.0, 19.0}"/> <!-- 4.3 4.0-->
+    <define name="G1_PITCH"  value="{-2.0,  2.0,    0,    0}"/>
+    <define name="G1_YAW"    value="{-2.5, -2.5,  0.0,  0.0}"/>
+    <define name="G1_THRUST" value="{   0,    0, -1.0, -1.0}"/>
     <!--Counter torque effect of spinning up a rotor-->
     <define name="G2" value="{0, 0, 0, 0}"/>
 
@@ -227,11 +227,14 @@
       <define name="AIRSPEED_ADC_BIAS" value="1837"/>
     </module> -->
 
+    <!--module name="adc_generic">
+      <configure name="ADC_CHANNEL_GENERIC1" value="ADC_1" />
+    </module-->
+
     <module name="airspeed" type="sdp3x">
       <define name="SDP3X_i2C_DEV" value="i2c2"/>
-      <define name="SDP3X_PRESSURE_SCALE" value="1.05"/>
-      <define name="SDP3X_PRESSURE_OFFSET" value="8618.4"/>
-      <!--define name="SDP3X_AIRSPEED_SCALE" value="1.7508"/--> <!-- 15% increased -->
+      <define name="SDP3X_PRESSURE_SCALE" value="1.0"/>
+      <define name="SDP3X_PRESSURE_OFFSET" value="0.0"/>
       <define name="USE_AIRSPEED_SDP3X" value="TRUE"/>
     </module>
 
@@ -253,10 +256,10 @@
     </module>
 
     <!-- module to read angle of attack and side slip angle -->
-     <module name="pwm_meas">
+     <!--module name="pwm_meas">
       <define name="USE_PWM_INPUT1" value="FALSE"/> 
       <!-- <define name="USE_PWM_INPUT2" value="FALSE"/> -->
-    </module> 
+    <!--/module --> 
 
   </modules>
 
@@ -313,14 +316,18 @@
 
     <module name="actuators"     type="pwm">
       <define name="TIM1_SERVO_HZ" value="500"/>
-      <define name="TIM4_SERVO_HZ" value="400"/>
+      <define name="TIM4_SERVO_HZ" value="2000"/>
       <!--define name="USE_SERVOS_7AND8"/-->
     </module>
 
     <module name="send_imu_mag_current">
-      <define name="MILLIAMP_AT_IDLE_THROTTLE" value="1000"/>
-      <define name="MILLIAMP_AT_FULL_THROTTLE" value="20000"/>
-      <define name="CURRENT_ESTIMATION_NONLINEARITY" value="1.5"/>
+<!--       <define name="MILLIAMP_AT_IDLE_THROTTLE" value="1000"/> -->
+      <!-- <define name="MILLIAMP_AT_FULL_THROTTLE" value="20000"/> -->
+      <!-- <define name="CURRENT_ESTIMATION_NONLINEARITY" value="1.5"/> -->
+    </module>
+
+    <module name="current_sensor">
+      <configure name="ADC_CURRENT_SENSOR" value="ADC_1"/>
     </module>
 
     <module name="sys_mon"/>
