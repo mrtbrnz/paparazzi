@@ -5,13 +5,14 @@
 	Ublox M8T
 	SBUS Futaba -->
 
-<airframe name="DarkO3_indi">
+<airframe name="Alpha_01">
 
   <servos driver="Pwm">
     <servo name="ELEVON_LEFT" no="1" min="560" neutral="760" max="960"/>
     <servo name="ELEVON_RIGHT" no="2" min="560" neutral="760" max="960"/>
     <servo name="RM" no="5" min="125" neutral="135" max="250"/>
     <servo name="LM" no="6" min="125" neutral="135" max="250"/>
+    <!-- <servo name="GEAR" no="10" min="950" neutral="950" max="2050"/> -->
   </servos>
 
   <commands>
@@ -19,13 +20,19 @@
     <axis name="ROLL" failsafe_value="0"/>
     <axis name="YAW" failsafe_value="0"/>
     <axis name="THRUST" failsafe_value="0"/>
+    <!-- <axis name="GEAR" failsafe_value="0"/> -->
   </commands>
+
+  <!-- <auto_rc_commands> -->
+    <!-- <set command="GEAR" value="@GAIN2"/> -->
+  <!-- </auto_rc_commands> -->
 
   <command_laws>
     <set servo="ELEVON_LEFT" value="autopilot.motors_on ? actuators_pprz[0] : 0"/>
     <set servo="ELEVON_RIGHT" value="autopilot.motors_on ? actuators_pprz[1] : 0"/>
     <set servo="RM" value="autopilot.motors_on ? actuators_pprz[2] : -MAX_PPRZ"/>
     <set servo="LM" value="autopilot.motors_on ? actuators_pprz[3] : -MAX_PPRZ"/>
+    <!-- <set servo="GEAR" value="@GEAR"/> -->
   </command_laws>
 
   <section name="IMU" prefix="IMU_">
@@ -233,7 +240,7 @@
 
     <module name="airspeed" type="sdp3x">
       <define name="SDP3X_i2C_DEV" value="i2c2"/>
-      <define name="SDP3X_PRESSURE_SCALE" value="1.0"/>
+      <define name="SDP3X_PRESSURE_SCALE" value="30.0"/>
       <define name="SDP3X_PRESSURE_OFFSET" value="0.0"/>
       <define name="USE_AIRSPEED_SDP3X" value="TRUE"/>
     </module>
@@ -317,7 +324,10 @@
     <module name="actuators"     type="pwm">
       <define name="TIM1_SERVO_HZ" value="500"/>
       <define name="TIM4_SERVO_HZ" value="2000"/>
-      <!--define name="USE_SERVOS_7AND8"/-->
+      <!-- <define name="STM32_PWM_USE_TIM5" value="TRUE"/> -->
+      <!-- <define name="USE_PWM10" value="TRUE"/> -->
+      <!-- <define name="USE_PWM11" value="TRUE"/> -->
+      <!--define name="USE_SERVOS_7AND8"/ this is old -->
     </module>
 
     <module name="send_imu_mag_current">
@@ -361,7 +371,7 @@
     <!--<module name="servo_tester"/>-->
 
     <module name="air_data">
-      <define name="USE_AIRSPEED_AIR_DATA" value="FALSE"/>
+      <define name="USE_AIRSPEED_AIR_DATA" value="TRUE"/>
       <!-- <define name="AIR_DATA_AIRSPEED_ID"  value="42" />  -->
     </module>
 
@@ -379,7 +389,7 @@
       <define name="GUIDANCE_INDI_PITCH_LIFT_EFF" value="0.12"/>
       <define name="GUIDANCE_INDI_PITCH_EFF_SCALING" value="1.0"/>
       <define name="GUIDANCE_H_REF_MAX_SPEED" value="18.0"/> <!--not used-->
-      <define name="GUIDANCE_INDI_MIN_THROTTLE" value="2700"/>
+      <define name="GUIDANCE_INDI_MIN_THROTTLE" value="3000"/>
       <define name="GUIDANCE_INDI_MIN_THROTTLE_FWD" value="1500"/>
       <define name="GUIDANCE_INDI_MAX_AIRSPEED" value="16.0"/>
       <define name="GUIDANCE_HEADING_IS_FREE" value="FALSE"/> <!--heading can not be set by navigation-->

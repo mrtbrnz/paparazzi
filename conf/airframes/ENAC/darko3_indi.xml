@@ -133,7 +133,7 @@
 
   <section name="ctrl_eff_scheduling" prefix="FWD_">
     <!-- control effectiveness, scaled by INDI_G_SCALING (1000)-->
-    <define name="G1_ROLL"   value="{    0,    0,  -6.0,  5.0}"/>
+    <define name="G1_ROLL"   value="{    0,    0,  -17.0,  17.0}"/>
     <define name="G1_PITCH"  value="{-19.0, 23.0,     0,    0}"/> 
     <define name="G1_YAW"    value="{-11.5, -11.5,   0.6, -0.6}"/>
     <define name="G1_THRUST" value="{    0,    0,  -2.0, -2.0}"/>
@@ -141,7 +141,7 @@
 
   <section name="STABILIZATION_ATTITUDE_INDI" prefix="STABILIZATION_INDI_">
     <!-- control effectiveness, scaled by INDI_G_SCALING (1000)-->
-    <define name="G1_ROLL"   value="{   0,    0, -6.3,  6.0}"/> <!-- 4.3 4.0-->
+    <define name="G1_ROLL"   value="{   0,    0, -15.0,  15.0}"/> <!-- 4.3 4.0-->
     <define name="G1_PITCH"  value="{-4.0,  4.3,    0,    0}"/>
     <define name="G1_YAW"    value="{-3.9, -3.8,  0.0,  0.0}"/>
     <define name="G1_THRUST" value="{   0,    0,  -1.0,  -1.5}"/>
@@ -267,8 +267,8 @@
 
     <module name="airspeed" type="sdp3x">
       <define name="SDP3X_i2C_DEV" value="i2c2"/>
-      <define name="SDP3X_PRESSURE_SCALE" value="1.05"/>
-      <define name="SDP3X_PRESSURE_OFFSET" value="8618.4"/>
+      <define name="SDP3X_PRESSURE_SCALE" value="40.0"/>
+      <define name="SDP3X_PRESSURE_OFFSET" value="0.0"/>
       <!--define name="SDP3X_AIRSPEED_SCALE" value="1.7508"/--> <!-- 15% increased -->
       <define name="USE_AIRSPEED_SDP3X" value="TRUE"/>
     </module>
@@ -376,7 +376,7 @@
     <!--<module name="servo_tester"/>-->
 
     <module name="air_data">
-      <define name="USE_AIRSPEED_AIR_DATA" value="FALSE"/>
+      <define name="USE_AIRSPEED_AIR_DATA" value="TRUE"/>
       <!-- <define name="AIR_DATA_AIRSPEED_ID"  value="42" />  -->
     </module>
 
