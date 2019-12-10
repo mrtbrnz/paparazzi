@@ -27,7 +27,7 @@
 #include "firmwares/rotorcraft/stabilization/stabilization_attitude_ref_quat_int.h"
 
 //only 4 actuators supported for now
-#define INDI_NUM_ACT 4
+#define INDI_NUM_ACT 6
 // outputs: roll, pitch, yaw, thrust
 #define INDI_OUTPUTS 4
 // Scaling for the control effectiveness to make it readible
