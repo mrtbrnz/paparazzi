@@ -30,6 +30,7 @@
     <module name="tlsf"/>
     <module name="logger" type="sd_chibios"/>
 
+    <module name="fault" />
 
     <module name="actuators" type="dshot">
       <!--define name="DSHOT_SPEED" value="300"/-->
@@ -81,7 +82,7 @@
     <servo name="UR" no="2" min="0" neutral="100" max="2000"/>
     <servo name="UL" no="3" min="0" neutral="100" max="2000"/>
     <servo name="BF" no="6" min="0" neutral="100" max="2000"/>
-    <servo name="BR" no="5" min="0" neutral="100" max="100"/>
+    <servo name="BR" no="5" min="0" neutral="100" max="2000"/>
     <servo name="BL" no="7" min="0" neutral="100" max="2000"/>
   </servos>
 
@@ -105,12 +106,12 @@
     <set servo="FL" value="motor_mixing.commands[MOTOR_FRONT_LEFT]"/>
   </command_laws-->
   <command_laws>
-    <set servo="UF" value="autopilot_get_motors_on() ? actuators_pprz[0] : -MAX_PPRZ"/>
-    <set servo="UR" value="autopilot_get_motors_on() ? actuators_pprz[1] : -MAX_PPRZ"/>
-    <set servo="UL" value="autopilot_get_motors_on() ? actuators_pprz[2] : -MAX_PPRZ"/>
-    <set servo="BF" value="autopilot_get_motors_on() ? actuators_pprz[3] : -MAX_PPRZ"/>
-    <set servo="BR" value="autopilot_get_motors_on() ? actuators_pprz[4] : -MAX_PPRZ"/>
-    <set servo="BL" value="autopilot_get_motors_on() ? actuators_pprz[5] : -MAX_PPRZ"/>
+    <set servo="UF" value="autopilot_get_motors_on() ? actuators_pprz[0]*upper_front_effectiveness : -MAX_PPRZ"/>
+    <set servo="UR" value="autopilot_get_motors_on() ? actuators_pprz[1]*upper_right_effectiveness : -MAX_PPRZ"/>
+    <set servo="UL" value="autopilot_get_motors_on() ? actuators_pprz[2]*upper_left_effectiveness : -MAX_PPRZ"/>
+    <set servo="BF" value="autopilot_get_motors_on() ? actuators_pprz[3]*bottom_front_effectiveness : -MAX_PPRZ"/>
+    <set servo="BR" value="autopilot_get_motors_on() ? actuators_pprz[4]*bottom_right_effectiveness : -MAX_PPRZ"/>
+    <set servo="BL" value="autopilot_get_motors_on() ? actuators_pprz[5]*bottom_left_effectiveness : -MAX_PPRZ"/>
   </command_laws>
 
 
