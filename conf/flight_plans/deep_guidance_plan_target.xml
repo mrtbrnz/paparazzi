@@ -10,6 +10,9 @@
     <waypoint name="STDBY" x="0.0" y="0.0"/>
     <waypoint height="2." name="CAM" x="-20" y="-50"/>
   </waypoints>
+  <modules>
+    <module name="object_tracking" />
+  </modules>
   <blocks>
     <block name="Wait GPS">
       <call_once fun="NavKillThrottle()"/>
@@ -34,6 +37,9 @@
     </block>
     <block name="Standby" strip_button="Standby" strip_icon="home.png">
       <stay wp="STDBY"/>
+    </block>
+    <block name="Rotate_Around">
+      <stay wp="STDBY" pre_call="object_tracking_run()"/>
     </block>
     <block name="land">
       <go wp="HOME"/>
