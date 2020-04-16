@@ -18,8 +18,8 @@
   <settings>
     <dl_settings>
       <dl_settings NAME="object track">
-        <dl_setting MAX="90." MIN="0." STEP="0.1" VAR="object_tracking_search_rate" shortname="search rate" unit="rad/s" alt_unit="deg/s" module="modules/ctrl/object_tracking"/>
-        <dl_setting MAX="90." MIN="0." STEP="0.1" VAR="object_tracking_rate" shortname="tracking rate" unit="rad/s" alt_unit="deg/s" module="modules/ctrl/object_tracking"/>
+        <dl_setting MAX="90." MIN="-90." STEP="0.1" VAR="object_tracking_search_rate" shortname="search rate" unit="rad/s" alt_unit="deg/s" module="modules/ctrl/object_tracking"/>
+        <dl_setting MAX="90." MIN="-90." STEP="0.1" VAR="object_tracking_rate" shortname="tracking rate" unit="rad/s" alt_unit="deg/s" module="modules/ctrl/object_tracking"/>
       </dl_settings>
     </dl_settings>
   </settings>

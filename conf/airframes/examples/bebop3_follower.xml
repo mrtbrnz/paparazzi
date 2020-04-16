@@ -27,6 +27,7 @@
     </module>
     <module name="gps" type="ublox"/>
     <module name="stabilization" type="indi_simple"/>
+    <module name="guidance" type="indi"/>
     <module name="ins"/>
     
     <module name="air_data"/>
