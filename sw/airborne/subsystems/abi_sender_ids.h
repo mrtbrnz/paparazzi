@@ -426,6 +426,10 @@
 #define ACCEL_SP_FCR_ID 1 // Formation Control Rotorcraft
 #endif
 
+#ifndef ACCEL_SP_DRLG_ID
+#define ACCEL_SP_DRLG_ID 1 // Deep RL Guidance accel sp sender
+#endif
+
 /*
  * RELATIVE_LOCALIZATION communication (message 24)
 */

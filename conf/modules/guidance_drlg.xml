@@ -1,0 +1,24 @@
+<!DOCTYPE module SYSTEM "module.dtd">
+
+<module name="drlg" dir="guidance/drlg">
+  <doc>
+    <description>
+      Deep Reinforcement Learning Guidance.
+      The vehicles are are running the INDI control and the desired acceleration are given by the DRLG python script from ground.
+    </description>
+  </doc>
+
+  <header>
+    <file name="drlg.h"/>
+  </header>
+
+  <init fun = "drlg_init()"/>
+
+  <datalink message="DESIRED_SETPOINT" fun="drlg_read_msg()"/>
+
+  <makefile firmware="rotorcraft">
+    <define name="DRLG"/>
+    <file name="drlg.c"/>
+  </makefile>
+
+</module>
