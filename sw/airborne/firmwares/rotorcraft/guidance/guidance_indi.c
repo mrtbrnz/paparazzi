@@ -181,9 +181,20 @@ void guidance_indi_run(float heading_sp)
       indi_accel_sp_set_2d = false;
     }
   } else if (indi_accel_sp_set_3d) {
+    struct NedCoor_f current_ned_vel;
+    current_ned_vel = *stateGetSpeedNed_f();
     sp_accel.x = indi_accel_sp.x;
+    if (fabs(current_ned_vel.x) > 3.0){
+      sp_accel.x = -1.0;
+    }
     sp_accel.y = indi_accel_sp.y;
+    if (fabs(current_ned_vel.y) > 3.0){
+      sp_accel.y = -1.0;
+    }
     sp_accel.z = indi_accel_sp.z;
+    if (fabs(current_ned_vel.z) > 3.0){
+      sp_accel.z = -1.0;
+    }
     float dt = get_sys_time_float() - time_of_accel_sp_3d;
     // If the input command is not updated after a timeout, switch back to flight plan control
     if (dt > 0.5) {
