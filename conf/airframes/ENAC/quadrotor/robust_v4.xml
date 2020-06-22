@@ -1,10 +1,10 @@
 <!DOCTYPE airframe SYSTEM "../../airframe.dtd">
 
-<airframe name="RoBust Hexa Y Copter">
+<airframe name="RoBust v4 Elastic Hexa-Copter">
 
   <description>
     * Autopilot:   Tawaki
-    * Actuators:   4 in 1 F45 
+    * Actuators:   4 in 1  
     * Telemetry:   XBee
     * GPS:         datalink
     * RC:          SBUS
@@ -86,12 +86,12 @@
   </firmware>
 
   <servos driver="DShot">
-    <servo name="UF" no="1" min="0" neutral="100" max="2000"/>
-    <servo name="UR" no="2" min="0" neutral="100" max="2000"/>
-    <servo name="UL" no="3" min="0" neutral="100" max="2000"/>
-    <servo name="BF" no="6" min="0" neutral="100" max="2000"/>
-    <servo name="BR" no="5" min="0" neutral="100" max="2000"/>
-    <servo name="BL" no="7" min="0" neutral="100" max="2000"/>
+    <servo name="M1" no="5" min="0" neutral="100" max="2000"/>
+    <servo name="M2" no="6" min="0" neutral="100" max="2000"/>
+    <servo name="M3" no="7" min="0" neutral="100" max="2000"/>
+    <servo name="M4" no="1" min="0" neutral="100" max="2000"/>
+    <servo name="M5" no="2" min="0" neutral="100" max="2000"/>
+    <servo name="M6" no="3" min="0" neutral="100" max="2000"/>
   </servos>
 
   <servos driver="Pwm">
@@ -123,37 +123,37 @@
     <set servo="FL" value="motor_mixing.commands[MOTOR_FRONT_LEFT]"/>
   </command_laws-->
   <command_laws>
-    <set servo="UF" value="autopilot_get_motors_on() ? actuators_pprz[0]*upper_front_effectiveness : -MAX_PPRZ"/>
-    <set servo="UR" value="autopilot_get_motors_on() ? actuators_pprz[1]*upper_right_effectiveness : -MAX_PPRZ"/>
-    <set servo="UL" value="autopilot_get_motors_on() ? actuators_pprz[2]*upper_left_effectiveness : -MAX_PPRZ"/>
-    <set servo="BF" value="autopilot_get_motors_on() ? actuators_pprz[3]*bottom_front_effectiveness : -MAX_PPRZ"/>
-    <set servo="BR" value="autopilot_get_motors_on() ? actuators_pprz[4]*bottom_right_effectiveness : -MAX_PPRZ"/>
-    <set servo="BL" value="autopilot_get_motors_on() ? actuators_pprz[5]*bottom_left_effectiveness : -MAX_PPRZ"/>
-    <set servo="GEAR" value="@GEAR"/>  
+    <set servo="M1" value="autopilot_get_motors_on() ? actuators_pprz[0]*upper_front_effectiveness : -MAX_PPRZ"/>
+    <set servo="M2" value="autopilot_get_motors_on() ? actuators_pprz[1]*upper_right_effectiveness : -MAX_PPRZ"/>
+    <set servo="M3" value="autopilot_get_motors_on() ? actuators_pprz[2]*upper_left_effectiveness : -MAX_PPRZ"/>
+    <set servo="M4" value="autopilot_get_motors_on() ? actuators_pprz[3]*bottom_front_effectiveness : -MAX_PPRZ"/>
+    <set servo="M5" value="autopilot_get_motors_on() ? actuators_pprz[4]*bottom_right_effectiveness : -MAX_PPRZ"/>
+    <set servo="M6" value="autopilot_get_motors_on() ? actuators_pprz[5]*bottom_left_effectiveness : -MAX_PPRZ"/>
+    <set servo="GEAR" value="@GEAR"/>
   </command_laws>
 
 
   <section name="IMU" prefix="IMU_">
-    <define name="GYRO_P_SIGN" value="-1"/>
+    <define name="GYRO_P_SIGN" value="1"/>
     <define name="GYRO_Q_SIGN" value="1"/>
-    <define name="GYRO_R_SIGN" value="-1"/>
+    <define name="GYRO_R_SIGN" value="1"/>
 
 
-    <define name="ACCEL_X_SIGN" value="-1"/>
+    <define name="ACCEL_X_SIGN" value="1"/>
     <define name="ACCEL_Y_SIGN" value="1"/>
-    <define name="ACCEL_Z_SIGN" value="-1"/>
+    <define name="ACCEL_Z_SIGN" value="1"/>
 
-    <define name="ACCEL_X_NEUTRAL" value="-87"/>
-    <define name="ACCEL_Y_NEUTRAL" value="50"/>
-    <define name="ACCEL_Z_NEUTRAL" value="-16"/>
+    <define name="ACCEL_X_NEUTRAL" value="0.0"/>
+    <define name="ACCEL_Y_NEUTRAL" value="0.0"/>
+    <define name="ACCEL_Z_NEUTRAL" value="0.0"/>
     <define name="ACCEL_X_SENS" value="2.26755822693" integer="16"/>
     <define name="ACCEL_Y_SENS" value="2.4468957791" integer="16"/>
     <define name="ACCEL_Z_SENS" value="2.45151941617" integer="16"/>
 
 
-    <define name="MAG_X_SIGN" value="-1"/>
+    <define name="MAG_X_SIGN" value="1"/>
     <define name="MAG_Y_SIGN" value="1"/>
-    <define name="MAG_Z_SIGN" value="-1"/>
+    <define name="MAG_Z_SIGN" value="1"/>
     <define name="MAG_X_NEUTRAL" value="-1536"/>
     <define name="MAG_Y_NEUTRAL" value="-6416"/>
     <define name="MAG_Z_NEUTRAL" value="-1155"/>
@@ -220,12 +220,20 @@
   <section name="STABILIZATION_ATTITUDE_INDI" prefix="STABILIZATION_INDI_">
     <define name="NUM_ACT" value="6"/>
     <!-- reference acceleration for attitude control -->
-    <define name="REF_ERR_P" value="111"/>
-    <define name="REF_ERR_Q" value="111"/>
-    <define name="REF_ERR_R" value="166"/>
-    <define name="REF_RATE_P" value="15.4"/>
-    <define name="REF_RATE_Q" value="14.0"/>
-    <define name="REF_RATE_R" value="14.0"/>
+    <define name="REF_ERR_P" value="250"/>
+    <define name="REF_ERR_Q" value="250"/>
+    <define name="REF_ERR_R" value="170"/>
+    <define name="REF_RATE_P" value="30.0"/>
+    <define name="REF_RATE_Q" value="30.0"/>
+    <define name="REF_RATE_R" value="15.0"/>
+
+<!--     <define name="REF_ERR_P" value="150"/>
+    <define name="REF_ERR_Q" value="150"/>
+    <define name="REF_ERR_R" value="170"/>
+    <define name="REF_RATE_P" value="20.0"/>
+    <define name="REF_RATE_Q" value="20.0"/>
+    <define name="REF_RATE_R" value="15.0"/> -->
+
 
     <define name="MAX_R" value="120" unit="deg/s"/>
 
@@ -239,13 +247,37 @@
 
 
     <!-- Full INDI -->
-    <!-- control effectiveness -->
-    <define name="G1_ROLL"   value="{ 0.0,  -20,   20,  0.0,  -20,   20 }"/>
-    <define name="G1_PITCH"  value="{  18,  -12,  -12,   18,  -12   -12 }"/>
-    <define name="G1_YAW"    value="{ 2.2,  2.2,  2.2, -2.2, -2.2,  -2.2 }"/>
-    <define name="G1_THRUST" value="{-0.9, -0.9, -0.9, -0.9, -0.9,  -0.9 }"/>
+    <!-- control effectiveness  inverse Y form -->
+<!--     <define name="G1_ROLL"   value="{  0.0,  -30,  -30,  30,   30,  0. }"/>
+    <define name="G1_PITCH"  value="{  30,   -19,  -19, -19,  -19,  30 }"/>
+    <define name="G1_YAW"    value="{   2,   -2,    2,   -2,    2,   -2 }"/>
+    <define name="G1_THRUST" value="{-0.9, -0.9, -0.9, -0.9, -0.9, -0.9 }"/> -->
+
+    <!-- control effectiveness Hexa Form-->
+    <define name="G1_ROLL"   value="{  -19.0,  -37,  -19,  19.0,  37,   19 }"/>
+    <define name="G1_PITCH"  value="{  30,   0,   -30,   -30,    0,  30 }"/>
+    <define name="G1_YAW"    value="{   2,   -2,    2,   -2,    2,   -2 }"/>
+    <define name="G1_THRUST" value="{-0.9, -0.9, -0.9, -0.9, -0.9, -0.9 }"/>
+    <define name="G2"        value="{10.0, -10, 10, -10.0 , 10.0 , -10.0}"/>
+
+    <!-- control effectiveness Hexa with 1st motor reduced eff -->
+<!--     <define name="G1_ROLL"   value="{ -1.0,  -37,  -19,  19.0,  37,   19 }"/>
+    <define name="G1_PITCH"  value="{  2,   0,   -30,   -30,    0,  30 }"/>
+    <define name="G1_YAW"    value="{  0.2,   -2,    2,   -2,    2,   -2 }"/>
+    <define name="G1_THRUST" value="{-0.1, -0.9, -0.9, -0.9, -0.9, -0.9 }"/>
+    <define name="G2"        value="{0.1, -10, 10, -10.0 , 10.0 , -10.0}"/> -->
+
+    <!-- control effectiveness Hexa with 3rd motor reduced eff -->
+<!--     <define name="G1_ROLL"   value="{-19.0, -37,   -1,  19.0,  37,   19 }"/>
+    <define name="G1_PITCH"  value="{  30,    0,   -2,   -30,    0,  30 }"/>
+    <define name="G1_YAW"    value="{   2,   -2,  0.2,   -2,    2,   -2 }"/>
+    <define name="G1_THRUST" value="{-0.9, -0.9, -0.1, -0.9, -0.9, -0.9 }"/>
+    <define name="G2"        value="{10.0, -10.0, 0.1, -10.0 , 10.0 , -10.0}"/> -->
+
     <!--Counter torque effect of spinning up a rotor-->
-    <define name="G2"        value="{100, 100, 100, -100.0 , -100.0 , -100.0}"/>
+    <!-- <define name="G2"        value="{100, -100, 100, -100.0 , 100.0 , -100.0}"/> -->
+
+
     <!-- first order actuator dynamics -->
     <define name="ACT_DYN" value="{0.03, 0.03, 0.03, 0.03, 0.03, 0.03}"/>
     <define name="ESTIMATION_FILT_CUTOFF" value="4.0"/>
@@ -285,6 +317,7 @@
     <define name="ARRIVED_AT_WAYPOINT" value="0.25"/>
     <define name="NAV_DESCEND_VSPEED" value="-0.5"/>
     <define name="NAV_CLIMB_VSPEED" value="0.5"/>
+    <define name="NAV_RADIUS" value="1.5"/>
   </section>
 
   <section name="BAT">

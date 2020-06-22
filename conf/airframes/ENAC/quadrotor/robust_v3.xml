@@ -223,8 +223,8 @@
     <define name="REF_ERR_P" value="111"/>
     <define name="REF_ERR_Q" value="111"/>
     <define name="REF_ERR_R" value="166"/>
-    <define name="REF_RATE_P" value="15.4"/>
-    <define name="REF_RATE_Q" value="14.0"/>
+    <define name="REF_RATE_P" value="24.0"/>
+    <define name="REF_RATE_Q" value="24.0"/>
     <define name="REF_RATE_R" value="14.0"/>
 
     <define name="MAX_R" value="120" unit="deg/s"/>
@@ -239,11 +239,28 @@
 
 
     <!-- Full INDI -->
-    <!-- control effectiveness -->
+    <!-- control effectiveness  inverse Y form -->
     <define name="G1_ROLL"   value="{  0.0,  -15,  15,  0.0,  -15,   15 }"/>
     <define name="G1_PITCH"  value="{  15,   -10, -10,   15,  -10,  -10 }"/>
     <define name="G1_YAW"    value="{   -3,   -3,    -3,   3,    3,   3 }"/>
     <define name="G1_THRUST" value="{-0.9, -0.9, -0.9, -0.9, -0.9, -0.9 }"/>
+
+    <!-- control effectiveness Hexa Form-->
+<!--     <define name="G1_ROLL"   value="{  -19.0,  -19,  38,  19.0,  -38,   19 }"/>
+    <define name="G1_PITCH"  value="{  38,   -38,   0,   38,    0,  -38 }"/>
+    <define name="G1_YAW"    value="{   -3,   -3,    -3,   3,    3,   3 }"/>
+    <define name="G1_THRUST" value="{-0.9, -0.9, -0.9, -0.9, -0.9, -0.9 }"/> -->
+
+<!--     <define name="G1_ROLL"   value="{-19.0,  -19,   0,  19.0,  -38,   19 }"/>
+    <define name="G1_PITCH"  value="{   38,  -38,   0,   38,    0,  -38 }"/>
+    <define name="G1_YAW"    value="{   -3,   -3,   0,   3,    3,   3 }"/>
+    <define name="G1_THRUST" value="{ -0.9, -0.9,   0, -0.9, -0.9, -0.9 }"/> -->
+
+<!--     <define name="G1_ROLL"   value="{  0,  -19,  38,  19.0,  -38,   19 }"/>
+    <define name="G1_PITCH"  value="{  0,  -38,   0,   38,    0,  -38 }"/>
+    <define name="G1_YAW"    value="{  0,  -3,    -3,   3,    3,   3 }"/>
+    <define name="G1_THRUST" value="{  0, -0.9, -0.9, -0.9, -0.9, -0.9 }"/> -->
+
     <!--Counter torque effect of spinning up a rotor-->
     <define name="G2"        value="{-100, -100, -100, 100.0 , 100.0 , 100.0}"/>
     <!-- first order actuator dynamics -->
