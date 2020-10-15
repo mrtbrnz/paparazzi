@@ -139,6 +139,7 @@
       <message name="ESC"                 period="0.1"/>
       <message name="ADC_GENERIC"         period="0.05"/>
       <message name="WIND_INFO_RET"       period="0.1"/>
+      <message name="SOARING_TELEMETRY"   period="0.01"/>
     </mode>
   </process>
     <process name="Extra">

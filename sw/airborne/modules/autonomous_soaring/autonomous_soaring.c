@@ -41,15 +41,19 @@
 int16_t smartprobe_velocity;
 int16_t smartprobe_a_attack;
 int16_t smartprobe_a_sideslip;
+int32_t smartprobe_dynamic_p;
+int32_t smartprobe_static_p;
 
 static void soaring_downlink(struct transport_tx *trans, struct link_device *dev){
-  pprz_msg_send_SOARING_TELEMETRY(trans, dev, AC_ID, &smartprobe_velocity, &smartprobe_a_attack, &smartprobe_a_sideslip);
+  pprz_msg_send_SOARING_TELEMETRY(trans, dev, AC_ID, &smartprobe_velocity, &smartprobe_a_attack, &smartprobe_a_sideslip, &smartprobe_dynamic_p, &smartprobe_static_p);
 }
 
 void soaring_init(void) {
   smartprobe_velocity = 0;
   smartprobe_a_attack = 0;
   smartprobe_a_sideslip = 2;
+  smartprobe_dynamic_p  = 0;
+  smartprobe_static_p  = 0;
 
 #if PERIODIC_TELEMETRY
   register_periodic_telemetry(DefaultPeriodic, PPRZ_MSG_ID_SOARING_TELEMETRY, soaring_downlink);
@@ -61,12 +65,16 @@ void soaring_parse_AEROPROBE(uint8_t *buf)
   smartprobe_velocity  =  DL_AEROPROBE_velocity(buf);
   smartprobe_a_attack  =  DL_AEROPROBE_a_attack(buf);
   smartprobe_a_sideslip  =  DL_AEROPROBE_a_sideslip(buf);
+  smartprobe_dynamic_p  =  DL_AEROPROBE_dynamic_p(buf);
+  smartprobe_static_p  =  DL_AEROPROBE_static_p(buf);
 }
 
 void soaring_status_report(void)
 {
   soaring_downlink(&(DefaultChannel).trans_tx, &(DefaultDevice).device);
 }
+// put a parameter for the rho and temperature or static pressure of the day.
+
 
 // void fault_periodic() {}
 // void fault_datalink_callback() {}

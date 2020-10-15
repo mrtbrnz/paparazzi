@@ -1725,6 +1725,13 @@
       <field name="velocity" type="int16"   unit="cm/s">veocity</field>
       <field name="a_attack" type="int16"   unit="centideg">angle of attack</field>
       <field name="a_sideslip" type="int16" unit="centideg">sideslip angle</field>
+      <field name="dynamic_p"  type="int32"  unit="Pa"/>
+      <field name="static_p"   type="int32"  unit="Pa"/>
+      <field name="wind_x"   type=""  unit="m/s"/>
+      <field name="wind_z"   type=""  unit="m/s"/>
+      <field name="wind_x_dot"   type=""  unit="m/s2"/>
+      <field name="wind_z_dot"   type=""  unit="m/s2"/>
+      <field name="wind_power"   type=""  unit="W"/>
     </message>
 
 
