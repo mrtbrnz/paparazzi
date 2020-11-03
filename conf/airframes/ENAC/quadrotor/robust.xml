@@ -31,6 +31,11 @@
     <module name="logger" type="sd_chibios"/>
 
     <module name="fault" />
+    <module name="compagnon_interface" />
+    <module name="extra_dl">
+      <configure name="EXTRA_DL_PORT" value="UART3"/>
+      <configure name="EXTRA_DL_BAUD" value="B230400"/>
+    </module>
 
     <module name="actuators" type="dshot">
       <!--define name="DSHOT_SPEED" value="300"/-->
@@ -44,7 +49,7 @@
       <define name="USE_PWM10" value="TRUE"/>
       <!-- <define name="USE_PWM11" value="TRUE"/> -->
     <!-- <define name="INDI_NUM_ACT" value="6"/> -->
-	</module>
+  	</module>
 
     <module name="board" type="tawaki">
       <define name="USE_DSHOT_TIM1" value="TRUE"/>
