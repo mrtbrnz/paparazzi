@@ -1722,16 +1722,16 @@
 
     <!-- 212 is not free anymore -->
     <message name="SOARING_TELEMETRY" id="212">
-      <field name="velocity" type="int16"   unit="cm/s">veocity</field>
-      <field name="a_attack" type="int16"   unit="centideg">angle of attack</field>
-      <field name="a_sideslip" type="int16" unit="centideg">sideslip angle</field>
-      <field name="dynamic_p"  type="int32"  unit="Pa"/>
-      <field name="static_p"   type="int32"  unit="Pa"/>
-      <field name="wind_x"   type=""  unit="m/s"/>
-      <field name="wind_z"   type=""  unit="m/s"/>
-      <field name="wind_x_dot"   type=""  unit="m/s2"/>
-      <field name="wind_z_dot"   type=""  unit="m/s2"/>
-      <field name="wind_power"   type=""  unit="W"/>
+      <field name="velocity"     type="float"  unit="m/s">veocity</field>
+      <field name="a_attack"     type="float"  unit="rad">angle of attack</field>
+      <field name="a_sideslip"   type="float"  unit="rad">sideslip angle</field>
+      <field name="dynamic_p"    type="float"  unit="Pa"/>
+      <field name="static_p"     type="float"  unit="Pa"/>
+      <field name="wind_x"       type="float"  unit="m/s"/>
+      <field name="wind_z"       type="float"  unit="m/s"/>
+      <field name="wind_x_dot"   type="float"  unit="m/s2"/>
+      <field name="wind_z_dot"   type="float"  unit="m/s2"/>
+      <field name="wind_power"   type="float"  unit="W"/>
     </message>
 
 

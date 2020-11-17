@@ -38,22 +38,49 @@
 #include "subsystems/datalink/datalink.h"
 #include "subsystems/datalink/downlink.h"
 
-int16_t smartprobe_velocity;
-int16_t smartprobe_a_attack;
-int16_t smartprobe_a_sideslip;
-int32_t smartprobe_dynamic_p;
-int32_t smartprobe_static_p;
+// State interface
+#include "state.h"
+
+// Time and uint32_t 
+#include "mcu_periph/sys_time.h"
+
+#include "subsystems/imu.h"
+
+// local variables
+static uint32_t last_periodic_time;     // last periodic time
+static float wx_old;
+static float wz_old;
+static int sampling;
+
+
+struct Soaring_states soaring_states;
+struct Smartprobe smartprobe;
+struct Soaring_coeffs soaring_coeffs;
+
 
 static void soaring_downlink(struct transport_tx *trans, struct link_device *dev){
-  pprz_msg_send_SOARING_TELEMETRY(trans, dev, AC_ID, &smartprobe_velocity, &smartprobe_a_attack, &smartprobe_a_sideslip, &smartprobe_dynamic_p, &smartprobe_static_p);
+  pprz_msg_send_SOARING_TELEMETRY(trans, dev, AC_ID,
+   &smartprobe.va,
+   &smartprobe.aoa,
+   &smartprobe.beta,
+   &smartprobe.q,
+   &smartprobe.p,
+
+   &soaring_states.wx,
+   &soaring_states.wz,
+   &soaring_states.d_wx,
+   &soaring_states.d_wz,
+   &soaring_states.p_w);
 }
 
 void soaring_init(void) {
-  smartprobe_velocity = 0;
-  smartprobe_a_attack = 0;
-  smartprobe_a_sideslip = 2;
-  smartprobe_dynamic_p  = 0;
-  smartprobe_static_p  = 0;
+  memset(&soaring_states, 0, sizeof(struct Soaring_states));
+  memset(&smartprobe, 0, sizeof(struct Smartprobe));
+  wx_old = 0.0;
+  wz_old = 0.0;
+  last_periodic_time = 0;
+  soaring_coeffs.sample_nr = 1;
+  sampling = 0;
 
 #if PERIODIC_TELEMETRY
   register_periodic_telemetry(DefaultPeriodic, PPRZ_MSG_ID_SOARING_TELEMETRY, soaring_downlink);
@@ -62,11 +89,11 @@ void soaring_init(void) {
 
 void soaring_parse_AEROPROBE(uint8_t *buf)
 {
-  smartprobe_velocity  =  DL_AEROPROBE_velocity(buf);
-  smartprobe_a_attack  =  DL_AEROPROBE_a_attack(buf);
-  smartprobe_a_sideslip  =  DL_AEROPROBE_a_sideslip(buf);
-  smartprobe_dynamic_p  =  DL_AEROPROBE_dynamic_p(buf);
-  smartprobe_static_p  =  DL_AEROPROBE_static_p(buf);
+  smartprobe.va   =  DL_AEROPROBE_velocity(buf) / 100.;
+  smartprobe.aoa  =  DL_AEROPROBE_a_attack(buf) / 57.3;
+  smartprobe.beta =  DL_AEROPROBE_a_sideslip(buf)/ 57.3;
+  smartprobe.q    =  DL_AEROPROBE_dynamic_p(buf);
+  smartprobe.p    =  DL_AEROPROBE_static_p(buf);
 }
 
 void soaring_status_report(void)
@@ -75,8 +102,53 @@ void soaring_status_report(void)
 }
 // put a parameter for the rho and temperature or static pressure of the day.
 
+static inline void soaring_run_step(void){
+  float va = soaring_states.va;
+  soaring_states.gama = soaring_states.theta - soaring_states.aoa;
+  soaring_states.wx =  1*(va*cosf(soaring_states.gama) - soaring_states.Vx);
+  soaring_states.wz = -1*(va*sinf(soaring_states.gama) - soaring_states.Vz);
 
-// void fault_periodic() {}
-// void fault_datalink_callback() {}
+  // Calculate the derivatives
+  soaring_states.d_wx = (soaring_states.wx - wx_old) / soaring_states.dt;
+  soaring_states.d_wz = (soaring_states.wz - wz_old) / soaring_states.dt;
+  wx_old = soaring_states.wx;
+  wz_old = soaring_states.wz;
+  // if (va > 5.0f){
+  //   soaring_states.theta_cmd = gust_gains.p_wx*soaring_states.wx + gust_gains.d_wx*d_wx + gust_gains.p_wz*soaring_states.wz + gust_gains.d_wz*d_wz; // stateGetBodyRates_f()->q // just to try for now...
+  // } else {
+  //   soaring_states.theta_cmd = 0.0;
+  // }
+  // Keep the last pitch command
+  // theta_cmd_old = soaring_states.theta_cmd;
+}
 
+void soaring_periodic(void) {
+// Get state variables...
+  soaring_states.va    = smartprobe.va;  // stateGetAirspeed_f();           // m/s
+  soaring_states.aoa   = smartprobe.aoa; // stateGetAngleOfAttack_f();      // rad.
+  soaring_states.theta = stateGetNedToBodyEulers_f()->theta; // pitch angle in rad.
+  soaring_states.Vx    = stateGetHorizontalSpeedNorm_f(); // Ground speedNorm, used as in-plane forward direction groundspeed
+  soaring_states.Vz    = stateGetSpeedNed_f()->z;         // Vertical speed  m/s
+  
+  if (last_periodic_time == 0) {
+    soaring_states.dt = SOARING_PERIODIC_PERIOD;
+    last_periodic_time = get_sys_time_msec();
+  } else {
+    soaring_states.dt = (get_sys_time_msec() - last_periodic_time); //   / 1000.f;
+    last_periodic_time = get_sys_time_msec();
+  }
+  // if (gust_states.aoa < gust_gains.max_aoa){
+  if (sampling > soaring_coeffs.sample_nr){
+    soaring_run_step();
+    sampling = 0; 
+  }
+  sampling += 1; // FIXME should we stop sampling during stall ?
+  
+}
 
+// void soaring_datalink_callback() {}
+
+void autonomous_soaring_Set_Sampling(int _v)
+{
+  soaring_coeffs.sample_nr = _v;
+}

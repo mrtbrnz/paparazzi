@@ -19,7 +19,8 @@
     <file name="autonomous_soaring.h"/>
   </header>
   <init fun="soaring_init()"/>
-  <periodic fun="soaring_status_report()" freq="4" autorun="TRUE"/>
+  <periodic fun="soaring_periodic()" freq="100"/>
+  <!-- <periodic fun="soaring_status_report()" freq="4" autorun="TRUE"/> -->
   
   <!-- <datalink message="FAULT_INFO" fun="fault_parse_FAULT_INFO(buf)"/> -->
   <datalink message="AEROPROBE" fun="soaring_parse_AEROPROBE(buf)"/>
