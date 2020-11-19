@@ -4,16 +4,15 @@
   <doc>
     <description>Soaring related things... thermal-gust-dynamic...</description>
   </doc>
-  <!-- <settings> -->
-    <!-- <dl_settings> -->
-      <!-- <dl_settings NAME="SOARING"> -->
+  <settings>
+    <dl_settings>
+      <dl_settings NAME="SOARING">
+        <dl_setting var="soaring_coeffs.aoa_offset" min="-5.0" step="0.1" max="5.0" shortname="AoA_offset" param="SMARTPROBE_AOA_OFFSET"/>
+        <dl_setting var="soaring_coeffs.aoa_coeff"  min="0" step="0.01" max="1.5" shortname="AoA_coeff" param="SMARTPROBE_AOA_COEFF"/>
         <!-- <dl_setting MAX="1.2" MIN="0.0" STEP="0.1" VAR="fault_right" shortname="right" module="modules/fault/fault" handler="Set_Right"/> -->
-        <!-- <dl_setting MAX="1.2" MIN="0.0" STEP="0.1" VAR="fault_left" shortname="left" module="modules/fault/fault" handler="Set_Left"/> -->
-        <!-- <dl_setting MAX="9600.0" MIN="-9600.0" STEP="1" VAR="fault_offset_right" shortname="right_offset" module="modules/fault/fault" handler="Set_Offset_Right"/> -->
-        <!-- <dl_setting MAX="9600.0" MIN="-9600.0" STEP="1" VAR="fault_offset_left" shortname="left_offset" module="modules/fault/fault" handler="Set_Offset_Left"/> -->
-      <!-- </dl_settings> -->
-    <!-- </dl_settings> -->
-  <!-- </settings> -->
+      </dl_settings>
+    </dl_settings>
+  </settings>
 
   <header>
     <file name="autonomous_soaring.h"/>

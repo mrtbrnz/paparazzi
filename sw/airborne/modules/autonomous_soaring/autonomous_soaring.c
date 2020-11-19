@@ -52,6 +52,13 @@ static float wx_old;
 static float wz_old;
 static int sampling;
 
+#ifndef SMARTPROBE_AOA_OFFSET
+#define SMARTPROBE_AOA_OFFSET 0.0
+#endif
+
+#ifndef SMARTPROBE_AOA_COEFF
+#define SMARTPROBE_AOA_COEFF 0.85
+#endif
 
 struct Soaring_states soaring_states;
 struct Smartprobe smartprobe;
@@ -76,10 +83,13 @@ static void soaring_downlink(struct transport_tx *trans, struct link_device *dev
 void soaring_init(void) {
   memset(&soaring_states, 0, sizeof(struct Soaring_states));
   memset(&smartprobe, 0, sizeof(struct Smartprobe));
+
   wx_old = 0.0;
   wz_old = 0.0;
   last_periodic_time = 0;
   soaring_coeffs.sample_nr = 1;
+  soaring_coeffs.aoa_coeff = SMARTPROBE_AOA_COEFF;
+  soaring_coeffs.aoa_offset = SMARTPROBE_AOA_OFFSET;
   sampling = 0;
 
 #if PERIODIC_TELEMETRY
@@ -90,8 +100,8 @@ void soaring_init(void) {
 void soaring_parse_AEROPROBE(uint8_t *buf)
 {
   smartprobe.va   =  DL_AEROPROBE_velocity(buf) / 100.;
-  smartprobe.aoa  =  DL_AEROPROBE_a_attack(buf) / 57.3;
-  smartprobe.beta =  DL_AEROPROBE_a_sideslip(buf)/ 57.3;
+  smartprobe.aoa  =  (DL_AEROPROBE_a_attack(buf) * 0.000174527 * soaring_coeffs.aoa_coeff) - (soaring_coeffs.aoa_offset*0.0174);
+  smartprobe.beta =  DL_AEROPROBE_a_sideslip(buf) * 0.000174527;
   smartprobe.q    =  DL_AEROPROBE_dynamic_p(buf);
   smartprobe.p    =  DL_AEROPROBE_static_p(buf);
 }

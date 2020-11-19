@@ -63,6 +63,8 @@ struct Soaring_states {
 
 struct Soaring_coeffs{
 	int sample_nr;
+	float aoa_offset;
+	float aoa_coeff;
 };
 
 // example:
