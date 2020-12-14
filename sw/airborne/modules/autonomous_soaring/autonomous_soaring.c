@@ -115,8 +115,9 @@ void soaring_status_report(void)
 static inline void soaring_run_step(void){
   float va = soaring_states.va;
   soaring_states.gama = soaring_states.theta - soaring_states.aoa;
-  soaring_states.wx =  1*(va*cosf(soaring_states.gama) - soaring_states.Vx);
-  soaring_states.wz = -1*(va*sinf(soaring_states.gama) - soaring_states.Vz);
+  soaring_states.wx =  va*cosf(soaring_states.gama) - soaring_states.Vx;
+  // soaring_states.wz = -1*(va*sinf(soaring_states.gama) - soaring_states.Vz);
+  soaring_states.wz = soaring_states.Vz + va*sinf(soaring_states.gama);
 
   // Calculate the derivatives
   soaring_states.d_wx = (soaring_states.wx - wx_old) / soaring_states.dt;
@@ -134,7 +135,8 @@ static inline void soaring_run_step(void){
 
 void soaring_periodic(void) {
 // Get state variables...
-  soaring_states.va    = smartprobe.va;  // stateGetAirspeed_f();           // m/s
+  soaring_states.va    = smartprobe.va;  // stateGetAirspeed_f();
+  // soaring_states.va    = stateGetAirspeed_f();           // m/s
   soaring_states.aoa   = smartprobe.aoa; // stateGetAngleOfAttack_f();      // rad.
   soaring_states.theta = stateGetNedToBodyEulers_f()->theta; // pitch angle in rad.
   soaring_states.Vx    = stateGetHorizontalSpeedNorm_f(); // Ground speedNorm, used as in-plane forward direction groundspeed

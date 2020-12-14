@@ -120,7 +120,7 @@
   </process>
   <process name="FlightRecorder">
     <mode name="default">
-      <message name="ENERGY"              period="0.5"/>
+      <message name="ENERGY"              period="0.05"/>
       <message name="GPS"                 period="0.2"/>
       <message name="ATTITUDE"            period="0.05"/>
       <message name="DESIRED"             period="0.05"/>
