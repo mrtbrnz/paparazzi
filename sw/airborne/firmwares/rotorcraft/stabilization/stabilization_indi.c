@@ -30,6 +30,8 @@
  * http://arc.aiaa.org/doi/pdf/10.2514/1.G001490
  */
 
+//#include "firmwares/rotorcraft/guidance/guidance_indi.h"
+
 #include "firmwares/rotorcraft/stabilization/stabilization_indi.h"
 #include "firmwares/rotorcraft/stabilization/stabilization_attitude.h"
 #include "firmwares/rotorcraft/stabilization/stabilization_attitude_rc_setpoint.h"
@@ -144,6 +146,7 @@ int32_t num_thrusters;
 
 struct Int32Eulers stab_att_sp_euler;
 struct Int32Quat   stab_att_sp_quat;
+struct FloatVect3  stab_att_sp_accel;
 
 abi_event rpm_ev;
 static void rpm_cb(uint8_t sender_id, uint16_t *rpm, uint8_t num_act);
@@ -513,6 +516,79 @@ void stabilization_indi_attitude_run(struct Int32Quat quat_sp, bool in_flight)
 
   // Possibly we can use some bounding here
   /*BoundAbs(rate_sp.r, 5.0);*/
+
+  //printf("p: %f q: %f r: %f \n",rate_sp.p,rate_sp.q,rate_sp.r);
+  //printf("\n");
+
+  /* compute the INDI command */
+  stabilization_indi_rate_run(rate_sp, in_flight);
+
+  // Reset thrust increment boolean
+  indi_thrust_increment_set = false;
+}
+
+/**
+ * @param enable_integrator
+ * @param rate_control boolean that determines if we are in rate control or attitude control
+ *
+ * Function that should be called to run the Headless Spinning INDI controller
+ */
+void stabilization_indi_headless_attitude_run(struct FloatVect3 accel_sp, bool in_flight)
+{
+  // printf("%f %f %f \n",accel_sp.x,accel_sp.y, accel_sp.z);
+  // printf("\n");
+
+  /* Find desired acceleration unit vector */
+  struct FloatVect3 n_des;
+  struct FloatVect3 n_des_b;
+  // struct FloatMat33 R_bi;
+
+  /*Subtract gravity vector from desired acceleration */
+  struct FloatVect3 gee = {0.0, 0.0, -1*9.81}; // defined positive for SUM
+  VECT3_SUM(n_des, accel_sp, gee);
+
+  /*Normalize vector (in place) */
+  float_vect3_normalize(&n_des);
+
+  // printf("n_des_i : %f %f %f \n",n_des.x,n_des.y,n_des.z);
+  // printf("\n");
+  /*Rotate inertial framed vector into Body frame */
+    //get attitude in quat (?euler ?)
+  struct FloatQuat * att_quat_f = stateGetNedToBodyQuat_f();
+    //generate rotation matrix
+  // MAT33_VECT3_MUL(n_des_b, R_bi, n_des);
+  // RMAT_VECT3_MUL(n_des_b, R_bi, n_des)
+  /* Rotate desired acc vector from inertial to body frame */
+  float_quat_vmult(&n_des_b, att_quat_f, &n_des);
+  // printf("n_des_b : %f %f %f \n",n_des_b.x,n_des_b.y,n_des_b.z);
+  // printf("\n");
+
+  // local variable to compute rate setpoints based on normalized desired acceleration
+  struct FloatRates rate_sp;
+  float h1 = n_des_b.x;
+  float h2 = n_des_b.y;
+  float h3 = n_des_b.z;
+  float ni_1 = 0.;
+  float ni_2 = 0.;
+  float v1 = 0.05 - h1; // 0.1
+  float v2 = 0.05 - h2; // 0.1
+
+  struct FloatRates *body_rates = stateGetBodyRates_f();
+  float rate_vect[3] = {body_rates->p, body_rates->q, body_rates->r};
+  float r = rate_vect[2];
+
+  rate_sp.p = 1.1 * (v2 - h1*r - ni_2) / h3;
+  rate_sp.q = 1.1 * (v1 - h2*r - ni_1) / -1.*h3;
+
+  // calculate the virtual control (reference acceleration) based on a PD controller
+  // rate_sp.p = indi_gains.att.p * accel_sp.x / indi_gains.rate.p;
+  // rate_sp.q = indi_gains.att.q * accel_sp.y / indi_gains.rate.q;
+  rate_sp.r = indi_gains.att.r * 0.0 / indi_gains.rate.r;
+  // Possibly we can use some bounding here
+  /*BoundAbs(rate_sp.r, 5.0);*/
+
+  // printf("p: %f q: %f r: %f \n",rate_sp.p,rate_sp.q,rate_sp.r);
+  // printf("\n");
 
   /* compute the INDI command */
   stabilization_indi_rate_run(rate_sp, in_flight);

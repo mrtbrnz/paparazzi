@@ -63,6 +63,7 @@ void stabilization_attitude_set_earth_cmd_i(struct Int32Vect2 *cmd, int32_t head
 void stabilization_attitude_run(bool in_flight)
 {
   stabilization_indi_attitude_run(stab_att_sp_quat, in_flight);
+  // stabilization_indi_headless_attitude_run(stab_att_sp_accel, in_flight); ///struct FloatVect3  stab_att_sp_accel
 }
 
 void stabilization_attitude_read_rc(bool in_flight, bool in_carefree, bool coordinated_turn)

@@ -48,6 +48,8 @@
 #include "filters/low_pass_filter.h"
 #include "subsystems/abi.h"
 
+// #include "firmwares/rotorcraft/stabilization/stabilization_indi.h"
+
 // The acceleration reference is calculated with these gains. If you use GPS,
 // they are probably limited by the update rate of your GPS. The default
 // values are tuned for 4 Hz GPS updates. If you have high speed position updates, the
@@ -220,6 +222,13 @@ void guidance_indi_run(float *heading_sp)
   Bound(a_diff.x, -6.0, 6.0);
   Bound(a_diff.y, -6.0, 6.0);
   Bound(a_diff.z, -9.0, 9.0);
+
+  // printf("%f %f %f \n",a_diff.x, a_diff.y, a_diff.z);
+  /* Sending desired acceleration setpoint to attitude controller */
+  stab_att_sp_accel.x = sp_accel.x;
+  stab_att_sp_accel.y = sp_accel.y;
+  stab_att_sp_accel.z = sp_accel.z;
+
 
   //If the thrust to specific force ratio has been defined, include vertical control
   //else ignore the vertical acceleration error
